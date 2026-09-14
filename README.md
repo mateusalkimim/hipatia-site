@@ -11,6 +11,14 @@ que não dependem um do outro — **GAAL**, sobre o que uma transformação
 *preserva*, e **Cálculo**, sobre o que acontece *perto de um ponto*. O índice
 desenha essa ordem; o visor abre um deck de cada vez com os vizinhos ao lado.
 
+**→ [Abrir as apresentações](index.html)**
+
+> **Estado: PROTÓTIPO.** O repositório é privado e não está no ar: o link acima
+> abre o site **no clone** (notebook, tablet, qualquer pasta que tenha o
+> repositório); no GitHub ele mostra só o arquivo. Em aberto: a versão em
+> inglês do índice e dos decks (só o G3 a tem), o nome público e a
+> hospedagem, se sair do clone local.
+
 ## Início rápido
 
 Não há instalação. Baixe e abra:
@@ -75,8 +83,3 @@ Código sob **MIT** (`LICENSE`). Conteúdo dos seminários sob
 **CC BY-SA 4.0** (`LICENSE-CONTENT`), **exceto** as figuras de terceiros
 creditadas dentro de cada deck (cartazes e stills de filmes no G3, páginas
 de caderno de desenho), que seguem com seus donos.
-
-## Estado
-
-Protótipo. Em aberto: a versão em inglês do índice e dos decks (só o G3 a
-tem); o nome público do repositório; a hospedagem, se sair do clone local.
