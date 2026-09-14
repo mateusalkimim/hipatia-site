@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="659 -66 555 644" width="555" height="644" role="img" aria-label="0e · Negativos e a reta — para onde vamos">
+<rect x="659" y="-66" width="555" height="644" fill="#f3f5f9"/>
+<polyline points="798.0,58.0 798.0,104.0 1085.5,104.0 1085.5,120.0" fill="none" stroke="#a9713f" stroke-width="1.6" opacity="0.85"/>
+<polyline points="1085.5,178.0 1085.5,214.0 775.0,214.0 775.0,240.0" fill="none" stroke="#a9713f" stroke-width="1.6" opacity="0.85"/>
+<polyline points="1085.5,178.0 1085.5,264.0 925.0,264.0 925.0,360.0" fill="none" stroke="#a9713f" stroke-width="1.6" opacity="0.85"/>
+<polyline points="1085.5,178.0 1085.5,329.0 1098.0,329.0 1098.0,480.0" fill="none" stroke="#a9713f" stroke-width="1.6" opacity="0.85"/>
+<polyline points="798.0,58.0 798.0,164.0 775.0,164.0 775.0,240.0" fill="none" stroke="#c3ccdb" stroke-width="1.0" opacity="0.35"/>
+<polyline points="775.0,298.0 775.0,319.0 925.0,319.0 925.0,360.0" fill="none" stroke="#c3ccdb" stroke-width="1.0" opacity="0.35"/>
+<polyline points="925.0,418.0 925.0,434.0 1098.0,434.0 1098.0,480.0" fill="none" stroke="#c3ccdb" stroke-width="1.0" opacity="0.35"/>
+<g transform="translate(722.0,0.0)" fill="#f3f5f9" stroke="#a9713f" stroke-width="1.6">
+<rect width="152" height="58" rx="8"></rect>
+</g>
+<text x="798.0" y="26.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">Aritmética</text>
+<text x="798.0" y="40.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">e as operações</text>
+<g transform="translate(1009.5,120.0)" fill="#ffffff" stroke="#a9713f" stroke-width="2.6">
+<rect width="152" height="58" rx="8"></rect>
+</g>
+<text x="1085.5" y="146.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#16233f">Negativos</text>
+<text x="1085.5" y="160.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#16233f">e a reta</text>
+<g transform="translate(699.0,240.0)" fill="#f3f5f9" stroke="#a9713f" stroke-width="1.6">
+<rect width="152" height="58" rx="8"></rect>
+</g>
+<text x="775.0" y="266.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">Álgebra</text>
+<text x="775.0" y="280.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">elementar</text>
+<g transform="translate(849.0,360.0)" fill="#f3f5f9" stroke="#a9713f" stroke-width="1.6">
+<rect width="152" height="58" rx="8"></rect>
+</g>
+<text x="925.0" y="393.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">Números reais</text>
+<g transform="translate(1022.0,480.0)" fill="#f3f5f9" stroke="#3ac848" stroke-width="1.6">
+<polygon points="15,0 137,0 152,29.0 137,58 15,58 0,29.0"></polygon>
+<g fill="none" stroke="#78c4ff" stroke-width="1.2" transform="translate(5,5)"><polygon points="12,0 130,0 142,24.0 130,48 12,48 0,24.0"></polygon></g>
+</g>
+<text x="1098.0" y="506.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">Coordenadas</text>
+<text x="1098.0" y="520.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">no plano</text>
+<text x="665" y="-48" font-family="Inter,sans-serif" font-size="15" font-weight="600" fill="#16233f">0e · Negativos e a reta — para onde vamos</text>
+</svg>

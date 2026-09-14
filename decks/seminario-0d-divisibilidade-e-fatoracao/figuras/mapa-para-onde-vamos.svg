@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="566 -66 486 524" width="486" height="524" role="img" aria-label="0d · Divisibilidade e fatoração — para onde vamos">
+<rect x="566" y="-66" width="486" height="524" fill="#f3f5f9"/>
+<polyline points="798.0,58.0 798.0,154.0 936.5,154.0 936.5,240.0" fill="none" stroke="#c3ccdb" stroke-width="1.0" opacity="0.35"/>
+<polyline points="798.0,58.0 798.0,74.0 890.5,74.0 890.5,120.0" fill="none" stroke="#a9713f" stroke-width="1.6" opacity="0.85"/>
+<polyline points="890.5,178.0 890.5,204.0 682.5,204.0 682.5,240.0" fill="none" stroke="#a9713f" stroke-width="1.6" opacity="0.85"/>
+<polyline points="890.5,178.0 890.5,209.0 936.5,209.0 936.5,240.0" fill="none" stroke="#a9713f" stroke-width="1.6" opacity="0.85"/>
+<polyline points="682.5,298.0 682.5,339.0 723.5,339.0 723.5,360.0" fill="none" stroke="#c3ccdb" stroke-width="1.0" opacity="0.35"/>
+<polyline points="890.5,178.0 890.5,284.0 723.5,284.0 723.5,360.0" fill="none" stroke="#a9713f" stroke-width="1.6" opacity="0.85"/>
+<polyline points="798.0,58.0 798.0,154.0 682.5,154.0 682.5,240.0" fill="none" stroke="#c3ccdb" stroke-width="1.0" opacity="0.35"/>
+<g transform="translate(722.0,0.0)" fill="#f3f5f9" stroke="#a9713f" stroke-width="1.6">
+<rect width="152" height="58" rx="8"></rect>
+</g>
+<text x="798.0" y="26.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">Aritmética</text>
+<text x="798.0" y="40.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">e as operações</text>
+<g transform="translate(860.5,240.0)" fill="#f3f5f9" stroke="#a9713f" stroke-width="1.6">
+<rect width="152" height="58" rx="8"></rect>
+</g>
+<text x="936.5" y="266.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">Frações</text>
+<text x="936.5" y="280.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">e proporção</text>
+<g transform="translate(814.5,120.0)" fill="#ffffff" stroke="#a9713f" stroke-width="2.6">
+<rect width="152" height="58" rx="8"></rect>
+</g>
+<text x="890.5" y="146.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#16233f">Divisibilidade</text>
+<text x="890.5" y="160.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#16233f">e fatoração</text>
+<g transform="translate(606.5,240.0)" fill="#f3f5f9" stroke="#a9713f" stroke-width="1.6">
+<rect width="152" height="58" rx="8"></rect>
+</g>
+<text x="682.5" y="266.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">Álgebra</text>
+<text x="682.5" y="280.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">elementar</text>
+<g transform="translate(647.5,360.0)" fill="#f3f5f9" stroke="#a9713f" stroke-width="1.6">
+<rect width="152" height="58" rx="8"></rect>
+</g>
+<text x="723.5" y="393.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">Polinômios</text>
+<text x="572" y="-48" font-family="Inter,sans-serif" font-size="15" font-weight="600" fill="#16233f">0d · Divisibilidade e fatoração — para onde vamos</text>
+</svg>

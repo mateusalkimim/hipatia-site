@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="90 -66 708 884" width="708" height="884" role="img" aria-label="G2 · Determinantes — para onde vamos">
+<rect x="90" y="-66" width="708" height="884" fill="#f3f5f9"/>
+<polyline points="556.5,58.0 556.5,264.0 411.5,264.0 411.5,480.0" fill="none" stroke="#a9713f" stroke-width="1.6" opacity="0.85"/>
+<polyline points="515.5,298.0 515.5,344.0 590.0,344.0 590.0,360.0" fill="none" stroke="#a9713f" stroke-width="1.6" opacity="0.85"/>
+<polyline points="682.5,178.0 682.5,194.0 515.5,194.0 515.5,240.0" fill="none" stroke="#a9713f" stroke-width="1.6" opacity="0.85"/>
+<polyline points="590.0,418.0 590.0,439.0 411.5,439.0 411.5,480.0" fill="none" stroke="#a9713f" stroke-width="1.6" opacity="0.85"/>
+<polyline points="590.0,418.0 590.0,524.0 206.0,524.0 206.0,600.0" fill="none" stroke="#a9713f" stroke-width="1.6" opacity="0.85"/>
+<polyline points="206.0,658.0 206.0,684.0 441.0,684.0 441.0,720.0" fill="none" stroke="#c3ccdb" stroke-width="1.0" opacity="0.35"/>
+<polyline points="411.5,538.0 411.5,629.0 441.0,629.0 441.0,720.0" fill="none" stroke="#a9713f" stroke-width="1.6" opacity="0.85"/>
+<g transform="translate(480.5,0.0)" fill="#f3f5f9" stroke="#a9713f" stroke-width="1.6">
+<rect width="152" height="58" rx="8"></rect>
+</g>
+<text x="556.5" y="26.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">Problemas</text>
+<text x="556.5" y="40.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">de contagem</text>
+<g transform="translate(606.5,120.0)" fill="#f3f5f9" stroke="#a9713f" stroke-width="1.6">
+<rect width="152" height="58" rx="8"></rect>
+</g>
+<text x="682.5" y="146.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">Álgebra</text>
+<text x="682.5" y="160.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">elementar</text>
+<g transform="translate(514.0,360.0)" fill="#ffffff" stroke="#3ac848" stroke-width="2.6">
+<polygon points="15,0 137,0 152,29.0 137,58 15,58 0,29.0"></polygon>
+</g>
+<text x="590.0" y="393.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#16233f">Matrizes</text>
+<g transform="translate(439.5,240.0)" fill="#ffffff" stroke="#3ac848" stroke-width="2.6">
+<polygon points="15,0 137,0 152,29.0 137,58 15,58 0,29.0"></polygon>
+</g>
+<text x="515.5" y="273.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#16233f">Sistemas lineares</text>
+<g transform="translate(335.5,480.0)" fill="#ffffff" stroke="#3ac848" stroke-width="2.6">
+<polygon points="15,0 137,0 152,29.0 137,58 15,58 0,29.0"></polygon>
+</g>
+<text x="411.5" y="513.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#16233f">Determinantes</text>
+<g transform="translate(130.0,600.0)" fill="#f3f5f9" stroke="#3ac848" stroke-width="1.6">
+<polygon points="15,0 137,0 152,29.0 137,58 15,58 0,29.0"></polygon>
+</g>
+<text x="206.0" y="626.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">Transformações</text>
+<text x="206.0" y="640.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">lineares</text>
+<g transform="translate(365.0,720.0)" fill="#f3f5f9" stroke="#3ac848" stroke-width="1.6">
+<polygon points="15,0 137,0 152,29.0 137,58 15,58 0,29.0"></polygon>
+</g>
+<text x="441.0" y="746.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">Autovalores</text>
+<text x="441.0" y="760.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">e autovetores</text>
+<text x="96" y="-48" font-family="Inter,sans-serif" font-size="15" font-weight="600" fill="#16233f">G2 · Determinantes — para onde vamos</text>
+</svg>

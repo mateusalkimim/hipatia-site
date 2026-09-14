@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="406 -66 807 764" width="807" height="764" role="img" aria-label="0h · A balança — para onde vamos">
+<rect x="406" y="-66" width="807" height="764" fill="#f3f5f9"/>
+<polyline points="798.0,58.0 798.0,89.0 854.5,89.0 854.5,120.0" fill="none" stroke="#c3ccdb" stroke-width="1.0" opacity="0.35"/>
+<polyline points="798.0,58.0 798.0,240.0" fill="none" stroke="#c3ccdb" stroke-width="1.0" opacity="0.35"/>
+<polyline points="798.0,58.0 798.0,104.0 1085.5,104.0 1085.5,120.0" fill="none" stroke="#c3ccdb" stroke-width="1.0" opacity="0.35"/>
+<polyline points="798.0,58.0 798.0,74.0 682.5,74.0 682.5,120.0" fill="none" stroke="#c3ccdb" stroke-width="1.0" opacity="0.35"/>
+<polyline points="854.5,178.0 854.5,259.0 775.0,259.0 775.0,360.0" fill="none" stroke="#a9713f" stroke-width="1.6" opacity="0.85"/>
+<polyline points="682.5,178.0 682.5,264.0 775.0,264.0 775.0,360.0" fill="none" stroke="#a9713f" stroke-width="1.6" opacity="0.85"/>
+<polyline points="798.0,298.0 798.0,329.0 775.0,329.0 775.0,360.0" fill="none" stroke="#a9713f" stroke-width="1.6" opacity="0.85"/>
+<polyline points="1085.5,178.0 1085.5,274.0 775.0,274.0 775.0,360.0" fill="none" stroke="#a9713f" stroke-width="1.6" opacity="0.85"/>
+<polyline points="682.5,178.0 682.5,219.0 798.0,219.0 798.0,240.0" fill="none" stroke="#c3ccdb" stroke-width="1.0" opacity="0.35"/>
+<polyline points="798.0,298.0 798.0,404.0 1097.0,404.0 1097.0,480.0" fill="none" stroke="#c3ccdb" stroke-width="1.0" opacity="0.35"/>
+<polyline points="775.0,418.0 775.0,434.0 522.0,434.0 522.0,480.0" fill="none" stroke="#a9713f" stroke-width="1.6" opacity="0.85"/>
+<polyline points="682.5,178.0 682.5,319.0 522.0,319.0 522.0,480.0" fill="none" stroke="#c3ccdb" stroke-width="1.0" opacity="0.35"/>
+<polyline points="1085.5,178.0 1085.5,324.0 925.0,324.0 925.0,480.0" fill="none" stroke="#c3ccdb" stroke-width="1.0" opacity="0.35"/>
+<polyline points="798.0,58.0 798.0,224.0 775.0,224.0 775.0,360.0" fill="none" stroke="#a9713f" stroke-width="1.6" opacity="0.85"/>
+<polyline points="775.0,418.0 775.0,434.0 1097.0,434.0 1097.0,480.0" fill="none" stroke="#a9713f" stroke-width="1.6" opacity="0.85"/>
+<polyline points="775.0,418.0 775.0,439.0 925.0,439.0 925.0,480.0" fill="none" stroke="#a9713f" stroke-width="1.6" opacity="0.85"/>
+<polyline points="775.0,418.0 775.0,504.0 873.5,504.0 873.5,600.0" fill="none" stroke="#a9713f" stroke-width="1.6" opacity="0.85"/>
+<polyline points="775.0,418.0 775.0,444.0 694.0,444.0 694.0,480.0" fill="none" stroke="#a9713f" stroke-width="1.6" opacity="0.85"/>
+<g transform="translate(722.0,0.0)" fill="#f3f5f9" stroke="#a9713f" stroke-width="1.6">
+<rect width="152" height="58" rx="8"></rect>
+</g>
+<text x="798.0" y="26.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">Aritmética</text>
+<text x="798.0" y="40.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">e as operações</text>
+<g transform="translate(778.5,120.0)" fill="#f3f5f9" stroke="#a9713f" stroke-width="1.6">
+<rect width="152" height="58" rx="8"></rect>
+</g>
+<text x="854.5" y="146.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">Soma e produto</text>
+<text x="854.5" y="160.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">e seus inversos</text>
+<g transform="translate(722.0,240.0)" fill="#f3f5f9" stroke="#a9713f" stroke-width="1.6">
+<rect width="152" height="58" rx="8"></rect>
+</g>
+<text x="798.0" y="266.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">Frações</text>
+<text x="798.0" y="280.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">e proporção</text>
+<g transform="translate(1009.5,120.0)" fill="#f3f5f9" stroke="#a9713f" stroke-width="1.6">
+<rect width="152" height="58" rx="8"></rect>
+</g>
+<text x="1085.5" y="146.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">Negativos</text>
+<text x="1085.5" y="160.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">e a reta</text>
+<g transform="translate(606.5,120.0)" fill="#f3f5f9" stroke="#a9713f" stroke-width="1.6">
+<rect width="152" height="58" rx="8"></rect>
+</g>
+<text x="682.5" y="146.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">Divisibilidade</text>
+<text x="682.5" y="160.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">e fatoração</text>
+<g transform="translate(699.0,360.0)" fill="#ffffff" stroke="#a9713f" stroke-width="2.6">
+<rect width="152" height="58" rx="8"></rect>
+</g>
+<text x="775.0" y="386.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#16233f">Álgebra</text>
+<text x="775.0" y="400.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#16233f">elementar</text>
+<g transform="translate(446.0,480.0)" fill="#f3f5f9" stroke="#a9713f" stroke-width="1.6">
+<rect width="152" height="58" rx="8"></rect>
+</g>
+<text x="522.0" y="513.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">Polinômios</text>
+<g transform="translate(1021.0,480.0)" fill="#f3f5f9" stroke="#a9713f" stroke-width="1.6">
+<rect width="152" height="58" rx="8"></rect>
+</g>
+<text x="1097.0" y="513.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">Trigonometria</text>
+<g transform="translate(849.0,480.0)" fill="#f3f5f9" stroke="#a9713f" stroke-width="1.6">
+<rect width="152" height="58" rx="8"></rect>
+</g>
+<text x="925.0" y="513.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">Números reais</text>
+<g transform="translate(797.5,600.0)" fill="#f3f5f9" stroke="#3ac848" stroke-width="1.6">
+<polygon points="15,0 137,0 152,29.0 137,58 15,58 0,29.0"></polygon>
+<g fill="none" stroke="#78c4ff" stroke-width="1.2" transform="translate(5,5)"><polygon points="12,0 130,0 142,24.0 130,48 12,48 0,24.0"></polygon></g>
+</g>
+<text x="873.5" y="633.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">Equações da reta</text>
+<g transform="translate(618.0,480.0)" fill="#f3f5f9" stroke="#3ac848" stroke-width="1.6">
+<polygon points="15,0 137,0 152,29.0 137,58 15,58 0,29.0"></polygon>
+</g>
+<text x="694.0" y="513.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">Sistemas lineares</text>
+<text x="412" y="-48" font-family="Inter,sans-serif" font-size="15" font-weight="600" fill="#16233f">0h · A balança — para onde vamos</text>
+</svg>

@@ -1,0 +1,1225 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A sacola e o que não vaza — espaços e subespaços vetoriais</title>
+<script>
+window.MathJax = {
+  tex: { inlineMath: [["\\(", "\\)"]], displayMath: [["\\[", "\\]"]] },
+  svg: { fontCache: "global" },
+  startup: { typeset: true }
+};
+</script>
+<script src="../../vendor/tex-svg.js" id="MathJax-script" async></script>
+<style>
+/* ============================================================
+   Ítaca DS — TEMA CLARO (o "irmão claro" previsto em
+   itaca-ds/tokens.css; primitivos da paleta do roteiro ao
+   orientador; muda só a camada semântica)
+   ============================================================ */
+:root {
+  --bg: #f3f5f9; --card: #ffffff; --linha: #d9e0ec;
+  --ink: #16233f; --ink2: #3f4d6b; --muted: #7c88a1;
+  --bronze: #a9713f; --bronze-fundo: #8f5e33; --bronze-soft: #c79b6e;
+  --azul: #1e3a6b; --azul-deep: #12244a;
+  --terracota: #b35430; --verde: #4e7a49; --rubro: #a84444;
+  --it-serif: Georgia, "Cormorant Garamond", "Times New Roman", serif;
+  --it-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --it-mono: "Spline Sans Mono", ui-monospace, "Cascadia Code", monospace;
+  /* cores dos 8 vértices (as mesmas de gerar_figuras.py) */
+  /* NORMA §2.1 — a medida de linha, declarada UMA vez. Em EM, nunca em `ch`:
+     `ch` mede o glifo "0" (0,636 em na Inter) e não o caractere médio de
+     prosa (0,456 em), então 66ch entregaria 92 caracteres. */
+  --medida: 30em;
+  --v0:#a9713f; --v1:#b35430; --v2:#4e7a49; --v3:#a84444;
+  --v4:#3d6394; --v5:#6d55a3; --v6:#2e7d70; --v7:#a85577;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+/* §2.6 — a ESCALA do registro deck. Uma raiz só, porque `rem` é global:
+   subir aqui escala junto o que tem `clamp(...vw...)` e o que tem tamanho
+   FIXO em rem. Levantar só os clamps (a primeira tentativa) deixou
+   `.leitura`, `.legenda`, `.eyebrow` e todo `<p>` fora de `.col` para trás, e
+   a folha ficou com DUAS escalas ao mesmo tempo.
+   25px escolhido para que o termo proporcional continue governando a 1920:
+   o teto de `.col p` (1,04rem) passa a valer 26px, logo acima dos 25,92px do
+   `1.35vw` — a proporção manda, o teto só segura viewport maior. */
+html { font-size: 25px; }
+html, body { height: 100%; background: var(--azul-deep); }
+body { font-family: var(--it-sans); color: var(--ink); overflow: hidden; }
+
+.slide {
+  display: none; position: absolute; inset: 0;
+  background: var(--bg);
+  padding: 4vh 6vw 6vh; flex-direction: column;
+  overflow: hidden;            /* nada vaza para a página seguinte */
+}
+.slide.ativo { display: flex; animation: fade .35s ease; }
+@keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.eyebrow {
+  font-size: 0.72rem; letter-spacing: 0.22em;
+  text-transform: uppercase; color: var(--bronze); font-weight: 700;
+  margin-bottom: 1vh;
+}
+h1 { font-family: var(--it-serif); font-weight: 700; font-size: clamp(1.5rem, 3vw, 2.4rem);
+     line-height: 1.12; margin-bottom: 1.2vh; color: var(--azul-deep);
+     letter-spacing: -0.01em; }
+h1 em { color: var(--bronze); font-style: normal; }
+.tese { font-family: var(--it-serif); font-style: italic; font-size: clamp(1.05rem, 1.8vw, 1.35rem);
+        color: var(--bronze-fundo); }
+.corpo { flex: 1; display: flex; gap: 2.6vw; align-items: safe center;
+         min-height: 0; }
+/* `safe center`, não `center`: a exceção do deck (§2.4) centra a faixa única
+   na vertical — mas `center` num flex TRANSBORDA PARA OS DOIS LADOS quando o
+   item é mais alto que o container, e aí o texto sobe por cima do título e
+   desce por cima do rodapé ao mesmo tempo. Foi o que apareceu na folha 12 ao
+   subir a escala. `safe` volta a alinhar pelo topo exatamente quando não cabe:
+   a centralização vale enquanto é composição, e desliga quando viraria
+   atropelo. */
+.col { flex: 1; min-width: 0; }
+
+/* ===== NORMA DE COMPOSIÇÃO — variante B (2026-08-17) =======================
+   §2.4 (o conteúdo pende do topo) NÃO foi aplicado aqui, e é decisão em
+   aberto do operador. Motivo medido: OITO folhas trazem
+   `style="align-items:center"` INLINE na `.corpo`, e estilo inline vence a
+   folha de estilo — trocar só a regra deixaria 30 folhas no topo e 8
+   centradas, inconsistência pior que qualquer das duas. E há uma dúvida de
+   mérito: numa folha subocupada, pendurar no topo joga TODO o vazio para
+   baixo (47% na folha 21) enquanto centrar o divide. A regra nasceu para
+   blocos empilhados do caderno e pode não valer para o deck.
+   O estilo inline é também a raiz dos 407 eixos distintos.
+
+   §2.1 a medida governa a PROSA; bloco de exibição (fórmula, figura, tabela,
+   grade) é governado pelo conteúdo. A `.corpo` continua FLEX de propósito: os
+   arranjos especiais deste deck (`duo`, `grid3x3`, `grid2x2`,
+   `figbox.vert.hierarquia`) carregam proporções que o autor declarou em
+   `flex`, e trocar por grade as apagaria. O eixo fica para um segundo ato,
+   com cada arranjo convertido caso a caso.
+
+   Alcance: a prosa deste deck NÃO mora só em `.col` — há folhas com `<div>`
+   sem classe dentro de `.corpo` (a 9 é uma). Seletor estreito deixava 67
+   linhas acima do teto com a regra certa aplicada; é a armadilha 13 outra vez,
+   pelo lado do ALCANCE. Por isso a regra vale para prosa onde quer que ela
+   esteja, e o que fica de fora é nomeado, não esquecido.                      */
+.slide p,
+.slide li,
+.slide figcaption,
+.slide .legenda,
+.slide .citacao .frase { max-width: var(--medida, 30em); }
+/* Prosa CENTRADA (33 blocos neste deck) precisa continuar centrada depois de
+   limitada: sem isto a caixa encolhe mas fica ancorada à esquerda, e o texto
+   parece deslocado — regressão que a medida introduziu na folha 9. Centrar o
+   BLOCO é o que preserva a decisão do autor enquanto a medida faz seu trabalho.
+   (A §2.2 desaprova bloco centrado; convertê-los é redesenho folha a folha, e
+   não é o que esta rodada faz.) */
+.slide [style*="text-align:center"],
+.slide [style*="text-align: center"] { margin-inline: auto; }
+
+/* fora da medida, por serem BLOCO DE EXIBIÇÃO (§2.1) */
+.slide .formula,
+.slide .formula p,
+.slide table p,
+.slide .quadro mjx-container { max-width: none; }
+.col p, .col li { color: var(--ink2); font-size: clamp(0.88rem, 1.35vw, 1.04rem);
+                  line-height: 1.55; margin-bottom: 1vh; }
+.col strong { color: var(--ink); }
+.col .ouro { color: var(--bronze-fundo); }
+.col .quente { color: var(--terracota); }
+ul { list-style: none; }
+ul li { padding-left: 1.1em; position: relative; }
+ul li::before { content: "▸"; position: absolute; left: 0; color: var(--bronze);
+                font-size: 0.8em; top: 0.28em; }
+img.fig { max-width: 100%; max-height: 100%; object-fit: contain;
+          border-radius: 8px; border: 1px solid var(--linha);
+          background: var(--card);
+          box-shadow: 0 1px 4px rgba(18, 36, 74, 0.08); }
+.figbox { flex: 1.3; min-width: 0; min-height: 0; height: 100%; display: flex;
+          align-items: center; justify-content: center; gap: 1vw; }
+.figbox img.fig { flex: 0 1 auto; min-width: 0; min-height: 0; width: auto; }
+.figbox.vert { flex-direction: column; }
+.figbox.vert img.fig { max-height: 48%; }
+/* HIERARQUIA VISUAL: a figura principal ocupa espaço proporcional à sua
+   importância; a secundária não compete com ela. Sem isto, uma figura larga
+   e rasa (observação de rodapé) fica MAIOR que a figura que carrega o
+   conceito, só por causa da proporção. */
+.figbox.vert.hierarquia img.fig:first-of-type { max-height: 68%; }
+.figbox.vert.hierarquia img.fig:last-of-type  { max-height: 26%; }
+
+/* transcrição do quadro: o cartão-lousa */
+.quadro {
+  background: var(--card); border: 1px solid var(--linha);
+  border-left: 5px solid var(--bronze); border-radius: 8px;
+  padding: 1.6vh 1.4vw; margin: 1vh 0;
+  color: var(--azul-deep); font-size: clamp(0.9rem, 1.4vw, 1.08rem);
+  line-height: 1.7;
+  box-shadow: 0 1px 4px rgba(18, 36, 74, 0.08);
+}
+.quadro .origem { display: block; font-size: 0.68rem; color: var(--muted);
+                  letter-spacing: 0.14em; text-transform: uppercase;
+                  margin-bottom: 0.8vh; }
+.quadro mjx-container { color: var(--azul-deep); }
+
+/* a tradução para quem está chegando agora */
+.traducao {
+  background: color-mix(in srgb, var(--verde) 7%, var(--card));
+  border: 1px solid color-mix(in srgb, var(--verde) 30%, var(--linha));
+  border-left: 5px solid var(--verde); border-radius: 8px;
+  padding: 1.3vh 1.4vw; margin: 1vh 0;
+  color: var(--ink2); font-size: clamp(0.86rem, 1.3vw, 1rem); line-height: 1.55;
+}
+.traducao::before { content: "em bom português: "; color: var(--verde);
+                    font-weight: 700; }
+
+.formula {
+  font-family: var(--it-mono); background: var(--card);
+  border: 1px solid var(--linha); border-left: 4px solid var(--bronze);
+  border-radius: 8px;
+  padding: 1.3vh 1.2vw; color: var(--azul-deep); font-size: clamp(0.85rem, 1.35vw, 1.02rem);
+  margin: 1vh 0; overflow-x: auto;
+}
+.legenda { font-size: 0.78rem; color: var(--muted); margin-top: 0.6vh; }
+/* leitura em voz alta das expressões — parte do método didático */
+.leitura { font-size: 0.8rem; color: var(--muted); font-style: italic;
+           margin: -0.3vh 0 1vh 0.3vw; }
+.leitura::before { content: "lê-se: "; font-style: normal; font-weight: 700;
+                   color: var(--bronze); }
+.rodape { position: absolute; bottom: 1.8vh; left: 6vw; right: 6vw;
+          display: flex; justify-content: space-between;
+          font-size: 0.72rem; color: var(--muted);
+          letter-spacing: 0.08em; border-top: 1px solid var(--linha);
+          padding-top: 0.9vh; }
+.contador { font-family: var(--it-mono); }
+
+/* dicionário de símbolos */
+table.simbolos { border-collapse: collapse; margin: 0.6vh 0; width: 100%; }
+/* D4 (2026-08-18): o teto era 0.98rem (~15,7 px) enquanto o termo
+       proporcional 1.25vw vale 24 px a 1920 — o teto em `rem` suprimia a
+       escala a dois terços, e as folhas 44/45 ficavam com 36% de sobra, que
+       a §2.4 chama de DEFEITO. Mesma armadilha já registrada na norma: a
+       escala certa já estava no arquivo; o teto é que a apagava. */
+    table.simbolos td { padding: 0.72vh 0.7vw; font-size: clamp(0.95rem, 1.25vw, 1.32rem);
+                    color: var(--ink2); border-bottom: 1px solid var(--linha); }
+table.simbolos td:first-child { color: var(--azul-deep); font-weight: 600;
+                                white-space: nowrap; }
+
+/* matriz colorida */
+table.matriz { border-collapse: collapse; font-family: var(--it-mono);
+               font-size: clamp(0.8rem, 1.5vw, 1.15rem); margin: 1vh auto;
+               background: var(--card); border: 1px solid var(--linha);
+               border-radius: 8px;
+               box-shadow: 0 1px 4px rgba(18, 36, 74, 0.08); }
+table.matriz td { padding: 0.8vh 0.75vw; text-align: center; font-weight: 600; }
+table.matriz td.rotulo { color: var(--muted); font-size: 0.8em; font-weight: 400; }
+table.matriz .colch { font-size: 2.2em; color: var(--ink2); font-family: var(--it-serif);
+                      font-weight: 400; }
+.chip { display: inline-block; width: 0.85em; height: 0.85em; border-radius: 50%;
+        vertical-align: -0.08em; }
+
+/* mapa da viagem */
+.estacoes { display: flex; gap: 1.2vw; align-items: stretch; margin: 2vh 0; }
+.estacao { flex: 1; background: var(--card); border: 1px solid var(--linha);
+           border-top: 4px solid var(--bronze); border-radius: 8px;
+           padding: 1.6vh 1vw; text-align: center;
+           box-shadow: 0 1px 4px rgba(18, 36, 74, 0.08); }
+.estacao .num { font-family: var(--it-serif); font-size: 1.6rem;
+                color: var(--bronze); }
+.estacao .nome { font-weight: 700; color: var(--azul-deep);
+                 font-size: clamp(0.85rem, 1.3vw, 1.05rem); margin: 0.5vh 0; }
+.estacao .oq { font-size: clamp(0.76rem, 1.1vw, 0.9rem); color: var(--ink2);
+               line-height: 1.45; }
+.seta-estacao { align-self: center; color: var(--bronze); font-size: 1.4rem; }
+
+/* galeria da obra: pranchas lado a lado e grade 3×3 do caderno */
+.duo { flex: 1.4; min-width: 0; min-height: 0; height: 100%; display: grid;
+       grid-template-columns: 1fr 1fr; gap: 1vw; align-items: center; }
+.duo figure { min-width: 0; min-height: 0; height: 100%; display: flex;
+              flex-direction: column; align-items: center;
+              justify-content: center; }
+.duo img { max-width: 100%; min-height: 0; flex: 0 1 auto; max-height: 92%;
+           object-fit: contain; border-radius: 8px;
+           border: 1px solid var(--bronze-soft);
+           box-shadow: 0 2px 10px rgba(18, 36, 74, 0.14); }
+.duo figcaption { font-family: var(--it-serif); font-style: italic;
+                  font-size: 0.95rem; color: var(--bronze-fundo);
+                  margin-top: 0.8vh; }
+.grid3x3 { flex: 1.15; min-width: 0; min-height: 0; height: 100%;
+           display: grid; grid-template-columns: repeat(3, 1fr);
+           grid-auto-rows: 1fr; gap: 0.7vh 0.7vw; align-content: center; }
+.grid3x3 img { width: 100%; height: 100%; min-height: 0; object-fit: cover;
+               border-radius: 6px; border: 1px solid var(--linha);
+               box-shadow: 0 1px 4px rgba(18, 36, 74, 0.10); }
+.citacao { border-left: 4px solid var(--bronze); padding: 1vh 1.2vw;
+           margin: 1.2vh 0; }
+.citacao .frase { font-family: var(--it-serif); font-style: italic;
+                  font-size: clamp(1rem, 1.6vw, 1.25rem);
+                  color: var(--azul-deep); line-height: 1.45; }
+.citacao .autor { font-size: 0.78rem; color: var(--muted);
+                  margin-top: 0.5vh; }
+
+/* grade 2×2 do experimento ControlNet */
+.grid2x2 { flex: 1.5; min-width: 0; min-height: 0; display: grid;
+           grid-template-columns: 1fr 1fr; grid-auto-rows: 1fr;
+           gap: 0.8vh 0.8vw; height: 100%; }
+.grid2x2 figure { min-width: 0; min-height: 0; display: flex;
+                  flex-direction: column; align-items: center; }
+.grid2x2 img { max-width: 100%; min-height: 0; flex: 1; object-fit: contain;
+               border-radius: 6px; border: 1px solid var(--linha);
+               background: var(--card); }
+.grid2x2 figcaption { font-size: 0.72rem; color: var(--muted);
+                      margin-top: 0.4vh; }
+
+.capa { justify-content: center; align-items: center; text-align: center;
+        background: radial-gradient(ellipse at 50% 38%, var(--card) 0%, var(--bg) 62%); }
+.capa h1 { font-size: clamp(2.4rem, 5.6vw, 4rem); margin: 1.6vh 0; }
+.capa .grega { width: min(30vw, 340px); height: 1px; background: var(--bronze);
+               opacity: 0.55; margin: 2.2vh auto; }
+.capa p { color: var(--ink2); max-width: 48ch; font-size: 1.05rem; line-height: 1.6; }
+    /* D5 (2026-08-18): a folha-quadro pode centrar a COMPOSIÇÃO — é a exceção
+       declarada do registro deck —, mas parágrafo longo centralizado é o pior
+       caso de leitura: cada linha começa num ponto diferente e o olho perde a
+       volta. O bloco continua centrado; as linhas passam a alinhar à esquerda. */
+    .capa p.prosa { text-align: left; margin: 0 auto 1.5vh; }
+    .capa p.prosa:last-of-type { margin-bottom: 0; }
+    /* autoria (2026-09-09): autor, coautora e orientador nomeados na capa, por
+       decisão do operador; o G3 (registro ao pixel) é só do autor e do
+       orientador. Método, item 5 (discrição): autoria nomeada abertamente. */
+    .capa p.autoria { font-size: 0.82rem; color: var(--muted); line-height: 1.55;
+                      margin: 2.6vh auto 0; text-align: center; max-width: none; }
+    .capa p.autoria strong { color: var(--ink2); font-weight: 600; }
+
+@page { size: 1920px 1080px; margin: 0; }
+.corpo > .col { flex: 1 1 0; min-width: 34ch; }     /* trava anti-espremida */
+/* §2.6 PARIDADE: figura e texto são metades da mesma metodologia e dividem
+   espaço equivalente (banda 40–60). A figura tinha `flex: 1.3` contra `flex: 1`
+   do texto e ficava em 60–67% em ONZE folhas — desequilíbrio por omissão, não
+   por decisão. Mesma base e mesmo crescimento nos dois = 50/50; quem quiser
+   sair da paridade declara na própria folha. */
+.corpo > .figbox { flex: 1 1 0; }
+/* Figura empilhada NÃO precisa encher a coluna inteira: quando ela enche, o
+   par figura↔texto sai da banda da §2.6 por ALTURA (647pt de figura contra
+   439pt de texto) e a folha fica sem borda. O teto de 86% devolve o ar sem
+   mexer no conteúdo. */
+.figbox.vert { max-height: 86%; }
+.corpo .figbox { min-width: 0; }
+.corpo .figbox img, .corpo img.fig { max-width: 100%; height: auto; }
+
+@media print {
+  /* 2026-08-12: fixa aqui o que antes era escolhido à mão no diálogo do
+     Ctrl+P (1920×1080, sem margem). Sem isto a exportação depende de quem
+     imprime — e um PDF de submissão precisa ser REGERÁVEL, não relembrado. */
+  @page { size: 1920px 1080px; margin: 0; }
+  * { -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important; }
+  html, body { width: 1920px; height: 1080px; }
+  body { overflow: visible; }
+  .slide { display: flex !important; position: relative; page-break-after: always;
+           width: 1920px; height: 1080px; overflow: hidden !important; }
+  .slide.ativo { animation: none; }
+  .rodape { position: absolute; }
+}
+
+
+/* a medida, à escala nova, enche a coluna: 30em a 25,9px = 585pt de ~624 */
+</style>
+</head>
+<body>
+
+<!-- 1 · capa -->
+<section class="slide capa ativo">
+  <div class="eyebrow">Hipátia · GAAL, seminário G4 de 4</div>
+  <h1>A sacola e o que <em>não vaza</em></h1>
+  <div class="grega"></div>
+  <p class="tese">espaços e subespaços vetoriais: que regras a sacola precisa cumprir</p>
+  <p class="prosa">Um vetor é uma <strong>sacola de segmentos orientados</strong>.
+    Um segmento orientado é uma reta com ponta de seta. Uma reta é o caminho
+    entre dois pontos. E um ponto pode ser uma matriz, um número complexo, um
+    polinômio, uma função.</p>
+  <p class="prosa">Logo: <strong>que regras eu preciso conferir para dizer que
+    uma sacola onde eu ponho vetores merece o nome de espaço vetorial?</strong>
+    E o que muda quando ela mora dentro de outra?</p>
+  <p class="autoria">Autor · <strong>Mateus Felipe Alkimim Pereira</strong><br>
+    Coautora · <strong>Sara Catiele Nogueira Pereira</strong><br>
+    Orientador · <strong>Rosivaldo Antônio Gohnan</strong></p>
+  <div class="rodape"><span>a sacola e o que não vaza</span><span class="contador"></span></div>
+</section>
+
+<!-- 2 · as convenções deste seminário -->
+<section class="slide">
+  <div class="eyebrow">antes de tudo · como ler os símbolos</div>
+  <h1>As convenções que valem <em>até o fim</em></h1>
+  <div class="corpo">
+    <div class="col">
+      <p>Antes de qualquer conta: a matemática escreve com convenções que quase
+        nunca são ditas em voz alta. Ditas, elas deixam de ser barreira — e
+        você passa a decifrar um símbolo novo sem esperar que ele seja
+        apresentado.</p>
+      <table class="simbolos">
+        <tr><td>\(V\), \(W\)</td><td><strong>maiúscula inclinada</strong> — a
+          sacola grande: um espaço inteiro. Lê-se "vê", "dáblio"</td></tr>
+        <tr><td>\(u\), \(v\), \(w\)</td><td><strong>minúscula
+          inclinada</strong> — um habitante da sacola: um vetor. Lê-se "u",
+          "vê", "dáblio"</td></tr>
+        <tr><td>\(\alpha\), \(\beta\)</td><td><strong>letra grega</strong> —
+          o número que estica; nunca é o assunto da folha. Lê-se "alfa",
+          "beta"</td></tr>
+        <tr><td>\(\mathbb{R}\)</td><td><strong>letra vazada</strong> — um
+          conjunto de números. Lê-se "erre": todos os números reais</td></tr>
+      </table>
+    </div>
+    <div class="col">
+      <table class="simbolos">
+        <tr><td>\(o\)</td><td>o habitante que não faz nada — o
+          <strong>neutro</strong>. Na imagem, a folha preta</td></tr>
+        <tr><td>\(-u\)</td><td>o oposto de \(u\): o que o desfaz. Lê-se
+          "menos u"</td></tr>
+        <tr><td>\(P_3\), \(M_{m\times n}\)</td><td><strong>índice
+          embaixo</strong> — diz <em>qual</em>, nunca <em>quantas vezes</em>.
+          Lê-se "pê três", "eme, eme por ene"</td></tr>
+        <tr><td>\(P_3(\mathbb{R})\)</td><td><strong>parêntese depois de um
+          nome</strong> — aplicar, não multiplicar. Lê-se "pê três dos
+          reais"</td></tr>
+      </table>
+      <div class="quadro"><span class="origem">mudou desde o seminário anterior</span>
+        <p>Lá, um vetor era \(\vec v\) — <strong>com seta</strong>, porque era
+        uma seta. Aqui ele é \(u\), sem seta. E \(\alpha\), que lá era um
+        ângulo, aqui é o número que estica.</p>
+      </div>
+    </div>
+  </div>
+  <div class="rodape"><span>a sacola e o que não vaza</span><span class="contador"></span></div>
+</section>
+
+<!-- 3 · o nó de nome -->
+<section class="slide">
+  <div class="eyebrow">antes de tudo · um nó de nome</div>
+  <h1>São <em>duas</em> sacolas, e elas precisam de nomes diferentes</h1>
+  <div class="corpo">
+    <div class="col">
+      <p>A palavra "sacola" aparece duas vezes no encadeamento da capa, com
+        sentidos diferentes — e fundir os dois é o erro mais caro que se pode
+        cometer neste assunto:</p>
+      <ul>
+        <li><strong class="ouro">sacola pequena</strong> — "um vetor é uma
+          sacola de segmentos orientados". Aqui a sacola <strong>é</strong> um
+          vetor;</li>
+        <li><strong class="quente">sacola grande</strong> — "uma sacola onde eu
+          ponho vetores". Aqui a sacola <strong>contém</strong> vetores.</li>
+      </ul>
+      <div class="traducao">
+        <p>uma mora dentro da outra. A pequena junta
+        setas que são "a mesma seta"; a grande junta vetores que são
+        <em>diferentes</em>. Chamar as duas pelo mesmo nome faz o aluno achar
+        que espaço vetorial é um vetor grande.</p>
+      </div>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-duas-sacolas.png" alt="a sacola grande do espaco contendo tres sacolas pequenas, cada uma um vetor">
+    </div>
+  </div>
+  <div class="rodape"><span>a sacola e o que não vaza</span><span class="contador"></span></div>
+</section>
+
+<!-- 4 · o que separa as duas -->
+<section class="slide">
+  <div class="eyebrow">antes de tudo · um nó de nome</div>
+  <h1>O que separa as duas é <em>por que</em> cada uma fecha</h1>
+  <div class="corpo">
+    <div class="col">
+      <div class="formula">
+        sacola <strong>pequena</strong> — fechada por uma <strong>RELAÇÃO</strong>:
+        equipolência<br><br>
+        sacola <strong>grande</strong> — fechada por <strong>OPERAÇÕES</strong>:
+        somar e esticar
+      </div>
+      <p>É a mesma palavra — <em>fechado</em> — fazendo dois trabalhos. Na
+        pequena, "fechado" quer dizer: se você entrar com uma seta, todas as
+        equipolentes a ela já estão lá dentro.</p>
+      <p>Na grande, quer dizer: se você <strong>fizer contas</strong> com o que
+        está dentro, o resultado não sai.</p>
+      <div class="traducao">
+        <p>guarde esta frase, porque o seminário
+        inteiro é ela: <strong>subespaço é a sacola de onde não dá para
+        vazar</strong>. Todo o resto é aprender a procurar o furo.</p>
+      </div>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-duas-sacolas.png" alt="duas sacolas, dois fechamentos: relacao na pequena, operacoes na grande">
+    </div>
+  </div>
+  <div class="rodape"><span>a sacola e o que não vaza</span><span class="contador"></span></div>
+</section>
+
+<!-- 5 · o ponto pode ser muita coisa -->
+<section class="slide">
+  <div class="eyebrow">Estação 1 · quatro trajes</div>
+  <h1>O mesmo passo de dança, em quatro objetos que não se parecem</h1>
+  <div class="corpo">
+    <div class="col">
+      <p>Some e estique uma <strong>matriz</strong>. Some e estique um
+        <strong>número complexo</strong>. Um <strong>polinômio</strong>. Uma
+        <strong>função</strong>.</p>
+      <p>São quatro objetos sem nenhum parentesco aparente — e a coreografia é
+        <strong>idêntica</strong>: casa com casa, coeficiente com coeficiente,
+        altura com altura.</p>
+      <div class="traducao">
+        <p>é aí que a álgebra linear nasce. Não como
+        "o estudo de setas", mas como <strong>o estudo do que sobra quando você
+        esquece o que o objeto é</strong> e guarda só como ele soma e como ele
+        estica.</p>
+      </div>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-quatro-trajes.png" alt="somar matriz, complexo, polinomio e funcao: a mesma coreografia nos quatro">
+    </div>
+  </div>
+  <div class="rodape"><span>a sacola e o que não vaza</span><span class="contador"></span></div>
+</section>
+
+<!-- 6 · a seta que some -->
+<section class="slide">
+  <div class="eyebrow">Estação 1 · quatro trajes</div>
+  <h1>A seta some — e é <em>isso</em> que a apresentação tem a dizer</h1>
+  <div class="corpo">
+    <div class="col">
+      <p>No seminário de geometria, um vetor se escrevia \(\vec v\): com seta,
+        porque ele <strong>era</strong> uma seta — o nome de uma família de
+        segmentos orientados.</p>
+      <div class="formula">
+        \(\vec v\) &nbsp;&nbsp;→&nbsp;&nbsp; \(u\)
+      </div>
+      <p>Daqui em diante ele se escreve \(u\), sem seta. E a razão não é
+        economia de tinta: <strong>um polinômio não tem ponta</strong>. Uma
+        matriz não tem ponta. Uma função não tem ponta.</p>
+      <div class="traducao">
+        <p>quando a notação perde um traço, ela está
+        dizendo que aquele traço não era essencial. A seta caiu porque a
+        coreografia — somar e esticar — sobrevive sem ela. O que a seta
+        desenhava era o objeto; o que sobrou é o comportamento.</p>
+      </div>
+      <p>Guarde a troca, porque ela é a tese deste seminário em um símbolo só:
+        deixamos de estudar <em>o que a coisa é</em> e passamos a estudar
+        <em>o que a coisa faz</em>.</p>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-polinomio-seta.png" alt="tres curvas cubicas e as quatro coordenadas de cada uma: habitantes sem ponta de seta">
+    </div>
+  </div>
+  <div class="rodape"><span>a sacola e o que não vaza</span><span class="contador"></span></div>
+</section>
+
+<!-- 7 · Callioli abre assim -->
+<section class="slide">
+  <div class="eyebrow">Estação 1 · quatro trajes</div>
+  <h1>Dois conjuntos que não se parecem, e a <em>coincidência</em></h1>
+  <div class="corpo">
+    <div class="col">
+      <div class="quadro"><span class="origem">a coincidência estrutural</span>
+        <p>De um lado, o conjunto \(V\) das <strong>setas</strong> — os vetores
+        da geometria, definidos por segmentos orientados. Do outro, o conjunto
+        \(M_{m \times n}(\mathbb{R})\) das <strong>matrizes</strong> reais.</p>
+        <p>À primeira vista, nada em comum. Mas somar duas setas e somar duas
+        matrizes obedecem às <strong>mesmas regras</strong>; esticar uma e
+        esticar a outra, também. Os dois conjuntos têm a mesma
+        <strong>coincidência estrutural</strong>.</p>
+      </div>
+      <div class="traducao">
+        <p>partindo das setas e das matrizes,
+        mostrando que somam igual e esticam igual, chega-se à conclusão de que
+        estudá-las separadamente é desperdício. A definição que vem a seguir é
+        só o <strong>nome</strong> dessa coincidência.</p>
+      </div>
+      <p>É a mesma porta pela qual chegamos pelo lado da sacola — a diferença
+        é só de onde se entra.</p>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-quatro-trajes.png" alt="a coincidencia estrutural: quatro objetos, uma so coreografia">
+    </div>
+  </div>
+  <div class="rodape"><span>a sacola e o que não vaza</span><span class="contador"></span></div>
+</section>
+
+<!-- 8 · as quatro da adição -->
+<section class="slide">
+  <div class="eyebrow">Estação 2 · as oito regras</div>
+  <h1>Quatro regras para <em>somar</em></h1>
+  <div class="corpo">
+    <div class="col">
+      <div class="quadro"><span class="origem">as quatro exigências da soma</span>
+        <p>Há na sacola uma soma que, dados dois habitantes \(u\) e \(v\),
+        devolve um terceiro, \(u+v\), <strong>que também está nela</strong>. E
+        essa soma cumpre quatro exigências:</p>
+        <p>a) \(u + v = v + u\), quaisquer que sejam os dois
+           <em>(comutativa)</em>;<br>
+        b) \(u + (v + w) = (u + v) + w\)  <em>(associativa)</em>;<br>
+        c) existe na sacola um habitante \(o\) com \(u + o = u\), qualquer que
+           seja \(u\) <em>(neutro)</em>;<br>
+        d) cada habitante \(u\) tem na sacola um oposto \(-u\), com
+           \(u + (-u) = o\)  <em>(oposto)</em>.</p>
+      </div>
+      <p class="leitura">"u mais vê é igual a vê mais u"; "u mais o neutro é
+        igual a u"; "u mais menos u é igual ao neutro".</p>
+      <div class="traducao">
+        <p>em ordem: a ordem não importa; o agrupamento
+        não importa; existe um elemento que não faz nada; e todo mundo tem quem
+        o desfaça. Nada aqui fala de setas — e é de propósito.</p>
+      </div>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-quatro-trajes.png" alt="somar nos quatro objetos: as quatro regras da adicao valem nos quatro">
+    </div>
+  </div>
+  <div class="rodape"><span>a sacola e o que não vaza</span><span class="contador"></span></div>
+</section>
+
+<!-- 9 · as quatro do escalar -->
+<section class="slide">
+  <div class="eyebrow">Estação 2 · as oito regras</div>
+  <h1>Quatro regras para <em>esticar</em></h1>
+  <div class="corpo">
+    <div class="col">
+      <div class="quadro"><span class="origem">as quatro exigências do esticar</span>
+        <p>Há também uma multiplicação que toma <strong>um número real</strong> e
+        <strong>um habitante da sacola</strong> e devolve outro habitante. Para
+        ela vale:</p>
+        <p>a) \(\alpha(\beta u) = (\alpha\beta)u\);<br>
+        b) \((\alpha + \beta)u = \alpha u + \beta u\);<br>
+        c) \(\alpha(u + v) = \alpha u + \alpha v\);<br>
+        d) \(1u = u\).</p>
+      </div>
+      <p class="leitura">"alfa vezes, beta vezes u, é igual a alfa-beta vezes
+        u"; e as duas do meio são as <em>distributivas</em>.</p>
+      <div class="traducao">
+        <p>a (d) parece boba — "esticar por 1 não faz
+        nada" — e é a que mais reprova candidato. Sem ela, dá para inventar uma
+        operação que satisfaz as outras sete e não serve para nada.</p>
+      </div>
+      <p>Oito ao todo. Uma sacola que passa nas oito <strong>é</strong> um
+        espaço vetorial — não importa se dentro dela há setas, matrizes ou
+        funções. Essas oito regras têm um nome técnico, que você vai encontrar
+        em qualquer livro: <strong>axiomas</strong>. É a mesma coisa, com roupa
+        de domingo.</p>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-polinomio-seta.png" alt="polinomios como pontos de R4: tres habitantes e suas quatro coordenadas">
+    </div>
+  </div>
+  <div class="rodape"><span>a sacola e o que não vaza</span><span class="contador"></span></div>
+</section>
+
+<!-- 10 · o polinômio como seta -->
+<section class="slide">
+  <div class="eyebrow">Estação 2 · as oito regras</div>
+  <h1>Um polinômio <em>é</em> um ponto — e o espaço dele tem quatro eixos</h1>
+  <div class="corpo">
+    <div class="col">
+      <div class="formula">\(a + bx + cx^2 + dx^3 \;\longleftrightarrow\;
+        (a,\, b,\, c,\, d)\)</div>
+      <p>Somar dois polinômios é somar as quatro coordenadas. Esticar é esticar
+        as quatro. As oito regras valem, e valem <em>pelo mesmo motivo</em> que
+        valem em \(\mathbb{R}^4\).</p>
+      <div class="traducao">
+        <p>o espaço dos polinômios de grau até 3 tem
+        <strong>quatro eixos</strong>. Você não consegue desenhá-lo — mas
+        consegue desenhar <strong>quem mora nele</strong>, e é o que a figura
+        faz: cada curva à esquerda é um ponto à direita.</p>
+      </div>
+      <p>É a resposta honesta ao limite do método visual: a figura não morre
+        quando faltam eixos. Ela muda de emprego — deixa de mostrar o
+        <em>espaço</em> e passa a mostrar os <em>habitantes</em>.</p>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-polinomio-seta.png" alt="tres curvas cubicas e as quatro coordenadas de cada uma">
+    </div>
+  </div>
+  <div class="rodape"><span>a sacola e o que não vaza</span><span class="contador"></span></div>
+</section>
+
+<!-- 11 · a sacola dentro da sacola -->
+<section class="slide">
+  <div class="eyebrow">Estação 3 · a sacola dentro da sacola</div>
+  <h1>Subespaço: quando um pedaço já é um espaço inteiro</h1>
+  <div class="corpo">
+    <div class="col">
+      <div class="quadro"><span class="origem">as três exigências do subespaço</span>
+        <p>Seja \(V\) uma sacola que já passou nas oito regras, esticando por
+        números reais. Um <em>subespaço</em> de \(V\) é um pedaço \(W\) de
+        dentro dela que cumpre três exigências:</p>
+        <p>(a) o neutro \(o\) está em \(W\);<br>
+        (b) somando dois habitantes de \(W\), o resultado ainda está em
+            \(W\);<br>
+        (c) esticando um habitante de \(W\) por qualquer número real
+            \(\alpha\), o resultado ainda está em \(W\).</p>
+      </div>
+      <p class="leitura">"o neutro está em dáblio"; "u mais vê está em dáblio";
+        "alfa vezes u está em dáblio".</p>
+      <div class="traducao">
+        <p>três condições, não oito. E não é
+        simplificação de professor: é <strong>teorema</strong>. A pergunta certa
+        é por que as outras cinco somem.</p>
+      </div>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-tres-e-cinco.png" alt="tres regras que se verificam e cinco que se herdam">
+    </div>
+  </div>
+  <div class="rodape"><span>a sacola e o que não vaza</span><span class="contador"></span></div>
+</section>
+
+<!-- 12 · três e cinco -->
+<section class="slide">
+  <div class="eyebrow">Estação 3 · a sacola dentro da sacola</div>
+  <h1>Três você confere. Cinco você <em>herda</em>.</h1>
+  <div class="corpo">
+    <div class="col">
+      <div class="quadro"><span class="origem">o teorema do desconto</span>
+        <p>Se \(W\) é um subespaço de \(V\), então \(W\) já é, por conta
+        própria, um espaço vetorial inteiro.</p>
+        <p>A rigor haveria oito itens a provar. Basta provar um: que se \(u\)
+        está em \(W\), o oposto \(-u\) também está — e <strong>é só esticar
+        por \(\alpha = -1\) na exigência (c)</strong>.</p>
+      </div>
+      <div class="traducao">
+        <p>a comutativa já valia em \(V\); os elementos
+        de \(W\) <em>são</em> elementos de \(V\); logo continua valendo. O mesmo
+        para a associativa e as distributivas. Elas não precisam ser conferidas
+        porque não têm como falhar.</p>
+      </div>
+      <p>O oposto é o único que dá trabalho — e some numa linha: multiplique por
+        \(-1\), e a regra (c) o entrega de graça.</p>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-tres-e-cinco.png" alt="o desconto do subespaco: das oito regras so tres se conferem">
+    </div>
+  </div>
+  <div class="rodape"><span>a sacola e o que não vaza</span><span class="contador"></span></div>
+</section>
+
+<!-- 13 · a sacola com furo -->
+<section class="slide">
+  <div class="eyebrow">Estação 4 · procurar o furo</div>
+  <h1>Testar subespaço é <em>procurar por onde vaza</em></h1>
+  <div class="corpo">
+    <div class="col">
+      <p>As três condições viram um único gesto: ponha um vetor na sacola, faça
+        as duas operações, e veja se ele <strong>escapa</strong>.</p>
+      <ul>
+        <li><strong>reta pela origem</strong> — some, estique, faça o que quiser:
+          nunca sai. <span class="ouro">Subespaço</span>;</li>
+        <li><strong>reta fora da origem</strong> — o zero nem mora lá. Vaza nas
+          três;</li>
+        <li><strong>primeiro quadrante</strong> — some à vontade; multiplique
+          por \(-1\) e vazou;</li>
+        <li><strong>circunferência unitária</strong> — duas setas de comprimento
+          1 somam uma de comprimento 1,6. Vazou.</li>
+      </ul>
+      <div class="traducao">
+        <p>o quadrante é o exemplo que mais ensina:
+        ele passa em <em>uma</em> das operações e reprova na outra. Não basta
+        fechar na soma.</p>
+      </div>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-sacola-com-furo.png" alt="quatro conjuntos: reta pela origem nao vaza; reta fora da origem, quadrante e circunferencia vazam">
+    </div>
+  </div>
+  <div class="rodape"><span>a sacola e o que não vaza</span><span class="contador"></span></div>
+</section>
+
+<!-- 14 · o vocabulário das matrizes -->
+<section class="slide">
+  <div class="eyebrow">Estação 4 · procurar o furo</div>
+  <h1>Quatro nomes de matriz, antes de <em>usá-los</em></h1>
+  <div class="corpo">
+    <div class="col">
+      <table class="simbolos">
+        <tr><td>inversível</td><td>a matriz que dá para <strong>desfazer</strong>:
+          existe outra que, multiplicada por ela, devolve a identidade \(I\).
+          Pelo seminário anterior, são exatamente as de determinante diferente
+          de zero</td></tr>
+        <tr><td>singular</td><td>o nome da que <strong>não</strong> tem inversa —
+          determinante zero. Lê-se "singular", e não quer dizer "estranha":
+          quer dizer "achatada"</td></tr>
+      </table>
+    </div>
+    <div class="col">
+      <table class="simbolos">
+        <tr><td>simétrica</td><td>a que não muda quando se trocam linhas por
+          colunas: a entrada da linha \(i\), coluna \(j\) é igual à da linha
+          \(j\), coluna \(i\). A diagonal funciona como espelho</td></tr>
+        <tr><td>sistema<br>homogêneo</td><td>um sistema linear em que o lado
+          direito é todo zero. Ele sempre tem ao menos uma solução — a solução
+          nula —, e é por isso que o neutro nunca falta</td></tr>
+      </table>
+      <div class="traducao">
+        <p>os quatro aparecem juntos na próxima folha
+        porque dois deles fecham a sacola e um vaza — e o que decide não é
+        quantas matrizes o conjunto tem, é a forma da condição que o define.</p>
+      </div>
+    </div>
+  </div>
+  <div class="rodape"><span>a sacola e o que não vaza</span><span class="contador"></span></div>
+</section>
+
+<!-- 15 · o caçador -->
+<section class="slide">
+  <div class="eyebrow">Estação 4 · procurar o furo</div>
+  <h1>O caçador de vazamento — e o furo que ele <em>não</em> acha</h1>
+  <div class="corpo">
+    <div class="col">
+      <p>O teste virou ferramenta: dá-se um conjunto, e ela procura a
+        testemunha do vazamento. Doze conjuntos rodados, com o furo exibido em
+        cada um.</p>
+      <div class="traducao">
+        <p>e ela ensinou uma lição sobre si mesma.
+        Para "matrizes com \(\det \neq 0\)", <strong>vinte mil sorteios</strong>
+        passam por cima do furo da soma — duas matrizes sorteadas quase nunca
+        somam uma matriz singular, daquelas da folha anterior. A testemunha teve de ser <strong>escrita à mão</strong>.</p>
+      </div>
+      <div class="formula">busca que não acha <strong>não prova</strong> que não
+        existe</div>
+      <p>Por isso a ferramenta <strong>exibe</strong> o furo a quem já sabe onde
+        ele está; ela não descobre se ele existe. O teste de subespaço se faz
+        por argumento — a máquina serve à intuição, não a substitui.</p>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-subespacos-medidos.png" alt="tabela do cacador de vazamento com sete conjuntos e por onde cada um vaza">
+    </div>
+  </div>
+  <div class="rodape"><span>a sacola e o que não vaza</span><span class="contador"></span></div>
+</section>
+
+<!-- 16 · a ponte com o outro deck -->
+<section class="slide">
+  <div class="eyebrow">Estação 4 · procurar o furo</div>
+  <h1>As matrizes que <em>têm inversa</em> não formam um espaço</h1>
+  <div class="corpo">
+    <div class="col">
+      <p>É a ponte com o seminário dos determinantes, e ela surpreende quase
+        todo mundo:</p>
+      <div class="formula">
+        \(I\) tem \(\det = 1\) — está no conjunto<br>
+        \(-I\) tem \(\det = 1\) — está no conjunto<br>
+        \(I + (-I) = o\) tem \(\det = 0\) — <strong>não está</strong>
+      </div>
+      <p>Aqui \(o\), o neutro deste espaço, é a <strong>matriz nula</strong> —
+        a que só tem zeros. Ela é quem não faz nada na soma, como a folha preta
+        fazia na imagem. E o determinante dela é zero, logo o conjunto também
+        falha na exigência (a): <strong>o neutro está de fora</strong>.</p>
+      <div class="traducao">
+        <p>"ser inversível" é uma propriedade
+        <strong>genérica</strong> — quase toda matriz tem —, e mesmo assim o
+        conjunto delas é cheio de buracos. Ser numeroso não é ser fechado.</p>
+      </div>
+      <p>Compare com o vizinho: o conjunto das matrizes <strong>simétricas</strong>
+        é subespaço, e o das <strong>soluções de um sistema homogêneo</strong>
+        também. O que fecha não é o tamanho — é a forma da condição.</p>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-subespacos-medidos.png" alt="a linha das matrizes com determinante nao nulo: vaza no zero e na soma">
+    </div>
+  </div>
+  <div class="rodape"><span>a sacola e o que não vaza</span><span class="contador"></span></div>
+</section>
+
+<!-- 17 · o vocabulário da imagem -->
+<section class="slide">
+  <div class="eyebrow">Estação 5 · a imagem</div>
+  <h1>Seis palavras do ofício, antes de <em>usá-las</em></h1>
+  <div class="corpo">
+    <div class="col">
+      <table class="simbolos">
+        <tr><td>canal alpha</td><td>a quarta tabela de números, ao lado de R, G
+          e B: diz o quanto de cada pixel é <strong>opaco</strong>. "Alpha
+          zero" é totalmente transparente</td></tr>
+        <tr><td>código<br>e luz</td><td>o número que o arquivo guarda, e a
+          quantidade de luz que ele representa. <strong>Não são a mesma
+          coisa</strong> — a Estação 6 inteira vive dessa diferença</td></tr>
+        <tr><td>sRGB</td><td>a receita que converte luz em código e de volta.
+          É uma <strong>curva</strong>, não uma reta — e é aí que mora o
+          problema</td></tr>
+      </table>
+    </div>
+    <div class="col">
+      <table class="simbolos">
+        <tr><td>float, EXR</td><td>formato que guarda número com vírgula e
+          <strong>sem teto</strong>. O de 8 bits guarda só 256 degraus entre 0
+          e 1, e não tem onde pôr o que passa disso</td></tr>
+        <tr><td>anti&shy;sserrilhado</td><td>a borda suavizada: o pixel da
+          beirada recebe uma <strong>mistura</strong> dos dois lados em vez de
+          escolher um</td></tr>
+        <tr><td>super&shy;samplear</td><td>calcular numa grade muito mais fina e
+          só depois reduzir. Serve de <strong>verdade de referência</strong>
+          para medir o erro dos outros caminhos</td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="rodape"><span>a sacola e o que não vaza</span><span class="contador"></span></div>
+</section>
+
+<!-- 18 · a imagem é um espaço vetorial -->
+<section class="slide">
+  <div class="eyebrow">Estação 5 · a imagem</div>
+  <h1>Um quadro é <em>um ponto</em>, e o Merge é a soma de vetores</h1>
+  <div class="corpo">
+    <div class="col">
+      <p>Um quadro \(1920 \times 1080\) em RGB tem \(6\,220\,800\) números. Ele
+        é <strong>um</strong> ponto de \(\mathbb{R}^{6\,220\,800}\).</p>
+      <div class="formula">
+        <strong>Merge (plus)</strong> \(\;=\;\) \(u + v\)<br>
+        <strong>Multiply por constante</strong> \(\;=\;\) \(\alpha u\)
+      </div>
+      <p class="leitura">no ofício, uma <em>folha</em> é um quadro — a imagem
+        inteira de um instante. Somar duas folhas com o Merge é somar dois
+        vetores desse espaço.</p>
+      <div class="traducao">
+        <p>o compositor passa o dia inteiro fazendo
+        álgebra linear e chamando de outra coisa. E as oito regras são
+        exatamente <strong>por que</strong> aquelas operações se comportam:
+        somar A com B dá o mesmo que B com A, a ordem dos merges não altera o
+        resultado, e existe uma folha preta que não faz nada.</p>
+      </div>
+      <p>A folha preta é o \(o\) da Definição 1. Ela tem nome no ofício:
+        <em>black</em>.</p>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-imagem-espaco.png" alt="duas folhas somadas: o Merge plus e a adicao de vetores">
+    </div>
+  </div>
+  <div class="rodape"><span>a sacola e o que não vaza</span><span class="contador"></span></div>
+</section>
+
+<!-- 19 · os subespaços do compositor -->
+<section class="slide">
+  <div class="eyebrow">Estação 5 · a imagem</div>
+  <h1>Os subespaços que o compositor usa <em>sem saber o nome</em></h1>
+  <div class="corpo">
+    <div class="col">
+      <p>Dentro do espaço das imagens, alguns conjuntos fecham e outros vazam —
+        e a diferença tem consequência prática:</p>
+      <ul>
+        <li><span class="ouro">✓</span> as imagens <strong>cinzas</strong>
+          (\(R = G = B\)): some duas, estique — continua cinza;</li>
+        <li><span class="ouro">✓</span> as de <strong>alpha zero</strong>, e as
+          <strong>soluções de um sistema homogêneo</strong>;</li>
+        <li><span class="quente">✗</span> as <strong>cores normalizadas</strong>
+          (\(R+G+B = 1\)): some duas e a soma dá 2. Vaza;</li>
+        <li><span class="quente">✗</span> a <strong>luz não negativa</strong>
+          (\(c \geq 0\)): multiplique por \(-1\) e vaza.</li>
+      </ul>
+      <div class="traducao">
+        <p>a última é a mais útil: é por isso que um
+        <em>despill</em> mal feito — a limpeza que tira do ator o verde que o
+        fundo jogou nele — produz pixel negativo. Ele não está bugado —
+        está saindo de um conjunto que nunca foi fechado.</p>
+      </div>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-subespacos-medidos.png" alt="quais conjuntos de imagem sao subespaco e por onde os outros vazam">
+    </div>
+  </div>
+  <div class="rodape"><span>a sacola e o que não vaza</span><span class="contador"></span></div>
+</section>
+
+<!-- 20 · o fechamento cai -->
+<section class="slide">
+  <div class="eyebrow">Estação 6 · o axioma que cai</div>
+  <h1>O código de 8 bits <em>não é fechado</em> — e isso se mede</h1>
+  <div class="corpo">
+    <div class="col">
+      <p>O conjunto que a ferramenta de 8 bits realmente oferece é o código em
+        \([0,1]\). Ele reprova nas duas operações. Medido sobre 200 mil
+        sorteios:</p>
+      <div class="formula">
+        <strong>49,96%</strong> — praticamente <strong>metade</strong> — dos pares têm soma fora do conjunto<br>
+        <strong>57,71%</strong> dos produtos por escalar saem<br>
+        testemunha: \(0{,}9993 + 0{,}9984 = 1{,}9977\)
+      </div>
+      <div class="traducao">
+        <p>metade. Não é caso de borda — é o caso
+        comum. Dois pixels claros somados <strong>estouram</strong>, e o
+        conjunto não tem onde pôr o resultado.</p>
+      </div>
+      <p>Este é um axioma que <strong>cai de verdade</strong>: o fechamento. E
+        é a razão de existir do float e do EXR — que não é conforto de precisão,
+        é ter <em>onde</em> guardar a soma.</p>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-fechamento-cai.png" alt="metade dos pares de pixels validos tem soma fora do conjunto e mais da metade dos escalares saem da faixa">
+    </div>
+  </div>
+  <div class="rodape"><span>a sacola e o que não vaza</span><span class="contador"></span></div>
+</section>
+
+<!-- 21 · dois espaços, uma ponte torta -->
+<section class="slide">
+  <div class="eyebrow">Estação 6 · o axioma que cai</div>
+  <h1>Há <em>dois</em> espaços sobre os mesmos pixels</h1>
+  <div class="corpo">
+    <div class="col">
+      <p>Um é o da <strong>luz</strong> — o que o sensor mede. Outro é o do
+        <strong>código</strong> — o que o arquivo guarda. A conversão entre eles
+        (o sRGB) é uma <strong>bijeção</strong> — cada valor de um lado tem
+        exatamente um correspondente do outro, e vice-versa, de modo que a ida
+        e a volta não perdem ninguém — e <strong>não é linear</strong>.
+        Medido:</p>
+      <div class="formula">
+        \(\max \big|\,\mathrm{encode}(a+b) - (\mathrm{encode}(a)+\mathrm{encode}(b))\,\big|
+        = 0{,}47\)<br>
+        ou seja, <strong>120 passos</strong> de 8 bits — e uma ponte linear
+        daria <strong>zero</strong>
+      </div>
+      <p class="leitura">"o maior valor do módulo da diferença entre: codificar
+        a soma de a com b, e somar a codificação de a com a de b".</p>
+      <div class="traducao">
+        <p>atenção ao que isto <em>não</em> diz: não
+        diz que o sRGB "quebra os axiomas". Valor codificado é número, e números
+        somam e esticam perfeitamente. <strong>Os oito axiomas passam nos
+        dois lados.</strong></p>
+      </div>
+      <p>O que quebra é a <strong>ponte</strong>: somar no código não é a mesma
+        coisa que somar luz.</p>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-ponte-nao-linear.png" alt="a curva do encode contra a reta linear, e o mapa do desvio em passos de 8 bits">
+    </div>
+  </div>
+  <div class="rodape"><span>a sacola e o que não vaza</span><span class="contador"></span></div>
+</section>
+
+<!-- 22 · necessário e não suficiente -->
+<section class="slide">
+  <div class="eyebrow">Estação 6 · o axioma que cai</div>
+  <h1>Conferir as oito regras é <em>necessário</em> — e não basta</h1>
+  <div class="corpo">
+    <div class="col">
+      <div class="citacao">
+        <p class="frase">Os axiomas não escolhem entre os dois espaços: passam
+          nos dois. Quem escolhe é o <strong>mundo</strong> — porque luz
+          superpõe.</p>
+      </div>
+      <p>Escolher um espaço vetorial não é só conferir regras sobre um conjunto.
+        É <strong>escolher as operações</strong> — e elas têm de ser as que o
+        seu problema de fato executa.</p>
+      <div class="traducao">
+        <p>duas lâmpadas acesas ao mesmo tempo entregam
+        a soma das luzes. Não a soma dos códigos. A física fez a escolha antes
+        de você abrir o software; o "linear workflow" é apenas obedecer a ela.</p>
+      </div>
+      <p>É a lição mais transportável deste seminário, e ela vale muito além da
+        imagem: <strong>a estrutura certa é a que o fenômeno obedece</strong>,
+        não a que passa no formulário.</p>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-ponte-nao-linear.png" alt="dois espacos vetoriais sobre os mesmos pixels, ligados por uma bijecao que nao e linear">
+    </div>
+  </div>
+  <div class="rodape"><span>a sacola e o que não vaza</span><span class="contador"></span></div>
+</section>
+
+<!-- 23 · 188 contra 128 -->
+<section class="slide">
+  <div class="eyebrow">Estação 7 · a consequência visível</div>
+  <h1>Meio a meio dá <em>188</em>, não 128</h1>
+  <div class="corpo">
+    <div class="col">
+      <p>Um xadrez de 1 px de preto e branco, reduzido pela metade. A resposta
+        fisicamente certa é meia luz — que em código é <strong>188/255</strong>.
+        Feita a média <em>no código</em>, sai <strong>128/255</strong>.</p>
+      <div class="formula">
+        diferença: <strong>60 passos</strong> de 8 bits<br>
+        em luz, o errado entrega <strong>0,214</strong> — só
+        <strong>42,8%</strong> da luz certa<br>
+        perda medida no xadrez: <strong>57,2%</strong>
+      </div>
+      <div class="traducao">
+        <p>é o "borrão que escurece" que todo
+        compositor já viu e poucos sabem nomear. A imagem não ficou escura por
+        gosto do software: <strong>quase 60% da luz foi embora</strong> numa
+        média feita no espaço errado.</p>
+      </div>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-luz-vs-codigo.png" alt="xadrez reduzido: 188 na luz contra 128 no codigo, e 57 por cento da luz perdida">
+    </div>
+  </div>
+  <div class="rodape"><span>a sacola e o que não vaza</span><span class="contador"></span></div>
+</section>
+
+<!-- 24 · a borda -->
+<section class="slide">
+  <div class="eyebrow">Estação 7 · a consequência visível</div>
+  <h1>E a borda inteira erra</h1>
+  <div class="corpo">
+    <div class="col">
+      <p>Um disco antisserrilhado, <strong>1044 pixels</strong> de cobertura
+        parcial, contra uma verdade supersampleada \(16\times16\):</p>
+      <div class="formula">
+        preto sobre branco: erro médio <strong>48,1</strong> passos ·
+        máximo <strong>73,2</strong><br>
+        18% sobre 80%: erro médio <strong>7,7</strong> passos ·
+        máximo <strong>11,8</strong><br>
+        pixels errados por mais de um passo: <strong>97,7%</strong>
+      </div>
+      <div class="traducao">
+        <p>o segundo caso é o realista, e é o mais
+        traiçoeiro: 7,7 passos não gritam numa folha isolada, mas atravessam a
+        borda inteira e reaparecem em cada composição seguinte.</p>
+      </div>
+      <p>Uma ressalva de honestidade: o lado linear é exato <strong>por
+        construção</strong> — média em luz <em>é</em> a definição da verdade.
+        O que se mede aqui não é um duelo, é o <strong>tamanho</strong> do erro
+        da via errada.</p>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-borda-medida.png" alt="erro medio e maximo em passos de 8 bits nos casos extremo e realista">
+    </div>
+  </div>
+  <div class="rodape"><span>a sacola e o que não vaza</span><span class="contador"></span></div>
+</section>
+
+<!-- 25 · dicionário -->
+<!-- apêndice · onde este seminário mora no mapa (2026-09-01) -->
+<section class="slide">
+  <div class="eyebrow">apêndice · onde este seminário mora</div>
+  <h1>O fim da estrada, <em>dentro</em> deste curso</h1>
+  <div class="corpo">
+    <div class="col">
+      <p>Este seminário ocupa <strong>seis nós</strong> — espaço vetorial,
+        base e dimensão, transformação linear, produto interno, autovalores e
+        formas quadráticas. É o maior bloco do mapa numa aula só, e ele recebe
+        de <strong>cinco</strong>: matrizes, determinante, vetores, cônicas e
+        polinômios.</p>
+      <p>O que ele paga é o que o diferencia de todos os outros: álgebra
+        abstrata, análise funcional e geometria diferencial —
+        <strong>três disciplinas que este curso não cobre</strong>. Daqui em
+        diante o mapa aponta para fora.</p>
+      <div class="traducao">
+        <p>é por isso que este é o último do arco. Não porque o assunto acabe,
+        mas porque a <strong>próxima seta sai do curso</strong> — e o mapa foi
+        desenhado para dizer exatamente isso.</p>
+      </div>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/mapa-para-onde-vamos.svg" alt="o recorte do mapa de pre-requisitos com os seis nos dos espacos vetoriais acesos, os cinco que os antecedem e as tres disciplinas fora do curso que dependem deles">
+    </div>
+  </div>
+  <div class="rodape"><span>a sacola e o que não vaza</span><span class="contador"></span></div>
+</section>
+
+<section class="slide">
+  <div class="eyebrow">apêndice</div>
+  <h1>Os símbolos que apareceram</h1>
+  <div class="corpo">
+    <div class="col">
+      <p>Nenhum deles é decoração: cada um foi introduzido com o conceito que
+        carrega, e volta aqui só para conferência.</p>
+      <table class="simbolos">
+        <tr><td>\(V\)</td><td>a sacola grande — o espaço vetorial</td></tr>
+        <tr><td>\(V\)</td><td>a sacola grande, quando o assunto é o espaço
+          inteiro</td></tr>
+        <tr><td>\(o\)</td><td>o elemento neutro; na imagem, a folha preta</td></tr>
+        <tr><td>\(-u\)</td><td>o oposto de \(u\): o que o desfaz</td></tr>
+        <tr><td>\(I\)</td><td>a matriz identidade — a que não mexe em
+          nada</td></tr>
+        <tr><td>\(P_3(\mathbb{R})\)</td><td>o conjunto dos polinômios reais de
+          grau até 3</td></tr>
+      </table>
+    </div>
+    <div class="col">
+      <table class="simbolos">
+        <tr><td>\(W\)</td><td>o pedaço de dentro: o subespaço</td></tr>
+        <tr><td>\(\det\)</td><td>escrito <em>em pé</em> porque é nome de
+          operação, não letra que vale um número</td></tr>
+        <tr><td>\(\alpha,\ \beta\)</td><td>"alfa" e "beta": os escalares, os
+          números que esticam</td></tr>
+        <tr><td>\(M_{m\times n}(\mathbb{R})\)</td><td>o conjunto das matrizes
+          reais de \(m\) linhas por \(n\) colunas</td></tr>
+        <tr><td>\(\mathbb{R}^{n}\)</td><td>as listas de \(n\) números reais —
+          um quadro HD é \(n = 6\,220\,800\)</td></tr>
+        <tr><td>\(\|v\|\)</td><td>a norma: o comprimento da seta</td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="rodape"><span>a sacola e o que não vaza</span><span class="contador"></span></div>
+</section>
+
+<!-- 26 · de onde veio -->
+<section class="slide">
+  <div class="eyebrow">apêndice</div>
+  <h1>De onde veio cada coisa</h1>
+  <div class="corpo">
+    <div class="col">
+      <ul>
+        <li><strong>Callioli, Domingues &amp; Costa</strong>, <em>Álgebra Linear
+          e Aplicações</em>, 6ª ed. — cap. 2: a Introdução (a "coincidência
+          estrutural"), a Definição 1 (as oito regras), a Definição 2 e a
+          Proposição 1 (subespaço, e o desconto de oito para três).
+          <strong>As definições foram traduzidas para português corrente</strong>
+          — o conteúdo é o do livro, a redação é desta casa, e os símbolos de
+          lógica que o original usa ficaram de fora por norma;</li>
+        <li><strong>Baldin &amp; Furuya</strong>, <em>Geometria Analítica para
+          todos</em>, EdUFSCar — a construção do vetor por classes de
+          equivalência, que é a sacola pequena;</li>
+        <li>o <strong>caçador de vazamento</strong> e as medidas de luz × código:
+          2026-08-22, <span class="ouro">verificar_subespaco.py</span> e
+          <span class="ouro">medir_linear_vs_srgb.py</span>, recibos em
+          <span class="ouro">evidencias-medidas.md</span>.</li>
+      </ul>
+      <div class="traducao">
+        <p>e uma correção que fica registrada: a
+        primeira versão deste deck afirmava que "o sRGB quebra os axiomas".
+        <strong>Não quebra</strong> — e a versão certa, medida, é mais forte que
+        a errada.</p>
+      </div>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-duas-sacolas.png" alt="a sacola grande e as sacolas pequenas dentro dela">
+    </div>
+  </div>
+  <div class="rodape"><span>a sacola e o que não vaza</span><span class="contador"></span></div>
+</section>
+
+<!-- 27 · fecho -->
+<section class="slide capa">
+  <div class="eyebrow">fecho</div>
+  <h1>O que não vaza</h1>
+  <div class="grega"></div>
+  <p class="tese">três condições, e a pergunta de qual operação o mundo executa</p>
+  <p class="prosa">Uma sacola é espaço vetorial quando passa nas oito regras.
+    Um pedaço dela é subespaço quando passa em <strong>três</strong> — o zero
+    mora lá, a soma não sai, o escalar não sai. As outras cinco vêm de casa.</p>
+  <p class="prosa">Mas conferir as oito é necessário e não é suficiente. Existe
+    mais de uma estrutura possível sobre o mesmo conjunto, e o formulário passa
+    em todas. <strong>Quem decide é o fenômeno</strong> — e, no caso da imagem,
+    quem decide é a luz.</p>
+  <div class="rodape"><span>a sacola e o que não vaza</span><span class="contador"></span></div>
+</section>
+
+<script>
+const slides = [...document.querySelectorAll(".slide")];
+let i = 0;
+// cada slide carrega o SEU número (vale para a tela e para o PDF impresso)
+slides.forEach((s, k) => s.querySelectorAll(".contador").forEach(c =>
+  c.textContent = `${k + 1} / ${slides.length}`));
+function mostra(n) {
+  i = Math.max(0, Math.min(slides.length - 1, n));
+  slides.forEach((s, k) => s.classList.toggle("ativo", k === i));
+}
+addEventListener("keydown", e => {
+  if (["ArrowRight", "PageDown", " "].includes(e.key)) mostra(i + 1);
+  if (["ArrowLeft", "PageUp"].includes(e.key)) mostra(i - 1);
+  if (e.key === "Home") mostra(0);
+  if (e.key === "End") mostra(slides.length - 1);
+});
+addEventListener("click", e => {
+  if (e.clientX > innerWidth / 2) mostra(i + 1); else mostra(i - 1);
+});
+function doHash() {
+  const n = parseInt(location.hash.slice(1), 10);
+  mostra(Number.isFinite(n) ? n - 1 : 0);
+}
+addEventListener("hashchange", doHash);
+doHash();
+</script>
+</body>
+</html>

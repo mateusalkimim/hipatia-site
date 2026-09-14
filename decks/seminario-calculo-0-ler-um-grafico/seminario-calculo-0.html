@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ler um gráfico — a leitura que o cálculo cobra e ninguém ensina</title>
+<script>
+window.MathJax = {
+  tex: { inlineMath: [["\\(", "\\)"]], displayMath: [["\\[", "\\]"]] },
+  svg: { fontCache: "global" },
+  startup: { typeset: true }
+};
+</script>
+<script src="../../vendor/tex-svg.js" id="MathJax-script" async></script>
+<style>
+/* ============================================================
+   Ítaca DS — TEMA CLARO (o "irmão claro" previsto em
+   itaca-ds/tokens.css; primitivos da paleta do roteiro ao
+   orientador; muda só a camada semântica)
+   ============================================================ */
+:root {
+  --bg: #f3f5f9; --card: #ffffff; --linha: #d9e0ec;
+  --ink: #16233f; --ink2: #3f4d6b; --muted: #7c88a1;
+  --bronze: #a9713f; --bronze-fundo: #8f5e33; --bronze-soft: #c79b6e;
+  --azul: #1e3a6b; --azul-deep: #12244a;
+  --terracota: #b35430; --verde: #4e7a49; --rubro: #a84444;
+  --it-serif: Georgia, "Cormorant Garamond", "Times New Roman", serif;
+  --it-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --it-mono: "Spline Sans Mono", ui-monospace, "Cascadia Code", monospace;
+  /* cores dos 8 vértices (as mesmas de gerar_figuras.py) */
+  /* NORMA §2.1 — a medida de linha, declarada UMA vez. Em EM, nunca em `ch`:
+     `ch` mede o glifo "0" (0,636 em na Inter) e não o caractere médio de
+     prosa (0,456 em), então 66ch entregaria 92 caracteres. */
+  --medida: 30em;
+  --v0:#a9713f; --v1:#b35430; --v2:#4e7a49; --v3:#a84444;
+  --v4:#3d6394; --v5:#6d55a3; --v6:#2e7d70; --v7:#a85577;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+/* §2.6 — a ESCALA do registro deck. Uma raiz só, porque `rem` é global:
+   subir aqui escala junto o que tem `clamp(...vw...)` e o que tem tamanho
+   FIXO em rem. Levantar só os clamps (a primeira tentativa) deixou
+   `.leitura`, `.legenda`, `.eyebrow` e todo `<p>` fora de `.col` para trás, e
+   a folha ficou com DUAS escalas ao mesmo tempo.
+   25px escolhido para que o termo proporcional continue governando a 1920:
+   o teto de `.col p` (1,04rem) passa a valer 26px, logo acima dos 25,92px do
+   `1.35vw` — a proporção manda, o teto só segura viewport maior. */
+html { font-size: 25px; }
+html, body { height: 100%; background: var(--azul-deep); }
+body { font-family: var(--it-sans); color: var(--ink); overflow: hidden; }
+
+.slide {
+  display: none; position: absolute; inset: 0;
+  background: var(--bg);
+  padding: 4vh 6vw 6vh; flex-direction: column;
+  overflow: hidden;            /* nada vaza para a página seguinte */
+}
+.slide.ativo { display: flex; animation: fade .35s ease; }
+@keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.eyebrow {
+  font-size: 0.72rem; letter-spacing: 0.22em;
+  text-transform: uppercase; color: var(--bronze); font-weight: 700;
+  margin-bottom: 1vh;
+}
+h1 { font-family: var(--it-serif); font-weight: 700; font-size: clamp(1.5rem, 3vw, 2.4rem);
+     line-height: 1.12; margin-bottom: 1.2vh; color: var(--azul-deep);
+     letter-spacing: -0.01em; }
+h1 em { color: var(--bronze); font-style: normal; }
+.tese { font-family: var(--it-serif); font-style: italic; font-size: clamp(1.05rem, 1.8vw, 1.35rem);
+        color: var(--bronze-fundo); }
+.corpo { flex: 1; display: flex; gap: 2.6vw; align-items: safe center;
+         min-height: 0; }
+/* `safe center`, não `center`: a exceção do deck (§2.4) centra a faixa única
+   na vertical — mas `center` num flex TRANSBORDA PARA OS DOIS LADOS quando o
+   item é mais alto que o container, e aí o texto sobe por cima do título e
+   desce por cima do rodapé ao mesmo tempo. Foi o que apareceu na folha 12 ao
+   subir a escala. `safe` volta a alinhar pelo topo exatamente quando não cabe:
+   a centralização vale enquanto é composição, e desliga quando viraria
+   atropelo. */
+.col { flex: 1; min-width: 0; }
+
+/* ===== NORMA DE COMPOSIÇÃO — variante B (2026-08-17) =======================
+   §2.4 (o conteúdo pende do topo) NÃO foi aplicado aqui, e é decisão em
+   aberto do operador. Motivo medido: OITO folhas trazem
+   `style="align-items:center"` INLINE na `.corpo`, e estilo inline vence a
+   folha de estilo — trocar só a regra deixaria 30 folhas no topo e 8
+   centradas, inconsistência pior que qualquer das duas. E há uma dúvida de
+   mérito: numa folha subocupada, pendurar no topo joga TODO o vazio para
+   baixo (47% na folha 21) enquanto centrar o divide. A regra nasceu para
+   blocos empilhados do caderno e pode não valer para o deck.
+   O estilo inline é também a raiz dos 407 eixos distintos.
+
+   §2.1 a medida governa a PROSA; bloco de exibição (fórmula, figura, tabela,
+   grade) é governado pelo conteúdo. A `.corpo` continua FLEX de propósito: os
+   arranjos especiais deste deck (`duo`, `grid3x3`, `grid2x2`,
+   `figbox.vert.hierarquia`) carregam proporções que o autor declarou em
+   `flex`, e trocar por grade as apagaria. O eixo fica para um segundo ato,
+   com cada arranjo convertido caso a caso.
+
+   Alcance: a prosa deste deck NÃO mora só em `.col` — há folhas com `<div>`
+   sem classe dentro de `.corpo` (a 9 é uma). Seletor estreito deixava 67
+   linhas acima do teto com a regra certa aplicada; é a armadilha 13 outra vez,
+   pelo lado do ALCANCE. Por isso a regra vale para prosa onde quer que ela
+   esteja, e o que fica de fora é nomeado, não esquecido.                      */
+.slide p,
+.slide li,
+.slide figcaption,
+.slide .legenda,
+.slide .citacao .frase { max-width: var(--medida, 30em); }
+/* Prosa CENTRADA (33 blocos neste deck) precisa continuar centrada depois de
+   limitada: sem isto a caixa encolhe mas fica ancorada à esquerda, e o texto
+   parece deslocado — regressão que a medida introduziu na folha 9. Centrar o
+   BLOCO é o que preserva a decisão do autor enquanto a medida faz seu trabalho.
+   (A §2.2 desaprova bloco centrado; convertê-los é redesenho folha a folha, e
+   não é o que esta rodada faz.) */
+.slide [style*="text-align:center"],
+.slide [style*="text-align: center"] { margin-inline: auto; }
+
+/* fora da medida, por serem BLOCO DE EXIBIÇÃO (§2.1) */
+.slide .formula,
+.slide .formula p,
+.slide table p,
+.slide .quadro mjx-container { max-width: none; }
+.col p, .col li { color: var(--ink2); font-size: clamp(0.88rem, 1.35vw, 1.04rem);
+                  line-height: 1.55; margin-bottom: 1vh; }
+.col strong { color: var(--ink); }
+.col .ouro { color: var(--bronze-fundo); }
+.col .quente { color: var(--terracota); }
+ul { list-style: none; }
+ul li { padding-left: 1.1em; position: relative; }
+ul li::before { content: "▸"; position: absolute; left: 0; color: var(--bronze);
+                font-size: 0.8em; top: 0.28em; }
+img.fig { max-width: 100%; max-height: 100%; object-fit: contain;
+          border-radius: 8px; border: 1px solid var(--linha);
+          background: var(--card);
+          box-shadow: 0 1px 4px rgba(18, 36, 74, 0.08); }
+.figbox { flex: 1.3; min-width: 0; min-height: 0; height: 100%; display: flex;
+          align-items: center; justify-content: center; gap: 1vw; }
+.figbox img.fig { flex: 0 1 auto; min-width: 0; min-height: 0; width: auto; }
+.figbox.vert { flex-direction: column; }
+.figbox.vert img.fig { max-height: 48%; }
+/* HIERARQUIA VISUAL: a figura principal ocupa espaço proporcional à sua
+   importância; a secundária não compete com ela. Sem isto, uma figura larga
+   e rasa (observação de rodapé) fica MAIOR que a figura que carrega o
+   conceito, só por causa da proporção. */
+.figbox.vert.hierarquia img.fig:first-of-type { max-height: 68%; }
+.figbox.vert.hierarquia img.fig:last-of-type  { max-height: 26%; }
+
+/* transcrição do quadro: o cartão-lousa */
+.quadro {
+  background: var(--card); border: 1px solid var(--linha);
+  border-left: 5px solid var(--bronze); border-radius: 8px;
+  padding: 1.6vh 1.4vw; margin: 1vh 0;
+  color: var(--azul-deep); font-size: clamp(0.9rem, 1.4vw, 1.08rem);
+  line-height: 1.7;
+  box-shadow: 0 1px 4px rgba(18, 36, 74, 0.08);
+}
+.quadro .origem { display: block; font-size: 0.68rem; color: var(--muted);
+                  letter-spacing: 0.14em; text-transform: uppercase;
+                  margin-bottom: 0.8vh; }
+.quadro mjx-container { color: var(--azul-deep); }
+
+/* a tradução para quem está chegando agora */
+.traducao {
+  background: color-mix(in srgb, var(--verde) 7%, var(--card));
+  border: 1px solid color-mix(in srgb, var(--verde) 30%, var(--linha));
+  border-left: 5px solid var(--verde); border-radius: 8px;
+  padding: 1.3vh 1.4vw; margin: 1vh 0;
+  color: var(--ink2); font-size: clamp(0.86rem, 1.3vw, 1rem); line-height: 1.55;
+}
+.traducao::before { content: "em bom português: "; color: var(--verde);
+                    font-weight: 700; }
+
+.formula {
+  font-family: var(--it-mono); background: var(--card);
+  border: 1px solid var(--linha); border-left: 4px solid var(--bronze);
+  border-radius: 8px;
+  padding: 1.3vh 1.2vw; color: var(--azul-deep); font-size: clamp(0.85rem, 1.35vw, 1.02rem);
+  margin: 1vh 0; overflow-x: auto;
+}
+.legenda { font-size: 0.78rem; color: var(--muted); margin-top: 0.6vh; }
+/* leitura em voz alta das expressões — parte do método didático */
+.leitura { font-size: 0.8rem; color: var(--muted); font-style: italic;
+           margin: -0.3vh 0 1vh 0.3vw; }
+.leitura::before { content: "lê-se: "; font-style: normal; font-weight: 700;
+                   color: var(--bronze); }
+.rodape { position: absolute; bottom: 1.8vh; left: 6vw; right: 6vw;
+          display: flex; justify-content: space-between;
+          font-size: 0.72rem; color: var(--muted);
+          letter-spacing: 0.08em; border-top: 1px solid var(--linha);
+          padding-top: 0.9vh; }
+.contador { font-family: var(--it-mono); }
+
+/* dicionário de símbolos */
+table.simbolos { border-collapse: collapse; margin: 0.6vh 0; width: 100%; }
+/* D4 (2026-08-18): o teto era 0.98rem (~15,7 px) enquanto o termo
+       proporcional 1.25vw vale 24 px a 1920 — o teto em `rem` suprimia a
+       escala a dois terços, e as folhas 44/45 ficavam com 36% de sobra, que
+       a §2.4 chama de DEFEITO. Mesma armadilha já registrada na norma: a
+       escala certa já estava no arquivo; o teto é que a apagava. */
+    table.simbolos td { padding: 0.72vh 0.7vw; font-size: clamp(0.95rem, 1.25vw, 1.32rem);
+                    color: var(--ink2); border-bottom: 1px solid var(--linha); }
+table.simbolos td:first-child { color: var(--azul-deep); font-weight: 600;
+                                white-space: nowrap; }
+
+/* matriz colorida */
+table.matriz { border-collapse: collapse; font-family: var(--it-mono);
+               font-size: clamp(0.8rem, 1.5vw, 1.15rem); margin: 1vh auto;
+               background: var(--card); border: 1px solid var(--linha);
+               border-radius: 8px;
+               box-shadow: 0 1px 4px rgba(18, 36, 74, 0.08); }
+table.matriz td { padding: 0.8vh 0.75vw; text-align: center; font-weight: 600; }
+table.matriz td.rotulo { color: var(--muted); font-size: 0.8em; font-weight: 400; }
+table.matriz .colch { font-size: 2.2em; color: var(--ink2); font-family: var(--it-serif);
+                      font-weight: 400; }
+.chip { display: inline-block; width: 0.85em; height: 0.85em; border-radius: 50%;
+        vertical-align: -0.08em; }
+
+/* mapa da viagem */
+.estacoes { display: flex; gap: 1.2vw; align-items: stretch; margin: 2vh 0; }
+.estacao { flex: 1; background: var(--card); border: 1px solid var(--linha);
+           border-top: 4px solid var(--bronze); border-radius: 8px;
+           padding: 1.6vh 1vw; text-align: center;
+           box-shadow: 0 1px 4px rgba(18, 36, 74, 0.08); }
+.estacao .num { font-family: var(--it-serif); font-size: 1.6rem;
+                color: var(--bronze); }
+.estacao .nome { font-weight: 700; color: var(--azul-deep);
+                 font-size: clamp(0.85rem, 1.3vw, 1.05rem); margin: 0.5vh 0; }
+.estacao .oq { font-size: clamp(0.76rem, 1.1vw, 0.9rem); color: var(--ink2);
+               line-height: 1.45; }
+.seta-estacao { align-self: center; color: var(--bronze); font-size: 1.4rem; }
+
+/* galeria da obra: pranchas lado a lado e grade 3×3 do caderno */
+.duo { flex: 1.4; min-width: 0; min-height: 0; height: 100%; display: grid;
+       grid-template-columns: 1fr 1fr; gap: 1vw; align-items: center; }
+.duo figure { min-width: 0; min-height: 0; height: 100%; display: flex;
+              flex-direction: column; align-items: center;
+              justify-content: center; }
+.duo img { max-width: 100%; min-height: 0; flex: 0 1 auto; max-height: 92%;
+           object-fit: contain; border-radius: 8px;
+           border: 1px solid var(--bronze-soft);
+           box-shadow: 0 2px 10px rgba(18, 36, 74, 0.14); }
+.duo figcaption { font-family: var(--it-serif); font-style: italic;
+                  font-size: 0.95rem; color: var(--bronze-fundo);
+                  margin-top: 0.8vh; }
+.grid3x3 { flex: 1.15; min-width: 0; min-height: 0; height: 100%;
+           display: grid; grid-template-columns: repeat(3, 1fr);
+           grid-auto-rows: 1fr; gap: 0.7vh 0.7vw; align-content: center; }
+.grid3x3 img { width: 100%; height: 100%; min-height: 0; object-fit: cover;
+               border-radius: 6px; border: 1px solid var(--linha);
+               box-shadow: 0 1px 4px rgba(18, 36, 74, 0.10); }
+.citacao { border-left: 4px solid var(--bronze); padding: 1vh 1.2vw;
+           margin: 1.2vh 0; }
+.citacao .frase { font-family: var(--it-serif); font-style: italic;
+                  font-size: clamp(1rem, 1.6vw, 1.25rem);
+                  color: var(--azul-deep); line-height: 1.45; }
+.citacao .autor { font-size: 0.78rem; color: var(--muted);
+                  margin-top: 0.5vh; }
+
+/* grade 2×2 do experimento ControlNet */
+.grid2x2 { flex: 1.5; min-width: 0; min-height: 0; display: grid;
+           grid-template-columns: 1fr 1fr; grid-auto-rows: 1fr;
+           gap: 0.8vh 0.8vw; height: 100%; }
+.grid2x2 figure { min-width: 0; min-height: 0; display: flex;
+                  flex-direction: column; align-items: center; }
+.grid2x2 img { max-width: 100%; min-height: 0; flex: 1; object-fit: contain;
+               border-radius: 6px; border: 1px solid var(--linha);
+               background: var(--card); }
+.grid2x2 figcaption { font-size: 0.72rem; color: var(--muted);
+                      margin-top: 0.4vh; }
+
+.capa { justify-content: center; align-items: center; text-align: center;
+        background: radial-gradient(ellipse at 50% 38%, var(--card) 0%, var(--bg) 62%); }
+.capa h1 { font-size: clamp(2.4rem, 5.6vw, 4rem); margin: 1.6vh 0; }
+.capa .grega { width: min(30vw, 340px); height: 1px; background: var(--bronze);
+               opacity: 0.55; margin: 2.2vh auto; }
+.capa p { color: var(--ink2); max-width: 48ch; font-size: 1.05rem; line-height: 1.6; }
+    /* D5 (2026-08-18): a folha-quadro pode centrar a COMPOSIÇÃO — é a exceção
+       declarada do registro deck —, mas parágrafo longo centralizado é o pior
+       caso de leitura: cada linha começa num ponto diferente e o olho perde a
+       volta. O bloco continua centrado; as linhas passam a alinhar à esquerda. */
+    .capa p.prosa { text-align: left; margin: 0 auto 1.5vh; }
+    .capa p.prosa:last-of-type { margin-bottom: 0; }
+    /* autoria (2026-09-09): autor, coautora e orientador nomeados na capa, por
+       decisão do operador; o G3 (registro ao pixel) é só do autor e do
+       orientador. Método, item 5 (discrição): autoria nomeada abertamente. */
+    .capa p.autoria { font-size: 0.82rem; color: var(--muted); line-height: 1.55;
+                      margin: 2.6vh auto 0; text-align: center; max-width: none; }
+    .capa p.autoria strong { color: var(--ink2); font-weight: 600; }
+
+@page { size: 1920px 1080px; margin: 0; }
+.corpo > .col { flex: 1 1 0; min-width: 34ch; }     /* trava anti-espremida */
+/* §2.6 PARIDADE: figura e texto são metades da mesma metodologia e dividem
+   espaço equivalente (banda 40–60). A figura tinha `flex: 1.3` contra `flex: 1`
+   do texto e ficava em 60–67% em ONZE folhas — desequilíbrio por omissão, não
+   por decisão. Mesma base e mesmo crescimento nos dois = 50/50; quem quiser
+   sair da paridade declara na própria folha. */
+.corpo > .figbox { flex: 1 1 0; }
+/* Figura empilhada NÃO precisa encher a coluna inteira: quando ela enche, o
+   par figura↔texto sai da banda da §2.6 por ALTURA (647pt de figura contra
+   439pt de texto) e a folha fica sem borda. O teto de 86% devolve o ar sem
+   mexer no conteúdo. */
+.figbox.vert { max-height: 86%; }
+.corpo .figbox { min-width: 0; }
+.corpo .figbox img, .corpo img.fig { max-width: 100%; height: auto; }
+
+@media print {
+  /* 2026-08-12: fixa aqui o que antes era escolhido à mão no diálogo do
+     Ctrl+P (1920×1080, sem margem). Sem isto a exportação depende de quem
+     imprime — e um PDF de submissão precisa ser REGERÁVEL, não relembrado. */
+  @page { size: 1920px 1080px; margin: 0; }
+  * { -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important; }
+  html, body { width: 1920px; height: 1080px; }
+  body { overflow: visible; }
+  .slide { display: flex !important; position: relative; page-break-after: always;
+           width: 1920px; height: 1080px; overflow: hidden !important; }
+  .slide.ativo { animation: none; }
+  .rodape { position: absolute; }
+}
+
+
+/* a medida, à escala nova, enche a coluna: 30em a 25,9px = 585pt de ~624 */
+
+/* ===== PÉ ATRÁS — a marca de procedência do rigor ==========================
+   Especificação de 2026-08-22. Guisoli conduz; Guidorizzi é guarda-corpo.
+   Toda afirmação vinda do Guisoli declara o que o Guidorizzi faz com ela.
+
+   DESENHO, e a razão dele: é RODAPÉ do cartão-lousa, irmão do `.origem` —
+   NÃO um terceiro cartão. A folha já tem duas vozes (o quadro e o "em bom
+   português"); uma terceira caixa competiria com as duas em vez de anotar.
+   Pé atrás é procedência, não voz.
+
+   O rótulo vai no HTML, nunca em `content:`. Lição de 2026-08-22: texto que
+   só existe em `content:` é invisível ao extrator, à peneira e ao auditor —
+   39 rótulos sobreviveram em português dentro do deck em inglês por isso.
+
+   REGRA DURA: `refina` SEMPRE escreve a diferença. Marca sem conteúdo em
+   folha que refina é pior que marca nenhuma — anuncia divergência e não
+   entrega.                                                                 */
+
+/* a folha que reúne os `refina` de cada deck */
+
+/* As regras do "pé atrás" (.pe-atras, .refina, .confirma, .silencioso,
+   .refino, .refinos) foram REMOVIDAS em 2026-08-24: o elemento saiu dos decks
+   por decisão do operador — primeiro as folhas, depois os spans inline. CSS
+   órfão é convite a reintroduzir o que se decidiu tirar. */
+</style>
+
+</head>
+<body>
+
+<!-- 1 · capa -->
+<section class="slide capa ativo">
+  <div class="eyebrow">Hipátia · Cálculo, seminário C1 de 4</div>
+  <h1>Ler um <em>gráfico</em></h1>
+  <div class="grega"></div>
+  <p class="tese">a leitura que o cálculo cobra — e que ninguém ensina</p>
+  <p class="prosa">A álgebra linear fala do que é <strong>linear</strong>. O
+    cálculo fala do que é <strong>constante</strong> — e do que muda quando a
+    gente chega perto de um ponto. São dois assuntos, e o segundo não se apoia
+    no primeiro: ele se apoia em aritmética, álgebra elementar, trigonometria e
+    <strong>funções</strong>.</p>
+  <p class="prosa">E numa quinta coisa, que nenhuma dessas matérias entrega:
+    olhar um desenho no plano e <strong>ler nele o comportamento da
+    função</strong>. Este seminário existe para pagar essa dívida antes que ela
+    seja cobrada.</p>
+  <p class="autoria">Autor · <strong>Mateus Felipe Alkimim Pereira</strong><br>
+    Coautora · <strong>Sara Catiele Nogueira Pereira</strong><br>
+    Orientador · <strong>Rosivaldo Antônio Gohnan</strong></p>
+  <div class="rodape"><span>ler um gráfico</span><span class="contador"></span></div>
+</section>
+
+<!-- 2 · as convenções -->
+<section class="slide">
+  <div class="eyebrow">antes de tudo · como ler os símbolos</div>
+  <h1>As convenções que valem <em>o arco inteiro</em></h1>
+  <div class="corpo">
+    <div class="col">
+      <p>A matemática escreve com convenções que quase nunca são ditas em voz
+        alta. Ditas, elas deixam de ser barreira — e você decifra um símbolo
+        novo sem esperar que alguém o apresente.</p>
+      <table class="simbolos">
+        <tr><td>\(f\), \(g\), \(h\)</td><td><strong>minúscula inclinada</strong>
+          — o nome de uma função. Lê-se "efe", "gê", "agá"</td></tr>
+        <tr><td>\(f(x)\)</td><td>o valor que sai quando entra \(x\). O
+          parêntese <strong>aplica</strong>, não multiplica. Lê-se "efe de
+          xis"</td></tr>
+        <tr><td>\(x\), \(y\)</td><td>a entrada e a saída — e também os dois
+          eixos do desenho</td></tr>
+        <tr><td>\(a\), \(b\), \(c\)</td><td>números fixos que a gente escolhe e
+          não mexe mais: as <em>constantes</em></td></tr>
+      </table>
+    </div>
+    <div class="col">
+      <table class="simbolos">
+        <tr><td>sen, cos, tg</td><td><strong>letra em pé</strong> — nome de
+          operação, não letra que vale um número. São as três da
+          trigonometria, e a folha 10 mostra o que cada uma <em>é</em>: um
+          comprimento no círculo</td></tr>
+        <tr><td>\(\pi\), \(\theta\)</td><td><strong>letra grega</strong> — o
+          que se mede: uma constante do círculo, um ângulo. Nunca é o assunto
+          da folha; é a medida dele</td></tr>
+        <tr><td>\(|x|\)</td><td><strong>uma barra</strong>: o número sem o
+          sinal. Lê-se "módulo de xis"</td></tr>
+        <tr><td>\(\to\)</td><td>"vai para", "tende a" — não é igual, é
+          <em>caminho</em></td></tr>
+      </table>
+      <div class="quadro"><span class="origem">de onde este seminário parte</span>
+        <p>Só do <strong>ensino básico</strong>. Nada aqui cobra os seminários
+        de geometria, determinantes ou espaços vetoriais: aquele é outro
+        ramo.</p>
+      </div>
+    </div>
+  </div>
+  <div class="rodape"><span>ler um gráfico</span><span class="contador"></span></div>
+</section>
+
+<!-- 3 · a função é uma máquina -->
+<section class="slide">
+  <div class="eyebrow">Estação 1 · a função</div>
+  <h1>Função: uma <em>máquina</em> de uma entrada e uma saída</h1>
+  <div class="corpo">
+    <div class="col">
+      <p>Uma <strong>função</strong> é uma regra que pega um número e devolve
+        outro. Entra \(x\), sai \(f(x)\).</p>
+      <p class="leitura">"efe de xis".</p>
+      <p>A regra pode ser uma conta ("dobre e some um"), uma tabela, ou um
+        desenho. O que a faz uma função é uma exigência só:</p>
+      <div class="formula">
+        uma entrada <strong>nunca</strong> tem duas saídas
+      </div>
+      <p>Na máquina ao lado a regra é "dobre e some um": entra
+        <strong>3</strong>, sai <strong>7</strong>. Entra outro número, sai
+        outro — mas o 3 sai 7 <em>sempre</em>.</p>
+      <div class="traducao">
+        <p>se você põe o 3 e às vezes sai 7 e às vezes
+        sai 9, aquilo não é função — é bagunça. A exigência parece boba e é ela
+        que segura tudo o que vem depois: sem ela, "para onde a função vai" não
+        teria resposta única.</p>
+      </div>
+      <table class="simbolos">
+        <tr><td>domínio</td><td>o conjunto das entradas que a máquina
+          <strong>aceita</strong></td></tr>
+        <tr><td>imagem</td><td>o conjunto das saídas que ela
+          <strong>produz</strong></td></tr>
+      </table>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-funcao-maquina.png" alt="a funcao como maquina: entra x, sai f de x, e uma entrada nunca tem duas saidas">
+    </div>
+  </div>
+  <div class="rodape"><span>ler um gráfico</span><span class="contador"></span></div>
+</section>
+
+<!-- 4 · o par vira ponto -->
+<section class="slide">
+  <div class="eyebrow">Estação 1 · a função</div>
+  <h1>O par vira ponto: o <em>plano cartesiano</em></h1>
+  <div class="corpo">
+    <div class="col">
+      <p>Pegue uma entrada e a saída dela. Isso é um <strong>par</strong>:
+        \((x,\; f(x))\). Agora marque esse par num plano — a entrada medida na
+        horizontal, a saída na vertical.</p>
+      <p class="leitura">"o par xis, efe de xis".</p>
+      <p>Faça isso com <em>todas</em> as entradas. O rastro que os pontos
+        deixam é o <strong>gráfico</strong> da função.</p>
+      <table class="simbolos">
+        <tr><td>plano<br>cartesiano</td><td>os dois eixos cruzados. O
+          horizontal é o \(x\); o vertical, o \(y\). Onde eles se cruzam é a
+          <strong>origem</strong></td></tr>
+        <tr><td>gráfico</td><td>o desenho formado por todos os pares da
+          função</td></tr>
+      </table>
+      <div class="traducao">
+        <p>a regra, a tabela e o desenho são
+        <strong>a mesma função</strong> em três roupas. Trocar de roupa não
+        muda a função — muda o que você consegue enxergar dela. E é a terceira
+        roupa que este seminário vem treinar.</p>
+      </div>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-par-ponto.png" alt="a mesma funcao em tres roupas: a regra, a tabela e o grafico, e o par que vira ponto">
+    </div>
+  </div>
+  <div class="rodape"><span>ler um gráfico</span><span class="contador"></span></div>
+</section>
+
+<!-- 5 · sobe, desce, fica parado -->
+<section class="slide">
+  <div class="eyebrow">Estação 2 · o comportamento</div>
+  <h1>O desenho <em>sobe</em>, <em>desce</em> ou fica parado</h1>
+  <div class="corpo">
+    <div class="col">
+      <p>Andando da esquerda para a direita — isto é, com \(x\) crescendo —
+        o desenho só pode fazer três coisas:</p>
+      <ul>
+        <li><strong class="ouro">sobe</strong>: a função é
+          <strong>crescente</strong> ali;</li>
+        <li><strong class="quente">desce</strong>: é
+          <strong>decrescente</strong>;</li>
+        <li><strong>fica na mesma altura</strong>: é
+          <strong>constante</strong>.</li>
+      </ul>
+      <div class="traducao">
+        <p>guarde a terceira. <strong>Constante</strong> é
+        a palavra de que o cálculo inteiro trata: o que não muda, o que muda
+        devagar, o que muda depressa. Ver "parado" num desenho é o primeiro
+        passo para entender o que uma derivada mede.</p>
+      </div>
+      <p>Uma mesma função pode subir num trecho, descer noutro e ficar parada
+        num terceiro. Comportamento é sempre <strong>local</strong>: pergunta-se
+        "onde?".</p>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-sobe-desce.png" alt="os tres comportamentos: crescente, decrescente e constante, lidos no desenho">
+    </div>
+  </div>
+  <div class="rodape"><span>ler um gráfico</span><span class="contador"></span></div>
+</section>
+
+<!-- 6 · os três defeitos -->
+<section class="slide">
+  <div class="eyebrow">Estação 2 · o comportamento</div>
+  <h1>Três jeitos de o desenho dar <em>defeito</em></h1>
+  <div class="corpo">
+    <div class="col">
+      <p>Nem todo desenho é um traço liso e inteiro. Os defeitos têm nome, e
+        cada um deles é um assunto dos próximos seminários:</p>
+      <table class="simbolos">
+        <tr><td>buraco</td><td>o traço segue, mas <strong>um ponto não
+          existe</strong>. A função não aceita aquela entrada</td></tr>
+        <tr><td>salto</td><td>chegando pela esquerda o desenho aponta um valor;
+          pela direita, <strong>outro</strong>. Falta um pedaço no
+          meio</td></tr>
+        <tr><td>bico</td><td>sem furo e sem salto — mas ali o traço
+          <strong>vira de repente</strong>, e não há uma inclinação
+          única</td></tr>
+      </table>
+      <div class="traducao">
+        <p>estes três desenhos são o motivo de o
+        cálculo existir. <em>Buraco</em> e <em>salto</em> são o assunto do
+        próximo seminário — limite e continuidade. O <em>bico</em> é o que
+        impede uma derivada de existir.</p>
+      </div>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-defeitos.png" alt="os tres defeitos do desenho: o buraco, o salto e o bico">
+    </div>
+  </div>
+  <div class="rodape"><span>ler um gráfico</span><span class="contador"></span></div>
+</section>
+
+<!-- 7 · encosta e dispara -->
+<section class="slide">
+  <div class="eyebrow">Estação 2 · o comportamento</div>
+  <h1>Encosta sem tocar, e <em>dispara</em></h1>
+  <div class="corpo">
+    <div class="col">
+      <p>Duas coisas que o desenho faz <strong>longe</strong> e
+        <strong>perto</strong>, e que a conta sozinha não mostra:</p>
+      <ul>
+        <li><strong>encosta sem tocar</strong> — indo cada vez mais para a
+          direita, o traço chega perto de uma reta e nunca a alcança. Essa
+          reta chama-se <strong>assíntota</strong>;</li>
+        <li><strong>dispara</strong> — chegando perto de um certo \(x\), o
+          traço sobe sem parar.</li>
+      </ul>
+      <p class="leitura">"assíntota" — do grego, "que não se encontra".</p>
+      <div class="traducao">
+        <p>as duas são a mesma pergunta em lugares
+        diferentes: <em>para onde isto está indo?</em> — feita ao longe, ou
+        feita perto de um ponto. Quando essa pergunta ganhar nome, o nome vai
+        ser <strong>limite</strong>.</p>
+      </div>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-assintota.png" alt="a assintota que o desenho encosta sem tocar e o ponto onde ele dispara">
+    </div>
+  </div>
+  <div class="rodape"><span>ler um gráfico</span><span class="contador"></span></div>
+</section>
+
+<!-- 8 · o treino -->
+<section class="slide">
+  <div class="eyebrow">Estação 3 · o treino</div>
+  <h1>O exercício que <em>ninguém faz</em>: olhar e dizer</h1>
+  <div class="corpo">
+    <div class="col">
+      <p>Saber a definição de crescente não é o mesmo que <em>ver</em>
+        crescente. A segunda coisa é a que o cálculo cobra, e só se ganha
+        praticando — como ler em voz alta.</p>
+      <p>Para cada desenho ao lado, responda sem conta nenhuma:</p>
+      <ul>
+        <li>ele sobe, desce, ou faz os dois em trechos diferentes?</li>
+        <li>fica parado em algum lugar?</li>
+        <li>tem buraco, salto ou bico?</li>
+        <li>encosta em alguma reta, ou dispara?</li>
+      </ul>
+      <p>Todos os seis são funções que aceitam qualquer número e devolvem um
+        número — as mais comuns, e as que este arco vai usar.</p>
+      <div class="traducao">
+        <p>não há resposta a decorar aqui. O ganho é o
+        <strong>reflexo</strong>: daqui a dois seminários, quando aparecer
+        \(\operatorname{sen}(x)/x\) com um buraco em zero, você já vai ter
+        visto um buraco antes — e a folha não vai precisar parar para
+        explicar.</p>
+      </div>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-treino.png" alt="seis desenhos para ler: comportamento, defeitos e o que acontece longe">
+    </div>
+  </div>
+  <div class="rodape"><span>ler um gráfico</span><span class="contador"></span></div>
+</section>
+
+<!-- 9 · duas escritas -->
+<section class="slide">
+  <div class="eyebrow">Estação 4 · a álgebra que o cálculo cobra</div>
+  <h1>A mesma conta, duas escritas — e <em>um</em> ponto de diferença</h1>
+  <div class="corpo">
+    <div class="col">
+      <p>A álgebra elementar não é um pré-requisito decorativo: ela muda o
+        <strong>domínio</strong>, e o domínio aparece no desenho.</p>
+      <div class="formula">
+        \(f(x) = x + 2\) &nbsp;&nbsp;·&nbsp;&nbsp;
+        \(g(x) = \dfrac{x^2 - 4}{x - 2}\)
+      </div>
+      <p class="leitura">"efe de xis é xis mais dois"; "gê de xis é xis ao
+        quadrado menos quatro, sobre xis menos dois".</p>
+      <p>Na figura, o <strong>círculo vazado</strong> marca o ponto que
+        <em>não existe</em>: é a convenção para "aqui o desenho tem um
+        buraco". Círculo cheio seria ponto que existe.</p>
+      <p>Fatorando, \(x^2 - 4 = (x-2)(x+2)\), e o \((x-2)\) cancela. As duas
+        dão o <strong>mesmo número</strong> em todo \(x\) — menos em
+        \(x = 2\), onde a segunda pede uma divisão por zero e simplesmente
+        <strong>não existe</strong>.</p>
+      <div class="traducao">
+        <p>o buraco não veio da conta: veio de
+        <strong>como a conta foi escrita</strong>. É por isso que fatorar,
+        cancelar e racionalizar são ferramentas do cálculo e não da aula
+        anterior — elas são o que revela ou esconde um buraco.</p>
+      </div>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-duas-escritas.png" alt="duas escritas da mesma funcao e o unico ponto em que uma delas nao existe">
+    </div>
+  </div>
+  <div class="rodape"><span>ler um gráfico</span><span class="contador"></span></div>
+</section>
+
+<!-- 10 · o ciclo -->
+<section class="slide">
+  <div class="eyebrow">Estação 5 · a trigonometria que o cálculo cobra</div>
+  <h1>No círculo de raio 1, são <em>quatro comprimentos</em></h1>
+  <div class="corpo">
+    <div class="col">
+      <p>Seno, cosseno e tangente costumam chegar como botões de calculadora.
+        No círculo de raio \(1\) eles são outra coisa: <strong>três
+        comprimentos que se veem</strong>.</p>
+      <table class="simbolos">
+        <tr><td>\(\operatorname{sen} x\)</td><td>a altura do ponto —
+          <strong>o segmento em pé</strong></td></tr>
+        <tr><td>\(\cos x\)</td><td>o quanto ele avançou na horizontal —
+          <strong>o segmento deitado</strong></td></tr>
+        <tr><td>\(\operatorname{tg} x\)</td><td>a altura onde o raio esticado
+          encontra a <strong>reta vertical do 1</strong></td></tr>
+        <tr><td>arco \(= x\)</td><td>o comprimento do pedaço de círculo. É
+          <strong>isso</strong> que "radiano" quer dizer: o ângulo medido pelo
+          arco que ele abre</td></tr>
+      </table>
+      <div class="traducao">
+        <p>com os quatro desenhados lado a lado, dá para
+        <strong>olhar</strong> e comparar <em>três deles</em>: a altura é menor
+        que o arco, e o arco é menor que a tangente. Dois seminários adiante, essa desigualdade —
+        obtida sem conta nenhuma — é o que prova o limite mais famoso do
+        cálculo.</p>
+      </div>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-ciclo.png" alt="o ciclo trigonometrico com seno, cosseno, tangente e o arco como quatro comprimentos">
+    </div>
+  </div>
+  <div class="rodape"><span>ler um gráfico</span><span class="contador"></span></div>
+</section>
+
+<!-- 11 · o círculo desenrolado -->
+<section class="slide">
+  <div class="eyebrow">Estação 5 · a trigonometria que o cálculo cobra</div>
+  <h1>O círculo <em>desenrolado</em></h1>
+  <div class="corpo">
+    <div class="col">
+      <p><strong>Toda</strong> função vira gráfico do mesmo jeito: o par vira
+        ponto, para toda entrada — a Estação 1. O que muda é <strong>de onde
+        sai o número</strong>: em \(x^2\) a regra é uma <em>conta</em>; no
+        seno, a regra é um <strong>desenho</strong>. É por isso que o círculo
+        aparece aqui, e não aparece lá.</p>
+      <p>Você já viu o gráfico do seno: uma <strong>onda</strong>, e acabou de
+        ver o seno como uma <strong>altura</strong> no círculo. São a mesma
+        coisa. No círculo a entrada é uma <strong>rotação</strong>; no gráfico,
+        uma <strong>posição horizontal</strong> — e a saída, a altura, não muda
+        no caminho. Isso é <strong>desenrolar</strong>.</p>
+      <div class="traducao">
+        <p>por isso o traço da figura é <strong>horizontal</strong>: ele liga
+        duas alturas iguais.</p>
+      </div>
+      <p>E aí duas coisas que se decoram deixam de precisar de memória:</p>
+      <table class="simbolos">
+        <tr><td>por que se<br><strong>repete</strong></td><td>dar <em>uma
+          volta</em> devolve o ponto ao mesmo lugar — a onda recomeça porque a
+          volta acabou</td></tr>
+        <tr><td>por que não<br><strong>passa de 1</strong></td><td>é a altura de
+          um ponto num círculo de <em>raio 1</em>; não há de onde tirar
+          mais</td></tr>
+      </table>
+      <p class="tese">O mesmo desenho explica a assíntota da tangente: o ponto
+        dela sobe pela reta tangente e <em>foge</em> quando o raio se aproxima
+        da vertical — as duas retas ficam paralelas e deixam de se encontrar.</p>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-desenrolamento.png" alt="à esquerda o círculo de raio 1 com três raios em ângulos diferentes; à direita a onda do seno; três traços horizontais tracejados levam a altura de cada ponto do círculo até o ponto correspondente do gráfico, e duas linhas tracejadas marcam os limites mais um e menos um">
+    </div>
+  </div>
+  <div class="rodape"><span>ler um gráfico</span><span class="contador"></span></div>
+</section>
+
+<!-- 12 · duas tangentes -->
+<section class="slide">
+  <div class="eyebrow">Estação 5 · a trigonometria que o cálculo cobra</div>
+  <h1>Duas <em>tangentes</em>, e elas não são a mesma coisa</h1>
+  <div class="corpo">
+    <div class="col">
+      <p>A palavra <strong>tangente</strong> nomeia dois objetos diferentes no
+        arco de cálculo, e a confusão entre eles é silenciosa:</p>
+      <table class="simbolos">
+        <tr><td>a <strong>reta</strong><br>tangente</td><td>a reta que encosta
+          numa curva em um ponto e segue a <em>inclinação</em> dela. É o
+          problema que abre o próximo seminário</td></tr>
+        <tr><td>o <strong>segmento</strong><br>de tangente</td><td>um
+          comprimento no círculo de raio 1 — o \(\operatorname{tg} x\) da
+          folha anterior</td></tr>
+      </table>
+      <div class="traducao">
+        <p>elas têm parentesco histórico e não são
+        intercambiáveis. Quando uma folha disser "a tangente", pergunte
+        <em>qual</em>: a reta que encosta, ou o comprimento no
+        círculo.</p>
+      </div>
+      <p class="tese">Palavra que nomeia dois objetos é a armadilha mais barata
+        de evitar — e a mais cara quando ninguém avisa.</p>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-duas-tangentes.png" alt="a reta tangente a uma curva e o segmento de tangente no ciclo, lado a lado">
+    </div>
+  </div>
+  <div class="rodape"><span>ler um gráfico</span><span class="contador"></span></div>
+</section>
+
+<!-- 13 · onde as duas se encontram -->
+<section class="slide">
+  <div class="eyebrow">Estação 5 · a trigonometria que o cálculo cobra</div>
+  <h1>Onde as duas <em>se encontram</em></h1>
+  <div class="corpo">
+    <div class="col">
+      <p>A folha anterior mandou desconfiar da palavra. Esta diz <strong>onde as
+        duas se encontram</strong> — porque elas se encontram, e num lugar só.</p>
+      <p>Para medir o quanto uma reta sobe, ande <strong>1</strong> para a
+        direita e veja quanto ela subiu. Esse número é a
+        <strong>inclinação</strong> dela.</p>
+      <p>A reta tangente encosta na curva fazendo um ângulo \(\theta\) com o
+        eixo \(x\). E quanto ela sobe, ao andar 1? Sobe exatamente
+        \(\operatorname{tg}\theta\) — a <em>mesma</em> razão do círculo de raio
+        1, com o triângulo deitado sobre a curva em vez de dentro do círculo.</p>
+      <p>Quando o próximo seminário der nome a essa inclinação, ele a escreverá
+        \(f'(x)\): a inclinação da reta tangente ao gráfico de \(f\) no ponto
+        \(x\). O <em>valor</em> dela é o assunto de lá; o
+        <strong>significado</strong> é este, e cabe aqui.</p>
+      <div class="traducao">
+        <p>\[ f'(x) = \operatorname{tg}\theta \]</p>
+        <p>lê-se: <em>"f linha de x é igual à tangente de teta"</em> — onde
+        \(\theta\) é o ângulo que a reta tangente faz com o eixo \(x\).</p>
+      </div>
+      <p class="tese">As duas tangentes não são homônimas: a reta dá o ângulo,
+        e a razão do círculo dá o número. É a única vez que as duas se
+        tocam.</p>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-ponte-tangentes.png" alt="à esquerda uma curva com a reta tangente, o ângulo teta com a horizontal e o triângulo de andar 1 e subir tangente de teta; à direita o mesmo ângulo teta dentro do círculo de raio 1, com o mesmo comprimento marcado sobre a reta vertical">
+    </div>
+  </div>
+  <div class="rodape"><span>ler um gráfico</span><span class="contador"></span></div>
+</section>
+
+<!-- 14 · o gráfico é uma imagem -->
+<section class="slide">
+  <div class="eyebrow">Estação 6 · a ponte</div>
+  <h1>Um gráfico já <em>é</em> uma imagem</h1>
+  <div class="corpo">
+    <div class="col">
+      <p>Este curso trata de imagem. E o desenho que você acabou de aprender a
+        ler é, ele mesmo, uma imagem: uma grade de números, um valor por
+        pixel.</p>
+      <p>A ponte funciona nos dois sentidos, e é o que os próximos três
+        seminários vão cobrar:</p>
+      <ul>
+        <li>a <strong>borda</strong> de um objeto na tela é o lugar onde uma
+          função salta — e suavizá-la é trocar o salto por uma rampa;</li>
+        <li>a <strong>curva lisa</strong> de uma esfera renderizada é feita de
+          segmentos retos: subdividir a malha é o mesmo gesto de aproximar um
+          círculo por polígonos;</li>
+        <li>o <strong>filtro</strong> que redimensiona uma imagem é uma função
+          com um buraco no meio — e é o Confronto que diz quanto vale ali.</li>
+      </ul>
+      <div class="traducao">
+        <p>ler um gráfico e ler uma imagem são a mesma
+        habilidade. É por isso que este seminário abre o arco: sem ele, os três
+        seguintes são conta; com ele, são <strong>coisas que se
+        veem</strong>.</p>
+      </div>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-grafico-imagem.png" alt="o mesmo desenho como grafico e como grade de pixels">
+    </div>
+  </div>
+  <div class="rodape"><span>ler um gráfico</span><span class="contador"></span></div>
+</section>
+
+<!-- 15 · dicionário -->
+<!-- apêndice · onde este seminário mora no mapa (2026-09-01) -->
+<section class="slide">
+  <div class="eyebrow">apêndice · onde este seminário mora</div>
+  <h1>A dobradiça entre a base e o <em>arco</em></h1>
+  <div class="corpo">
+    <div class="col">
+      <p>Este seminário não fica dentro do arco do cálculo: fica na
+        <strong>dobradiça</strong>. Ele ensina cinco nós da base de uma vez —
+        o <strong>par ordenado</strong>, os <strong>números reais</strong>, a
+        <strong>função</strong>, e usa a trigonometria e a álgebra elementar
+        para montar os dois primeiros.</p>
+      <p>E tudo o que ele constrói desemboca num lugar só: a
+        <strong>função</strong> alimenta o <strong>limite</strong>, que é o nó
+        onde o arco inteiro acontece. Quem sai daqui está a uma seta do
+        cálculo.</p>
+      <div class="traducao">
+        <p>o <strong>plano cartesiano</strong> aparece aqui pelo par ordenado,
+        não por coordenada — <em>coord_plano</em> é do arco da geometria
+        analítica, e a norma proíbe um arco cobrar o outro.</p>
+      </div>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/mapa-para-onde-vamos.svg" alt="o recorte do mapa de pre-requisitos com os nos funcoes, relacoes, reais, trigonometria e algebra elementar acesos, e o limite que depende deles">
+    </div>
+  </div>
+  <div class="rodape"><span>ler um gráfico</span><span class="contador"></span></div>
+</section>
+
+<section class="slide">
+  <div class="eyebrow">apêndice</div>
+  <h1>As palavras desta folha em diante</h1>
+  <div class="corpo">
+    <div class="col">
+      <table class="simbolos">
+        <tr><td>função</td><td>a regra que, para cada entrada aceita, devolve
+          <strong>uma</strong> saída</td></tr>
+        <tr><td>domínio</td><td>as entradas que a função aceita</td></tr>
+        <tr><td>imagem</td><td>as saídas que ela produz</td></tr>
+        <tr><td>par \((x, f(x))\)</td><td>uma entrada e a saída dela, juntas —
+          é o que vira ponto</td></tr>
+        <tr><td>plano<br>cartesiano</td><td>os dois eixos cruzados; onde se
+          cruzam é a origem</td></tr>
+        <tr><td>gráfico</td><td>o desenho de todos os pares da função</td></tr>
+      </table>
+    </div>
+    <div class="col">
+      <table class="simbolos">
+        <tr><td>crescente</td><td>andando para a direita, sobe</td></tr>
+        <tr><td>decrescente</td><td>andando para a direita, desce</td></tr>
+        <tr><td>constante</td><td>não muda de altura</td></tr>
+        <tr><td>buraco ·<br>salto · bico</td><td>os três defeitos do
+          desenho</td></tr>
+        <tr><td>assíntota</td><td>a reta que o desenho encosta sem
+          tocar</td></tr>
+        <tr><td>radiano</td><td>o ângulo medido pelo comprimento do arco que
+          ele abre, no círculo de raio 1</td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="rodape"><span>ler um gráfico</span><span class="contador"></span></div>
+</section>
+
+<!-- 16 · de onde veio -->
+<section class="slide">
+  <div class="eyebrow">apêndice</div>
+  <h1>De onde veio cada coisa</h1>
+  <div class="corpo">
+    <div class="col">
+      <ul>
+        <li>este seminário <strong>não tem fonte de livro</strong>: ele existe
+          para pagar uma dívida que os livros de cálculo assumem paga. O
+          conteúdo é o repertório mínimo que os três seminários seguintes
+          cobram sem avisar;</li>
+        <li>a <strong>medida que o motivou</strong>, de 2026-08-24: nos três
+          decks de cálculo desta série — 46 folhas e 37 gráficos — a palavra
+          <em>gráfico</em> aparecia <strong>zero</strong> vezes;
+          <em>plano cartesiano</em>, <em>domínio</em>, <em>par ordenado</em>,
+          <em>crescente</em> e <em>decrescente</em>, zero; e <em>função</em>,
+          usada 33 vezes, <strong>nunca era definida</strong>;</li>
+        <li>a norma que passou a exigir isto:
+          <span class="ouro">hipatia/norma-de-notacao.md</span>, §1 —
+          um arco pode declarar um pré-requisito que o ensino básico não
+          entrega, e aí ele o <strong>constrói</strong> dentro da série;</li>
+        <li>toda figura deste deck sai de script nesta pasta.</li>
+      </ul>
+      <div class="traducao">
+        <p>a dívida não era dos alunos. Era da série —
+        e está escrita aqui para não voltar a ser esquecida.</p>
+      </div>
+    </div>
+  </div>
+  <div class="rodape"><span>ler um gráfico</span><span class="contador"></span></div>
+</section>
+
+<!-- 17 · fecho -->
+<section class="slide">
+  <div class="eyebrow">fecho</div>
+  <h1>Agora o desenho <em>fala</em></h1>
+  <div class="corpo">
+    <div class="col">
+      <p class="tese">uma função é uma máquina; o par vira ponto; o rastro dos
+        pontos é o gráfico — e o que o gráfico faz é o que a função faz.</p>
+      <p>Você sabe dizer, olhando: se sobe, se desce, se fica parada; se tem
+        buraco, salto ou bico; se encosta numa reta sem tocar, ou se dispara.
+        E sabe que seno, cosseno e tangente são comprimentos num círculo de
+        raio um.</p>
+      <p>É pouco, e é exatamente o que faltava. Os três seminários seguintes
+        não vão parar para explicar nenhuma dessas coisas — eles vão
+        <strong>usá-las</strong>.</p>
+      <div class="traducao">
+        <p>o cálculo não é difícil por causa das
+        contas. É difícil quando se pede a alguém que enxergue um
+        comportamento sem nunca lhe terem ensinado a olhar.</p>
+      </div>
+    </div>
+  </div>
+  <div class="rodape"><span>ler um gráfico</span><span class="contador"></span></div>
+</section>
+
+
+<script>
+const slides = [...document.querySelectorAll(".slide")];
+let i = 0;
+// cada slide carrega o SEU número (vale para a tela e para o PDF impresso)
+slides.forEach((s, k) => s.querySelectorAll(".contador").forEach(c =>
+  c.textContent = `${k + 1} / ${slides.length}`));
+function mostra(n) {
+  i = Math.max(0, Math.min(slides.length - 1, n));
+  slides.forEach((s, k) => s.classList.toggle("ativo", k === i));
+}
+addEventListener("keydown", e => {
+  if (["ArrowRight", "PageDown", " "].includes(e.key)) mostra(i + 1);
+  if (["ArrowLeft", "PageUp"].includes(e.key)) mostra(i - 1);
+  if (e.key === "Home") mostra(0);
+  if (e.key === "End") mostra(slides.length - 1);
+});
+addEventListener("click", e => {
+  if (e.clientX > innerWidth / 2) mostra(i + 1); else mostra(i - 1);
+});
+function doHash() {
+  const n = parseInt(location.hash.slice(1), 10);
+  mostra(Number.isFinite(n) ? n - 1 : 0);
+}
+addEventListener("hashchange", doHash);
+doHash();
+</script>
+</body>
+</html>

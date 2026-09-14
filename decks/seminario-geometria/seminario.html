@@ -1,0 +1,2014 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Do registro ao pixel — introdução a geometria analítica e álgebra linear</title>
+<script>
+window.MathJax = {
+  tex: { inlineMath: [["\\(", "\\)"]], displayMath: [["\\[", "\\]"]] },
+  svg: { fontCache: "global" },
+  startup: { typeset: true }
+};
+</script>
+<script src="../../vendor/tex-svg.js" id="MathJax-script" async></script>
+<style>
+/* ============================================================
+   Ítaca DS — TEMA CLARO (o "irmão claro" previsto em
+   itaca-ds/tokens.css; primitivos da paleta do roteiro ao
+   orientador; muda só a camada semântica)
+   ============================================================ */
+:root {
+  --bg: #f3f5f9; --card: #ffffff; --linha: #d9e0ec;
+  --ink: #16233f; --ink2: #3f4d6b; --muted: #7c88a1;
+  --bronze: #a9713f; --bronze-fundo: #8f5e33; --bronze-soft: #c79b6e;
+  --azul: #1e3a6b; --azul-deep: #12244a;
+  --terracota: #b35430; --verde: #4e7a49; --rubro: #a84444;
+  --it-serif: Georgia, "Cormorant Garamond", "Times New Roman", serif;
+  --it-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --it-mono: "Spline Sans Mono", ui-monospace, "Cascadia Code", monospace;
+  /* cores dos 8 vértices (as mesmas de gerar_figuras.py) */
+  /* NORMA §2.1 — a medida de linha, declarada UMA vez. Em EM, nunca em `ch`:
+     `ch` mede o glifo "0" (0,636 em na Inter) e não o caractere médio de
+     prosa (0,456 em), então 66ch entregaria 92 caracteres. */
+  --medida: 30em;
+  --v0:#a9713f; --v1:#b35430; --v2:#4e7a49; --v3:#a84444;
+  --v4:#3d6394; --v5:#6d55a3; --v6:#2e7d70; --v7:#a85577;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+/* §2.6 — a ESCALA do registro deck. Uma raiz só, porque `rem` é global:
+   subir aqui escala junto o que tem `clamp(...vw...)` e o que tem tamanho
+   FIXO em rem. Levantar só os clamps (a primeira tentativa) deixou
+   `.leitura`, `.legenda`, `.eyebrow` e todo `<p>` fora de `.col` para trás, e
+   a folha ficou com DUAS escalas ao mesmo tempo.
+   25px escolhido para que o termo proporcional continue governando a 1920:
+   o teto de `.col p` (1,04rem) passa a valer 26px, logo acima dos 25,92px do
+   `1.35vw` — a proporção manda, o teto só segura viewport maior. */
+html { font-size: 25px; }
+html, body { height: 100%; background: var(--azul-deep); }
+body { font-family: var(--it-sans); color: var(--ink); overflow: hidden; }
+
+.slide {
+  display: none; position: absolute; inset: 0;
+  background: var(--bg);
+  padding: 4vh 6vw 6vh; flex-direction: column;
+  overflow: hidden;            /* nada vaza para a página seguinte */
+}
+.slide.ativo { display: flex; animation: fade .35s ease; }
+@keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.eyebrow {
+  font-size: 0.72rem; letter-spacing: 0.22em;
+  text-transform: uppercase; color: var(--bronze); font-weight: 700;
+  margin-bottom: 1vh;
+}
+h1 { font-family: var(--it-serif); font-weight: 700; font-size: clamp(1.5rem, 3vw, 2.4rem);
+     line-height: 1.12; margin-bottom: 1.2vh; color: var(--azul-deep);
+     letter-spacing: -0.01em; }
+h1 em { color: var(--bronze); font-style: normal; }
+.tese { font-family: var(--it-serif); font-style: italic; font-size: clamp(1.05rem, 1.8vw, 1.35rem);
+        color: var(--bronze-fundo); }
+.corpo { flex: 1; display: flex; gap: 2.6vw; align-items: safe center;
+         min-height: 0; }
+/* `safe center`, não `center`: a exceção do deck (§2.4) centra a faixa única
+   na vertical — mas `center` num flex TRANSBORDA PARA OS DOIS LADOS quando o
+   item é mais alto que o container, e aí o texto sobe por cima do título e
+   desce por cima do rodapé ao mesmo tempo. Foi o que apareceu na folha 12 ao
+   subir a escala. `safe` volta a alinhar pelo topo exatamente quando não cabe:
+   a centralização vale enquanto é composição, e desliga quando viraria
+   atropelo. */
+.col { flex: 1; min-width: 0; }
+
+/* ===== NORMA DE COMPOSIÇÃO — variante B (2026-08-17) =======================
+   §2.4 (o conteúdo pende do topo) NÃO foi aplicado aqui, e é decisão em
+   aberto do operador. Motivo medido: OITO folhas trazem
+   `style="align-items:center"` INLINE na `.corpo`, e estilo inline vence a
+   folha de estilo — trocar só a regra deixaria 30 folhas no topo e 8
+   centradas, inconsistência pior que qualquer das duas. E há uma dúvida de
+   mérito: numa folha subocupada, pendurar no topo joga TODO o vazio para
+   baixo (47% na folha 21) enquanto centrar o divide. A regra nasceu para
+   blocos empilhados do caderno e pode não valer para o deck.
+   O estilo inline é também a raiz dos 407 eixos distintos.
+
+   §2.1 a medida governa a PROSA; bloco de exibição (fórmula, figura, tabela,
+   grade) é governado pelo conteúdo. A `.corpo` continua FLEX de propósito: os
+   arranjos especiais deste deck (`duo`, `grid3x3`, `grid2x2`,
+   `figbox.vert.hierarquia`) carregam proporções que o autor declarou em
+   `flex`, e trocar por grade as apagaria. O eixo fica para um segundo ato,
+   com cada arranjo convertido caso a caso.
+
+   Alcance: a prosa deste deck NÃO mora só em `.col` — há folhas com `<div>`
+   sem classe dentro de `.corpo` (a 9 é uma). Seletor estreito deixava 67
+   linhas acima do teto com a regra certa aplicada; é a armadilha 13 outra vez,
+   pelo lado do ALCANCE. Por isso a regra vale para prosa onde quer que ela
+   esteja, e o que fica de fora é nomeado, não esquecido.                      */
+.slide p,
+.slide li,
+.slide figcaption,
+.slide .legenda,
+.slide .citacao .frase { max-width: var(--medida, 30em); }
+/* Prosa CENTRADA (33 blocos neste deck) precisa continuar centrada depois de
+   limitada: sem isto a caixa encolhe mas fica ancorada à esquerda, e o texto
+   parece deslocado — regressão que a medida introduziu na folha 9. Centrar o
+   BLOCO é o que preserva a decisão do autor enquanto a medida faz seu trabalho.
+   (A §2.2 desaprova bloco centrado; convertê-los é redesenho folha a folha, e
+   não é o que esta rodada faz.) */
+.slide [style*="text-align:center"],
+.slide [style*="text-align: center"] { margin-inline: auto; }
+
+/* fora da medida, por serem BLOCO DE EXIBIÇÃO (§2.1) */
+.slide .formula,
+.slide .formula p,
+.slide table p,
+.slide .quadro mjx-container { max-width: none; }
+.col p, .col li { color: var(--ink2); font-size: clamp(0.88rem, 1.35vw, 1.04rem);
+                  line-height: 1.55; margin-bottom: 1vh; }
+.col strong { color: var(--ink); }
+.col .ouro { color: var(--bronze-fundo); }
+.col .quente { color: var(--terracota); }
+ul { list-style: none; }
+ul li { padding-left: 1.1em; position: relative; }
+ul li::before { content: "▸"; position: absolute; left: 0; color: var(--bronze);
+                font-size: 0.8em; top: 0.28em; }
+img.fig { max-width: 100%; max-height: 100%; object-fit: contain;
+          border-radius: 8px; border: 1px solid var(--linha);
+          background: var(--card);
+          box-shadow: 0 1px 4px rgba(18, 36, 74, 0.08); }
+.figbox { flex: 1.3; min-width: 0; min-height: 0; height: 100%; display: flex;
+          align-items: center; justify-content: center; gap: 1vw; }
+.figbox img.fig { flex: 0 1 auto; min-width: 0; min-height: 0; width: auto; }
+.figbox.vert { flex-direction: column; }
+.figbox.vert img.fig { max-height: 48%; }
+/* HIERARQUIA VISUAL: a figura principal ocupa espaço proporcional à sua
+   importância; a secundária não compete com ela. Sem isto, uma figura larga
+   e rasa (observação de rodapé) fica MAIOR que a figura que carrega o
+   conceito, só por causa da proporção. */
+.figbox.vert.hierarquia img.fig:first-of-type { max-height: 68%; }
+.figbox.vert.hierarquia img.fig:last-of-type  { max-height: 26%; }
+
+/* transcrição do quadro: o cartão-lousa */
+.quadro {
+  background: var(--card); border: 1px solid var(--linha);
+  border-left: 5px solid var(--bronze); border-radius: 8px;
+  padding: 1.6vh 1.4vw; margin: 1vh 0;
+  color: var(--azul-deep); font-size: clamp(0.9rem, 1.4vw, 1.08rem);
+  line-height: 1.7;
+  box-shadow: 0 1px 4px rgba(18, 36, 74, 0.08);
+}
+.quadro .origem { display: block; font-size: 0.68rem; color: var(--muted);
+                  letter-spacing: 0.14em; text-transform: uppercase;
+                  margin-bottom: 0.8vh; }
+.quadro mjx-container { color: var(--azul-deep); }
+
+/* a tradução para quem está chegando agora */
+.traducao {
+  background: color-mix(in srgb, var(--verde) 7%, var(--card));
+  border: 1px solid color-mix(in srgb, var(--verde) 30%, var(--linha));
+  border-left: 5px solid var(--verde); border-radius: 8px;
+  padding: 1.3vh 1.4vw; margin: 1vh 0;
+  color: var(--ink2); font-size: clamp(0.86rem, 1.3vw, 1rem); line-height: 1.55;
+}
+.traducao::before { content: "em bom português: "; color: var(--verde);
+                    font-weight: 700; }
+
+.formula {
+  font-family: var(--it-mono); background: var(--card);
+  border: 1px solid var(--linha); border-left: 4px solid var(--bronze);
+  border-radius: 8px;
+  padding: 1.3vh 1.2vw; color: var(--azul-deep); font-size: clamp(0.85rem, 1.35vw, 1.02rem);
+  margin: 1vh 0; overflow-x: auto;
+}
+.legenda { font-size: 0.78rem; color: var(--muted); margin-top: 0.6vh; }
+/* leitura em voz alta das expressões — parte do método didático */
+.leitura { font-size: 0.8rem; color: var(--muted); font-style: italic;
+           margin: -0.3vh 0 1vh 0.3vw; }
+.leitura::before { content: "lê-se: "; font-style: normal; font-weight: 700;
+                   color: var(--bronze); }
+.rodape { position: absolute; bottom: 1.8vh; left: 6vw; right: 6vw;
+          display: flex; justify-content: space-between;
+          font-size: 0.72rem; color: var(--muted);
+          letter-spacing: 0.08em; border-top: 1px solid var(--linha);
+          padding-top: 0.9vh; }
+.contador { font-family: var(--it-mono); }
+
+/* dicionário de símbolos */
+table.simbolos { border-collapse: collapse; margin: 0.6vh 0; width: 100%; }
+/* D4 (2026-08-18): o teto era 0.98rem (~15,7 px) enquanto o termo
+       proporcional 1.25vw vale 24 px a 1920 — o teto em `rem` suprimia a
+       escala a dois terços, e as folhas 44/45 ficavam com 36% de sobra, que
+       a §2.4 chama de DEFEITO. Mesma armadilha já registrada na norma: a
+       escala certa já estava no arquivo; o teto é que a apagava. */
+    table.simbolos td { padding: 0.72vh 0.7vw; font-size: clamp(0.95rem, 1.25vw, 1.32rem);
+                    color: var(--ink2); border-bottom: 1px solid var(--linha); }
+table.simbolos td:first-child { color: var(--azul-deep); font-weight: 600;
+                                white-space: nowrap; }
+
+/* matriz colorida */
+table.matriz { border-collapse: collapse; font-family: var(--it-mono);
+               font-size: clamp(0.8rem, 1.5vw, 1.15rem); margin: 1vh auto;
+               background: var(--card); border: 1px solid var(--linha);
+               border-radius: 8px;
+               box-shadow: 0 1px 4px rgba(18, 36, 74, 0.08); }
+table.matriz td { padding: 0.8vh 0.75vw; text-align: center; font-weight: 600; }
+table.matriz td.rotulo { color: var(--muted); font-size: 0.8em; font-weight: 400; }
+table.matriz .colch { font-size: 2.2em; color: var(--ink2); font-family: var(--it-serif);
+                      font-weight: 400; }
+.chip { display: inline-block; width: 0.85em; height: 0.85em; border-radius: 50%;
+        vertical-align: -0.08em; }
+
+/* mapa da viagem */
+.estacoes { display: flex; gap: 1.2vw; align-items: stretch; margin: 2vh 0; }
+.estacao { flex: 1; background: var(--card); border: 1px solid var(--linha);
+           border-top: 4px solid var(--bronze); border-radius: 8px;
+           padding: 1.6vh 1vw; text-align: center;
+           box-shadow: 0 1px 4px rgba(18, 36, 74, 0.08); }
+.estacao .num { font-family: var(--it-serif); font-size: 1.6rem;
+                color: var(--bronze); }
+.estacao .nome { font-weight: 700; color: var(--azul-deep);
+                 font-size: clamp(0.85rem, 1.3vw, 1.05rem); margin: 0.5vh 0; }
+.estacao .oq { font-size: clamp(0.76rem, 1.1vw, 0.9rem); color: var(--ink2);
+               line-height: 1.45; }
+.seta-estacao { align-self: center; color: var(--bronze); font-size: 1.4rem; }
+
+/* galeria da obra: pranchas lado a lado e grade 3×3 do caderno */
+.duo { flex: 1.4; min-width: 0; min-height: 0; height: 100%; display: grid;
+       grid-template-columns: 1fr 1fr; gap: 1vw; align-items: center; }
+.duo figure { min-width: 0; min-height: 0; height: 100%; display: flex;
+              flex-direction: column; align-items: center;
+              justify-content: center; }
+.duo img { max-width: 100%; min-height: 0; flex: 0 1 auto; max-height: 92%;
+           object-fit: contain; border-radius: 8px;
+           border: 1px solid var(--bronze-soft);
+           box-shadow: 0 2px 10px rgba(18, 36, 74, 0.14); }
+.duo figcaption { font-family: var(--it-serif); font-style: italic;
+                  font-size: 0.95rem; color: var(--bronze-fundo);
+                  margin-top: 0.8vh; }
+.grid3x3 { flex: 1.15; min-width: 0; min-height: 0; height: 100%;
+           display: grid; grid-template-columns: repeat(3, 1fr);
+           grid-auto-rows: 1fr; gap: 0.7vh 0.7vw; align-content: center; }
+.grid3x3 img { width: 100%; height: 100%; min-height: 0; object-fit: cover;
+               border-radius: 6px; border: 1px solid var(--linha);
+               box-shadow: 0 1px 4px rgba(18, 36, 74, 0.10); }
+.citacao { border-left: 4px solid var(--bronze); padding: 1vh 1.2vw;
+           margin: 1.2vh 0; }
+.citacao .frase { font-family: var(--it-serif); font-style: italic;
+                  font-size: clamp(1rem, 1.6vw, 1.25rem);
+                  color: var(--azul-deep); line-height: 1.45; }
+.citacao .autor { font-size: 0.78rem; color: var(--muted);
+                  margin-top: 0.5vh; }
+
+/* grade 2×2 do experimento ControlNet */
+.grid2x2 { flex: 1.5; min-width: 0; min-height: 0; display: grid;
+           grid-template-columns: 1fr 1fr; grid-auto-rows: 1fr;
+           gap: 0.8vh 0.8vw; height: 100%; }
+.grid2x2 figure { min-width: 0; min-height: 0; display: flex;
+                  flex-direction: column; align-items: center; }
+.grid2x2 img { max-width: 100%; min-height: 0; flex: 1; object-fit: contain;
+               border-radius: 6px; border: 1px solid var(--linha);
+               background: var(--card); }
+.grid2x2 figcaption { font-size: 0.72rem; color: var(--muted);
+                      margin-top: 0.4vh; }
+
+.capa { justify-content: center; align-items: center; text-align: center;
+        background: radial-gradient(ellipse at 50% 38%, var(--card) 0%, var(--bg) 62%); }
+.capa h1 { font-size: clamp(2.4rem, 5.6vw, 4rem); margin: 1.6vh 0; }
+.capa .grega { width: min(30vw, 340px); height: 1px; background: var(--bronze);
+               opacity: 0.55; margin: 2.2vh auto; }
+.capa p { color: var(--ink2); max-width: 48ch; font-size: 1.05rem; line-height: 1.6; }
+    /* D5 (2026-08-18): a folha-quadro pode centrar a COMPOSIÇÃO — é a exceção
+       declarada do registro deck —, mas parágrafo longo centralizado é o pior
+       caso de leitura: cada linha começa num ponto diferente e o olho perde a
+       volta. O bloco continua centrado; as linhas passam a alinhar à esquerda. */
+    .capa p.prosa { text-align: left; margin: 0 auto 1.5vh; }
+    .capa p.prosa:last-of-type { margin-bottom: 0; }
+    /* autoria (2026-09-09): autor, coautora e orientador nomeados na capa, por
+       decisão do operador; o G3 (registro ao pixel) é só do autor e do
+       orientador. Método, item 5 (discrição): autoria nomeada abertamente. */
+    .capa p.autoria { font-size: 0.82rem; color: var(--muted); line-height: 1.55;
+                      margin: 2.6vh auto 0; text-align: center; max-width: none; }
+    .capa p.autoria strong { color: var(--ink2); font-weight: 600; }
+
+@page { size: 1920px 1080px; margin: 0; }
+.corpo > .col { flex: 1 1 0; min-width: 34ch; }     /* trava anti-espremida */
+/* §2.6 PARIDADE: figura e texto são metades da mesma metodologia e dividem
+   espaço equivalente (banda 40–60). A figura tinha `flex: 1.3` contra `flex: 1`
+   do texto e ficava em 60–67% em ONZE folhas — desequilíbrio por omissão, não
+   por decisão. Mesma base e mesmo crescimento nos dois = 50/50; quem quiser
+   sair da paridade declara na própria folha. */
+.corpo > .figbox { flex: 1 1 0; }
+/* Figura empilhada NÃO precisa encher a coluna inteira: quando ela enche, o
+   par figura↔texto sai da banda da §2.6 por ALTURA (647pt de figura contra
+   439pt de texto) e a folha fica sem borda. O teto de 86% devolve o ar sem
+   mexer no conteúdo. */
+.figbox.vert { max-height: 86%; }
+.corpo .figbox { min-width: 0; }
+.corpo .figbox img, .corpo img.fig { max-width: 100%; height: auto; }
+
+@media print {
+  /* 2026-08-12: fixa aqui o que antes era escolhido à mão no diálogo do
+     Ctrl+P (1920×1080, sem margem). Sem isto a exportação depende de quem
+     imprime — e um PDF de submissão precisa ser REGERÁVEL, não relembrado. */
+  @page { size: 1920px 1080px; margin: 0; }
+  * { -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important; }
+  html, body { width: 1920px; height: 1080px; }
+  body { overflow: visible; }
+  .slide { display: flex !important; position: relative; page-break-after: always;
+           width: 1920px; height: 1080px; overflow: hidden !important; }
+  .slide.ativo { animation: none; }
+  .rodape { position: absolute; }
+}
+
+
+/* a medida, à escala nova, enche a coluna: 30em a 25,9px = 585pt de ~624 */
+</style>
+</head>
+<body>
+
+<!-- 1 · capa -->
+<section class="slide capa ativo">
+  <div class="eyebrow">Hipátia · GAAL, seminário G3 de 4</div>
+  <h1>Do registro ao <em>pixel</em></h1>
+  <div class="grega"></div>
+  <p class="tese">geometria analítica e álgebra linear, do primeiro desenho
+     à imagem gerada por computador</p>
+  <div class="grega"></div>
+  <p class="prosa">Uma imagem é uma <strong>tabela de números</strong> — e
+     <strong>onde</strong> cada coisa está, e <strong>quão longe</strong>, é
+     decidido por geometria.</p>
+  <p class="prosa">Cinco estações, de matrizes a pixels. Nenhum pré-requisito
+     além do colégio: cada símbolo aparece antes de ser usado.</p>
+  <div class="grega"></div>
+  <p class="autoria">Autor · <strong>Mateus Felipe Alkimim Pereira</strong><br>
+    Orientador · <strong>Rosivaldo Antônio Gohnan</strong></p>
+</section>
+
+<!-- 2 · créditos de produção -->
+<section class="slide">
+  <div class="eyebrow">Apresentação · o ofício do autor</div>
+  <h1>O ofício por trás do método</h1>
+  <div class="corpo" style="flex-direction:column; justify-content:center; gap:1.2vh;">
+    <div style="display:flex; gap:2.2vw; align-items:flex-start; justify-content:center;">
+      <figure style="margin:0; flex:0 0 24%; display:flex; flex-direction:column;">
+        <img src="figuras/creditos/genio-cartaz.jpg" alt="Cartaz de O Gênio do Crime"
+             style="width:100%; height:48vh; flex:none; object-fit:cover; object-position:50% 12%; border-radius:6px;
+                    box-shadow:0 4px 18px rgba(20,30,50,.18);">
+        <figcaption style="margin-top:1vh; font-size:0.92rem;">
+          <strong>O Gênio do Crime</strong> (2026)<br>
+          <span style="color:var(--muted); font-size:0.8rem;">longa de cinema ·
+          composição<br>Globo Filmes/Boutique</span></figcaption>
+      </figure>
+      <figure style="margin:0; flex:0 0 33%; display:flex; flex-direction:column;">
+        <img src="figuras/creditos/amor-still.jpg" alt="Still de Amor da Minha Vida"
+             style="width:100%; height:48vh; flex:none; object-fit:cover; border-radius:6px;
+                    box-shadow:0 4px 18px rgba(20,30,50,.18);">
+        <figcaption style="margin-top:1vh; font-size:0.92rem;">
+          <strong>Amor da Minha Vida</strong> (2024–)<br>
+          <span style="color:var(--muted); font-size:0.8rem;">série ·
+          composição<br>Disney+</span></figcaption>
+      </figure>
+      <figure style="margin:0; flex:0 0 33%; display:flex; flex-direction:column;">
+        <img src="figuras/creditos/aruna-keyart.png" alt="Arte de A Magia de Aruna"
+             style="width:100%; height:48vh; flex:none; object-fit:cover; object-position:left center; border-radius:6px;
+                    box-shadow:0 4px 18px rgba(20,30,50,.18);">
+        <figcaption style="margin-top:1vh; font-size:0.92rem;">
+          <strong>A Magia de Aruna</strong> (2023)<br>
+          <span style="color:var(--muted); font-size:0.8rem;">série ·
+          composição<br>Disney+</span></figcaption>
+      </figure>
+    </div>
+    <p style="color:var(--ink2); max-width:72ch; margin:3.4vh auto 0;">
+      <strong style="color:var(--azul-deep)">A arte e a ciência se encontram em
+      seus métodos.</strong> Meu ofício é <strong>Compositor Digital</strong> —
+      foi nestas produções que eu o exerci. É do conhecimento de artista, e da
+      aspiração a cientista, que nasce esta aula.</p>
+    <p style="text-align:center; font-size:0.72rem; color:var(--muted); margin:0;">
+      imagens: divulgação oficial (Paris Filmes · Disney) — uso editorial</p>
+  </div>
+  <div class="rodape"><span>do registro ao pixel</span><span class="contador"></span></div>
+</section>
+
+<!-- 3 · o destino: crepúsculo na fronteira -->
+<section class="slide">
+  <div class="eyebrow">O mapa da viagem</div>
+  <h1>Cinco estações, uma pergunta</h1>
+  <div class="corpo" style="flex-direction:column; justify-content:center;">
+    <div class="estacoes">
+      <div class="estacao"><div class="num">1</div>
+        <div class="nome">Matrizes</div>
+        <div class="oq">o que é uma imagem: uma grade de números — a matriz
+          antes de qualquer conta</div>
+        <div class="oq" style="color:var(--bronze-fundo); margin-top:0.7vh">para a pergunta: é NELA que a profundidade vai ser lida</div></div>
+      <div class="seta-estacao">→</div>
+      <div class="estacao"><div class="num">2</div>
+        <div class="nome">Vetores</div>
+        <div class="oq">o que é um vetor — desenhando, antes de qualquer
+          número</div>
+        <div class="oq" style="color:var(--bronze-fundo); margin-top:0.7vh">para a pergunta: profundidade ainda não existe aqui: só direção, sentido e comprimento</div></div>
+      <div class="seta-estacao">→</div>
+      <div class="estacao"><div class="num">3</div>
+        <div class="nome">Coordenadas</div>
+        <div class="oq">coordenadas: cada ponto vira três números; a forma
+          vira uma tabela (matriz)</div>
+        <div class="oq" style="color:var(--bronze-fundo); margin-top:0.7vh">para a pergunta: a origem vira o olho — e "longe" ganha endereço</div></div>
+      <div class="seta-estacao">→</div>
+      <div class="estacao"><div class="num">4</div>
+        <div class="nome">Equações</div>
+        <div class="oq">sistemas lineares: onde uma reta encontra um
+          plano</div>
+        <div class="oq" style="color:var(--bronze-fundo); margin-top:0.7vh">para a pergunta: cada pixel vira um sistema; a solução é o ponto que ele mostra</div></div>
+      <div class="seta-estacao">→</div>
+      <div class="estacao"><div class="num">5</div>
+        <div class="nome">Pixels</div>
+        <div class="oq">a mesma matemática dentro de um modelo generativo
+          de imagem</div>
+        <div class="oq" style="color:var(--bronze-fundo); margin-top:0.7vh">para a pergunta: duas réguas medem o mesmo longe — e uma delas não carrega tudo</div></div>
+    </div>
+    <p style="color:var(--ink2); max-width:66ch; margin:1.6vh auto 0;">
+      A pergunta que amarra tudo: <strong style="color:var(--azul-deep)">quão
+      longe está, de quem olha, cada coisa que a imagem mostra?</strong>
+      A resposta muda a cada estação — e é essa mudança que
+      <span class="ouro" style="color:var(--bronze-fundo)">é</span> a matéria.</p>
+    <p style="color:var(--ink2); max-width:66ch; margin:1.1vh auto 0;">
+      <strong>Régua</strong> é o nome curto para <em>o jeito de medir esse
+      longe</em>. Na última estação haverá duas.</p>
+  </div>
+  <div class="rodape"><span>do registro ao pixel</span><span class="contador"></span></div>
+</section>
+
+<!-- 2b · o palco: eixos, chão e horizonte, antes da primeira seta -->
+
+
+<!-- estação 1 · imagem -->
+<!-- 4-4b · DIVIDIDA em 2026-08-17: 279 palavras fazendo DUAS coisas — a
+     imagem é uma matriz, e a ordem da matriz é a resolução. A grade de
+     números (o achado da folha: desfoque e vira uma casinha) fica inteira na
+     primeira; a segunda ganha figura própria, gerada em gerar_figuras.py. -->
+<section class="slide">
+  <div class="eyebrow">antes de começar · como ler os símbolos</div>
+  <h1>As convenções que valem <em>a viagem inteira</em></h1>
+  <div class="corpo">
+    <div class="col">
+      <p>A matemática escreve com convenções que quase nunca são ditas em voz
+        alta. Ditas, elas deixam de ser barreira: você passa a decifrar um
+        símbolo <em>novo</em> sem esperar que alguém o apresente.</p>
+      <table class="simbolos">
+        <tr><td>\(A\), \(B\), \(P\)</td><td><strong>maiúscula
+          inclinada</strong> — um ponto do espaço. Lê-se "a", "bê",
+          "pê"</td></tr>
+        <tr><td>\(E\), \(M\), \(R\)</td><td>a maiúscula também nomeia o
+          objeto grande: o espaço inteiro, uma tabela de números, uma relação.
+          <em>Qual</em> deles é, a folha diz na hora</td></tr>
+        <tr><td>\(\vec v\), \(\overrightarrow{AB}\)</td><td><strong>seta em
+          cima</strong> — um vetor: a família de setas, não uma seta
+          só</td></tr>
+        <tr><td>\(x\), \(y\), \(z\)</td><td><strong>minúscula
+          inclinada</strong> — as coordenadas: largura, profundidade,
+          altura</td></tr>
+      </table>
+    </div>
+    <div class="col">
+      <table class="simbolos">
+        <tr><td>\(k\), \(t\), \(h\)</td><td>a minúscula também é um número
+          comum: o que estica, o instante, a altura</td></tr>
+        <tr><td>\(\alpha\), \(\theta\), \(\rho\)</td><td><strong>letra
+          grega</strong> — o que se <em>mede</em>: um ângulo, um ângulo, uma
+          distância. Nunca é o assunto da folha; é a medida dele. Lê-se
+          "alfa", "teta", "rô"</td></tr>
+        <tr><td>\(\mathbb{R}\)</td><td><strong>letra vazada</strong> — todos
+          os números reais. Lê-se "erre"</td></tr>
+        <tr><td>\(\|\vec v\|\) e \(|k|\)</td><td><strong>duas
+          barras</strong> é comprimento — a norma; <strong>uma barra</strong> é
+          o número sem o sinal. Parecidas na página, diferentes no que
+          medem</td></tr>
+        <tr><td>sen, cos, tg</td><td><strong>letra em pé</strong> — nome de
+          operação, não letra que vale um número</td></tr>
+      </table>
+      <div class="traducao">
+        <p>a <strong>forma</strong> da letra já diz de que
+        família o símbolo é. Reconhecida a família, um símbolo que você nunca
+        viu deixa de ser obstáculo: você lê a forma dele e já sabe o que
+        esperar.</p>
+      </div>
+    </div>
+  </div>
+  <div class="rodape"><span>do registro ao pixel</span><span class="contador"></span></div>
+</section>
+
+<section class="slide">
+  <div class="eyebrow">Estação 1 · matrizes</div>
+  <h1>O que é uma imagem: uma <em>tabela de números</em></h1>
+  <div class="corpo">
+    <div class="col">
+      <p>Cada quadradinho é um <strong>pixel</strong>, e cada pixel guarda
+        <strong>um número</strong>: 0 é preto, 255 é branco, e o meio do
+        caminho são os cinzas.</p>
+      <p>Em matemática, essa tabela tem nome: uma <strong>matriz de ordem
+        \(m \times n\)</strong> — \(m\) linhas e \(n\) colunas de
+        números.</p>
+      <p class="leitura">"eme por ene".</p>
+      <p>Cada entrada se chama \(a_{ij}\): o número que mora na linha
+        \(i\), coluna \(j\). A casinha ao lado é uma matriz de ordem
+        \(8 \times 12\) — e a célula destacada é
+        \(a_{3,5} = 70\): terceira linha, quinta coluna.</p>
+      <p class="leitura">"a i j".</p>
+    </div>
+    <div class="figbox">
+      <figure style="margin:0; width:100%;">
+      <div style="display:grid; grid-template-columns:1.5em repeat(12, 1fr); gap:2px;
+                  aspect-ratio:13.5/9; border:1px solid var(--muted); padding:3px;
+                  border-radius:6px; background:#fff;"><div style="font-size:0.6rem; color:var(--muted); display:flex; align-items:center; justify-content:center; font-family:var(--it-mono, monospace); color:var(--bronze); font-size:0.55rem;">j→</div><div style="font-size:0.6rem; color:var(--muted); display:flex; align-items:center; justify-content:center; font-family:var(--it-mono, monospace);">1</div><div style="font-size:0.6rem; color:var(--muted); display:flex; align-items:center; justify-content:center; font-family:var(--it-mono, monospace);">2</div><div style="font-size:0.6rem; color:var(--muted); display:flex; align-items:center; justify-content:center; font-family:var(--it-mono, monospace);">3</div><div style="font-size:0.6rem; color:var(--muted); display:flex; align-items:center; justify-content:center; font-family:var(--it-mono, monospace);">4</div><div style="font-size:0.6rem; color:var(--muted); display:flex; align-items:center; justify-content:center; font-family:var(--it-mono, monospace);">5</div><div style="font-size:0.6rem; color:var(--muted); display:flex; align-items:center; justify-content:center; font-family:var(--it-mono, monospace);">6</div><div style="font-size:0.6rem; color:var(--muted); display:flex; align-items:center; justify-content:center; font-family:var(--it-mono, monospace);">7</div><div style="font-size:0.6rem; color:var(--muted); display:flex; align-items:center; justify-content:center; font-family:var(--it-mono, monospace);">8</div><div style="font-size:0.6rem; color:var(--muted); display:flex; align-items:center; justify-content:center; font-family:var(--it-mono, monospace);">9</div><div style="font-size:0.6rem; color:var(--muted); display:flex; align-items:center; justify-content:center; font-family:var(--it-mono, monospace);">10</div><div style="font-size:0.6rem; color:var(--muted); display:flex; align-items:center; justify-content:center; font-family:var(--it-mono, monospace);">11</div><div style="font-size:0.6rem; color:var(--muted); display:flex; align-items:center; justify-content:center; font-family:var(--it-mono, monospace);">12</div><div style="font-size:0.6rem; color:var(--muted); display:flex; align-items:center; justify-content:center; font-family:var(--it-mono, monospace);">1</div><div style="background:rgb(235,235,235); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">235</div><div style="background:rgb(235,235,235); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">235</div><div style="background:rgb(235,235,235); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">235</div><div style="background:rgb(235,235,235); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">235</div><div style="background:rgb(235,235,235); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">235</div><div style="background:rgb(235,235,235); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">235</div><div style="background:rgb(235,235,235); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">235</div><div style="background:rgb(235,235,235); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">235</div><div style="background:rgb(235,235,235); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">235</div><div style="background:rgb(235,235,235); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">235</div><div style="background:rgb(235,235,235); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">235</div><div style="background:rgb(235,235,235); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">235</div><div style="font-size:0.6rem; color:var(--muted); display:flex; align-items:center; justify-content:center; font-family:var(--it-mono, monospace);">2</div><div style="background:rgb(235,235,235); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">235</div><div style="background:rgb(235,235,235); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">235</div><div style="background:rgb(235,235,235); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">235</div><div style="background:rgb(235,235,235); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">235</div><div style="background:rgb(235,235,235); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">235</div><div style="background:rgb(70,70,70); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">70</div><div style="background:rgb(70,70,70); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">70</div><div style="background:rgb(235,235,235); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">235</div><div style="background:rgb(235,235,235); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">235</div><div style="background:rgb(235,235,235); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">235</div><div style="background:rgb(235,235,235); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">235</div><div style="background:rgb(235,235,235); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">235</div><div style="font-size:0.6rem; color:var(--muted); display:flex; align-items:center; justify-content:center; font-family:var(--it-mono, monospace);">3</div><div style="background:rgb(235,235,235); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">235</div><div style="background:rgb(235,235,235); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">235</div><div style="background:rgb(235,235,235); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">235</div><div style="background:rgb(235,235,235); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">235</div><div style="outline:2.5px solid var(--bronze); outline-offset:1px; z-index:2; position:relative; background:rgb(70,70,70); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">70</div><div style="background:rgb(70,70,70); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">70</div><div style="background:rgb(70,70,70); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">70</div><div style="background:rgb(70,70,70); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">70</div><div style="background:rgb(235,235,235); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">235</div><div style="background:rgb(235,235,235); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">235</div><div style="background:rgb(235,235,235); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">235</div><div style="background:rgb(235,235,235); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">235</div><div style="font-size:0.6rem; color:var(--muted); display:flex; align-items:center; justify-content:center; font-family:var(--it-mono, monospace);">4</div><div style="background:rgb(235,235,235); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">235</div><div style="background:rgb(235,235,235); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">235</div><div style="background:rgb(235,235,235); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">235</div><div style="background:rgb(70,70,70); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">70</div><div style="background:rgb(70,70,70); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">70</div><div style="background:rgb(70,70,70); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">70</div><div style="background:rgb(70,70,70); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">70</div><div style="background:rgb(70,70,70); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">70</div><div style="background:rgb(70,70,70); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">70</div><div style="background:rgb(235,235,235); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">235</div><div style="background:rgb(235,235,235); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">235</div><div style="background:rgb(235,235,235); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">235</div><div style="font-size:0.6rem; color:var(--muted); display:flex; align-items:center; justify-content:center; font-family:var(--it-mono, monospace);">5</div><div style="background:rgb(235,235,235); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">235</div><div style="background:rgb(235,235,235); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">235</div><div style="background:rgb(235,235,235); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">235</div><div style="background:rgb(165,165,165); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">165</div><div style="background:rgb(165,165,165); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">165</div><div style="background:rgb(165,165,165); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">165</div><div style="background:rgb(165,165,165); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">165</div><div style="background:rgb(165,165,165); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">165</div><div style="background:rgb(165,165,165); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">165</div><div style="background:rgb(235,235,235); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">235</div><div style="background:rgb(235,235,235); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">235</div><div style="background:rgb(235,235,235); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">235</div><div style="font-size:0.6rem; color:var(--muted); display:flex; align-items:center; justify-content:center; font-family:var(--it-mono, monospace);">6</div><div style="background:rgb(235,235,235); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">235</div><div style="background:rgb(235,235,235); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">235</div><div style="background:rgb(235,235,235); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">235</div><div style="background:rgb(165,165,165); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">165</div><div style="background:rgb(165,165,165); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">165</div><div style="background:rgb(95,95,95); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">95</div><div style="background:rgb(95,95,95); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">95</div><div style="background:rgb(165,165,165); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">165</div><div style="background:rgb(165,165,165); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">165</div><div style="background:rgb(235,235,235); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">235</div><div style="background:rgb(235,235,235); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">235</div><div style="background:rgb(235,235,235); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">235</div><div style="font-size:0.6rem; color:var(--muted); display:flex; align-items:center; justify-content:center; font-family:var(--it-mono, monospace);">7</div><div style="background:rgb(235,235,235); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">235</div><div style="background:rgb(235,235,235); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">235</div><div style="background:rgb(235,235,235); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">235</div><div style="background:rgb(165,165,165); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">165</div><div style="background:rgb(165,165,165); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">165</div><div style="background:rgb(95,95,95); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">95</div><div style="background:rgb(95,95,95); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">95</div><div style="background:rgb(165,165,165); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">165</div><div style="background:rgb(165,165,165); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">165</div><div style="background:rgb(235,235,235); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">235</div><div style="background:rgb(235,235,235); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">235</div><div style="background:rgb(235,235,235); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">235</div><div style="font-size:0.6rem; color:var(--muted); display:flex; align-items:center; justify-content:center; font-family:var(--it-mono, monospace);">8</div><div style="background:rgb(205,205,205); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">205</div><div style="background:rgb(205,205,205); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">205</div><div style="background:rgb(205,205,205); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">205</div><div style="background:rgb(205,205,205); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">205</div><div style="background:rgb(205,205,205); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">205</div><div style="background:rgb(205,205,205); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">205</div><div style="background:rgb(205,205,205); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">205</div><div style="background:rgb(205,205,205); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">205</div><div style="background:rgb(205,205,205); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">205</div><div style="background:rgb(205,205,205); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">205</div><div style="background:rgb(205,205,205); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">205</div><div style="background:rgb(205,205,205); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-family:var(--it-mono, monospace);">205</div></div>
+      <div style="font-size:0.58rem; color:var(--bronze); margin-top:0.3vh;">i&nbsp;↓&nbsp; linhas &nbsp;·&nbsp; j&nbsp;→&nbsp; colunas</div>
+      <figcaption style="margin-top:0.9vh; font-size:0.8rem; color:var(--muted); text-align:center;">
+        afaste os olhos da tela: os números viram uma casinha — porque os
+        números <strong>são</strong> a imagem</figcaption>
+      </figure>
+    </div>
+  </div>
+  <div class="rodape"><span>do registro ao pixel</span><span class="contador"></span></div>
+</section>
+    
+
+<!-- 4b · a ordem é a resolução -->
+<section class="slide">
+  <div class="eyebrow">Estação 1 · matrizes</div>
+  <h1>A ordem da matriz é o que o dia a dia chama de <em>resolução</em></h1>
+  <div class="corpo">
+    <div class="col">
+      <p>Trocar de resolução é trocar de <strong>ordem da matriz</strong> — e
+        o "número de pixels" que se anuncia é a <strong>área</strong> dessa
+        tabela: linhas vezes colunas.</p>
+      <div class="traducao">
+        <p>a folha que você está vendo tem
+        <strong>1 011 712</strong> números por canal. Um 4K tem oito vezes
+        isso. É a mesma ideia, em escalas diferentes.</p>
+      </div>
+      <p class="ouro"><strong>Repare na ordem:</strong> a matriz diz
+        <strong>linhas × colunas</strong> — altura primeiro. Por isso o Full HD
+        é a matriz \(1080 \times 1920\), embora o comércio anuncie
+        "1920×1080", largura primeiro. <strong>Mesma tabela, duas
+        gramáticas.</strong></p>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-r-ordem-resolucao.png"
+           alt="Tres resolucoes como retangulos encaixados, na escala real entre si">
+    </div>
+  </div>
+  <div class="rodape"><span>do registro ao pixel</span><span class="contador"></span></div>
+</section>
+
+<!-- estação 1 · canal R -->
+<section class="slide">
+  <div class="eyebrow">Estação 1 · matrizes — os três canais</div>
+  <h1>O canal <span style="color:#dc3c32">R</span> (vermelho) é uma tabela de números</h1>
+  <div class="corpo" style="align-items:center; justify-content:center; gap:3.2vw;">
+    <figure style="margin:0; flex:0 0 41%;">
+      <img src="figuras/canais/canal-r-marcado.png" alt="Canal R"
+           style="width:100%; border-radius:6px; box-shadow:0 5px 20px rgba(20,30,50,.22);">
+      <figcaption style="margin-top:0.7vh; font-size:0.78rem; color:var(--muted); text-align:center;">
+        o canal R da pintura do crepúsculo — por natureza, dessaturado: um
+        mapa cinza de intensidade</figcaption>
+    </figure>
+    <div style="flex:0 0 40%; display:flex; flex-direction:column; gap:1.2vh; justify-content:center;">
+      <div style="display:grid; grid-template-columns:repeat(12, 1fr); gap:2px;
+                  aspect-ratio:12/8; border:2px solid #dc3c32; padding:3px;
+                  border-radius:6px; background:#fff;"><div style="background:rgb(245,245,245); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">245</div><div style="background:rgb(245,245,245); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">245</div><div style="background:rgb(245,245,245); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">245</div><div style="background:rgb(245,245,245); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">245</div><div style="background:rgb(245,245,245); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">245</div><div style="background:rgb(245,245,245); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">245</div><div style="background:rgb(245,245,245); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">245</div><div style="background:rgb(245,245,245); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">245</div><div style="background:rgb(245,245,245); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">245</div><div style="background:rgb(245,245,245); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">245</div><div style="background:rgb(245,245,245); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">245</div><div style="background:rgb(245,245,245); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">245</div><div style="background:rgb(245,245,245); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">245</div><div style="background:rgb(245,245,245); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">245</div><div style="background:rgb(245,245,245); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">245</div><div style="background:rgb(245,245,245); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">245</div><div style="background:rgb(245,245,245); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">245</div><div style="background:rgb(245,245,245); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">245</div><div style="background:rgb(245,245,245); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">245</div><div style="background:rgb(245,245,245); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">245</div><div style="background:rgb(245,245,245); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">245</div><div style="background:rgb(244,244,244); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">244</div><div style="background:rgb(244,244,244); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">244</div><div style="background:rgb(244,244,244); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">244</div><div style="background:rgb(245,245,245); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">245</div><div style="background:rgb(245,245,245); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">245</div><div style="background:rgb(245,245,245); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">245</div><div style="background:rgb(245,245,245); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">245</div><div style="background:rgb(245,245,245); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">245</div><div style="background:rgb(245,245,245); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">245</div><div style="background:rgb(245,245,245); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">245</div><div style="background:rgb(245,245,245); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">245</div><div style="background:rgb(245,245,245); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">245</div><div style="background:rgb(244,244,244); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">244</div><div style="background:rgb(244,244,244); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">244</div><div style="background:rgb(245,245,245); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">245</div><div style="background:rgb(245,245,245); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">245</div><div style="background:rgb(245,245,245); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">245</div><div style="background:rgb(245,245,245); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">245</div><div style="background:rgb(245,245,245); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">245</div><div style="background:rgb(245,245,245); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">245</div><div style="background:rgb(245,245,245); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">245</div><div style="background:rgb(245,245,245); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">245</div><div style="background:rgb(245,245,245); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">245</div><div style="background:rgb(245,245,245); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">245</div><div style="background:rgb(245,245,245); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">245</div><div style="background:rgb(245,245,245); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">245</div><div style="background:rgb(245,245,245); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">245</div><div style="background:rgb(243,243,243); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">243</div><div style="background:rgb(245,245,245); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">245</div><div style="background:rgb(245,245,245); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">245</div><div style="background:rgb(243,243,243); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">243</div><div style="background:rgb(245,245,245); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">245</div><div style="background:rgb(244,244,244); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">244</div><div style="background:rgb(244,244,244); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">244</div><div style="background:rgb(243,243,243); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">243</div><div style="background:rgb(243,243,243); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">243</div><div style="background:rgb(243,243,243); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">243</div><div style="background:rgb(243,243,243); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">243</div><div style="background:rgb(243,243,243); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">243</div><div style="background:rgb(242,242,242); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">242</div><div style="background:rgb(243,243,243); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">243</div><div style="background:rgb(243,243,243); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">243</div><div style="background:rgb(242,242,242); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">242</div><div style="background:rgb(243,243,243); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">243</div><div style="background:rgb(243,243,243); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">243</div><div style="background:rgb(243,243,243); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">243</div><div style="background:rgb(242,242,242); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">242</div><div style="background:rgb(243,243,243); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">243</div><div style="background:rgb(242,242,242); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">242</div><div style="background:rgb(243,243,243); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">243</div><div style="background:rgb(243,243,243); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">243</div><div style="background:rgb(239,239,239); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">239</div><div style="background:rgb(239,239,239); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">239</div><div style="background:rgb(240,240,240); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">240</div><div style="background:rgb(238,238,238); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">238</div><div style="background:rgb(239,239,239); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">239</div><div style="background:rgb(239,239,239); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">239</div><div style="background:rgb(241,241,241); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">241</div><div style="background:rgb(241,241,241); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">241</div><div style="background:rgb(241,241,241); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">241</div><div style="background:rgb(239,239,239); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">239</div><div style="background:rgb(236,236,236); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">236</div><div style="background:rgb(239,239,239); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">239</div><div style="background:rgb(237,237,237); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">237</div><div style="background:rgb(237,237,237); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">237</div><div style="background:rgb(238,238,238); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">238</div><div style="background:rgb(238,238,238); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">238</div><div style="background:rgb(236,236,236); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">236</div><div style="background:rgb(237,237,237); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">237</div><div style="background:rgb(237,237,237); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">237</div><div style="background:rgb(234,234,234); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">234</div><div style="background:rgb(237,237,237); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">237</div><div style="background:rgb(235,235,235); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">235</div><div style="background:rgb(235,235,235); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">235</div><div style="background:rgb(235,235,235); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">235</div></div>
+      <p style="font-size:0.82rem; color:var(--muted); text-align:center; margin:0;">
+        os <strong>valores exatos</strong> do canal R na janela marcada,
+        cruzando o horizonte (12×8 pixels, passo 8) — mesma janela nos três
+        slides: <strong>só os números mudam</strong></p>
+    </div>
+  </div>
+  <div class="rodape"><span>do registro ao pixel</span><span class="contador"></span></div>
+</section>
+
+<!-- estação 1 · canal G -->
+<section class="slide">
+  <div class="eyebrow">Estação 1 · matrizes — os três canais</div>
+  <h1>O canal <span style="color:#46a050">G</span> (verde) é uma tabela de números</h1>
+  <div class="corpo" style="align-items:center; justify-content:center; gap:3.2vw;">
+    <figure style="margin:0; flex:0 0 41%;">
+      <img src="figuras/canais/canal-g-marcado.png" alt="Canal G"
+           style="width:100%; border-radius:6px; box-shadow:0 5px 20px rgba(20,30,50,.22);">
+      <figcaption style="margin-top:0.7vh; font-size:0.78rem; color:var(--muted); text-align:center;">
+        o canal G da pintura do crepúsculo — por natureza, dessaturado: um
+        mapa cinza de intensidade</figcaption>
+    </figure>
+    <div style="flex:0 0 40%; display:flex; flex-direction:column; gap:1.2vh; justify-content:center;">
+      <div style="display:grid; grid-template-columns:repeat(12, 1fr); gap:2px;
+                  aspect-ratio:12/8; border:2px solid #46a050; padding:3px;
+                  border-radius:6px; background:#fff;"><div style="background:rgb(223,223,223); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">223</div><div style="background:rgb(224,224,224); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">224</div><div style="background:rgb(224,224,224); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">224</div><div style="background:rgb(224,224,224); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">224</div><div style="background:rgb(224,224,224); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">224</div><div style="background:rgb(224,224,224); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">224</div><div style="background:rgb(223,223,223); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">223</div><div style="background:rgb(223,223,223); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">223</div><div style="background:rgb(222,222,222); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">222</div><div style="background:rgb(219,219,219); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">219</div><div style="background:rgb(220,220,220); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">220</div><div style="background:rgb(220,220,220); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">220</div><div style="background:rgb(224,224,224); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">224</div><div style="background:rgb(224,224,224); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">224</div><div style="background:rgb(225,225,225); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">225</div><div style="background:rgb(224,224,224); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">224</div><div style="background:rgb(223,223,223); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">223</div><div style="background:rgb(225,225,225); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">225</div><div style="background:rgb(223,223,223); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">223</div><div style="background:rgb(223,223,223); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">223</div><div style="background:rgb(222,222,222); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">222</div><div style="background:rgb(220,220,220); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">220</div><div style="background:rgb(220,220,220); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">220</div><div style="background:rgb(219,219,219); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">219</div><div style="background:rgb(223,223,223); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">223</div><div style="background:rgb(223,223,223); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">223</div><div style="background:rgb(224,224,224); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">224</div><div style="background:rgb(223,223,223); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">223</div><div style="background:rgb(223,223,223); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">223</div><div style="background:rgb(223,223,223); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">223</div><div style="background:rgb(222,222,222); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">222</div><div style="background:rgb(221,221,221); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">221</div><div style="background:rgb(221,221,221); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">221</div><div style="background:rgb(218,218,218); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">218</div><div style="background:rgb(219,219,219); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">219</div><div style="background:rgb(218,218,218); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">218</div><div style="background:rgb(223,223,223); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">223</div><div style="background:rgb(223,223,223); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">223</div><div style="background:rgb(222,222,222); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">222</div><div style="background:rgb(223,223,223); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">223</div><div style="background:rgb(222,222,222); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">222</div><div style="background:rgb(221,221,221); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">221</div><div style="background:rgb(219,219,219); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">219</div><div style="background:rgb(219,219,219); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">219</div><div style="background:rgb(215,215,215); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">215</div><div style="background:rgb(215,215,215); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">215</div><div style="background:rgb(212,212,212); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">212</div><div style="background:rgb(211,211,211); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">211</div><div style="background:rgb(221,221,221); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">221</div><div style="background:rgb(221,221,221); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">221</div><div style="background:rgb(220,220,220); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">220</div><div style="background:rgb(217,217,217); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">217</div><div style="background:rgb(216,216,216); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">216</div><div style="background:rgb(211,211,211); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">211</div><div style="background:rgb(212,212,212); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">212</div><div style="background:rgb(209,209,209); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">209</div><div style="background:rgb(207,207,207); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">207</div><div style="background:rgb(205,205,205); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">205</div><div style="background:rgb(205,205,205); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">205</div><div style="background:rgb(205,205,205); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">205</div><div style="background:rgb(212,212,212); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">212</div><div style="background:rgb(211,211,211); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">211</div><div style="background:rgb(209,209,209); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">209</div><div style="background:rgb(207,207,207); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">207</div><div style="background:rgb(207,207,207); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">207</div><div style="background:rgb(206,206,206); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">206</div><div style="background:rgb(200,200,200); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">200</div><div style="background:rgb(199,199,199); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">199</div><div style="background:rgb(198,198,198); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">198</div><div style="background:rgb(195,195,195); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">195</div><div style="background:rgb(195,195,195); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">195</div><div style="background:rgb(197,197,197); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">197</div><div style="background:rgb(179,179,179); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">179</div><div style="background:rgb(173,173,173); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">173</div><div style="background:rgb(175,175,175); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">175</div><div style="background:rgb(169,169,169); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">169</div><div style="background:rgb(170,170,170); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">170</div><div style="background:rgb(169,169,169); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">169</div><div style="background:rgb(172,172,172); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">172</div><div style="background:rgb(177,177,177); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">177</div><div style="background:rgb(173,173,173); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">173</div><div style="background:rgb(175,175,175); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">175</div><div style="background:rgb(158,158,158); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">158</div><div style="background:rgb(170,170,170); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">170</div><div style="background:rgb(157,157,157); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">157</div><div style="background:rgb(157,157,157); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">157</div><div style="background:rgb(157,157,157); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">157</div><div style="background:rgb(156,156,156); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">156</div><div style="background:rgb(150,150,150); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">150</div><div style="background:rgb(152,152,152); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">152</div><div style="background:rgb(148,148,148); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">148</div><div style="background:rgb(142,142,142); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">142</div><div style="background:rgb(149,149,149); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">149</div><div style="background:rgb(146,146,146); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">146</div><div style="background:rgb(145,145,145); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">145</div><div style="background:rgb(145,145,145); color:#222; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">145</div></div>
+      <p style="font-size:0.82rem; color:var(--muted); text-align:center; margin:0;">
+        os <strong>valores exatos</strong> do canal G na janela marcada,
+        cruzando o horizonte (12×8 pixels, passo 8) — mesma janela nos três
+        slides: <strong>só os números mudam</strong></p>
+    </div>
+  </div>
+  <div class="rodape"><span>do registro ao pixel</span><span class="contador"></span></div>
+</section>
+
+<!-- estação 1 · canal B -->
+<section class="slide">
+  <div class="eyebrow">Estação 1 · matrizes — os três canais</div>
+  <h1>O canal <span style="color:#466edc">B</span> (azul) é uma tabela de números</h1>
+  <div class="corpo" style="align-items:center; justify-content:center; gap:3.2vw;">
+    <figure style="margin:0; flex:0 0 41%;">
+      <img src="figuras/canais/canal-b-marcado.png" alt="Canal B"
+           style="width:100%; border-radius:6px; box-shadow:0 5px 20px rgba(20,30,50,.22);">
+      <figcaption style="margin-top:0.7vh; font-size:0.78rem; color:var(--muted); text-align:center;">
+        o canal B da pintura do crepúsculo — por natureza, dessaturado: um
+        mapa cinza de intensidade</figcaption>
+    </figure>
+    <div style="flex:0 0 40%; display:flex; flex-direction:column; gap:1.2vh; justify-content:center;">
+      <div style="display:grid; grid-template-columns:repeat(12, 1fr); gap:2px;
+                  aspect-ratio:12/8; border:2px solid #466edc; padding:3px;
+                  border-radius:6px; background:#fff;"><div style="background:rgb(108,108,108); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">108</div><div style="background:rgb(108,108,108); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">108</div><div style="background:rgb(107,107,107); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">107</div><div style="background:rgb(107,107,107); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">107</div><div style="background:rgb(107,107,107); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">107</div><div style="background:rgb(107,107,107); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">107</div><div style="background:rgb(106,106,106); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">106</div><div style="background:rgb(106,106,106); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">106</div><div style="background:rgb(104,104,104); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">104</div><div style="background:rgb(102,102,102); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">102</div><div style="background:rgb(102,102,102); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">102</div><div style="background:rgb(103,103,103); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">103</div><div style="background:rgb(108,108,108); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">108</div><div style="background:rgb(108,108,108); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">108</div><div style="background:rgb(107,107,107); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">107</div><div style="background:rgb(107,107,107); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">107</div><div style="background:rgb(107,107,107); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">107</div><div style="background:rgb(107,107,107); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">107</div><div style="background:rgb(107,107,107); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">107</div><div style="background:rgb(105,105,105); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">105</div><div style="background:rgb(105,105,105); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">105</div><div style="background:rgb(103,103,103); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">103</div><div style="background:rgb(103,103,103); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">103</div><div style="background:rgb(102,102,102); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">102</div><div style="background:rgb(107,107,107); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">107</div><div style="background:rgb(107,107,107); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">107</div><div style="background:rgb(107,107,107); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">107</div><div style="background:rgb(107,107,107); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">107</div><div style="background:rgb(107,107,107); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">107</div><div style="background:rgb(107,107,107); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">107</div><div style="background:rgb(105,105,105); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">105</div><div style="background:rgb(104,104,104); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">104</div><div style="background:rgb(103,103,103); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">103</div><div style="background:rgb(101,101,101); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">101</div><div style="background:rgb(101,101,101); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">101</div><div style="background:rgb(100,100,100); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">100</div><div style="background:rgb(106,106,106); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">106</div><div style="background:rgb(105,105,105); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">105</div><div style="background:rgb(105,105,105); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">105</div><div style="background:rgb(106,106,106); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">106</div><div style="background:rgb(105,105,105); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">105</div><div style="background:rgb(104,104,104); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">104</div><div style="background:rgb(102,102,102); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">102</div><div style="background:rgb(101,101,101); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">101</div><div style="background:rgb(99,99,99); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">99</div><div style="background:rgb(99,99,99); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">99</div><div style="background:rgb(97,97,97); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">97</div><div style="background:rgb(97,97,97); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">97</div><div style="background:rgb(104,104,104); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">104</div><div style="background:rgb(103,103,103); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">103</div><div style="background:rgb(102,102,102); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">102</div><div style="background:rgb(100,100,100); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">100</div><div style="background:rgb(99,99,99); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">99</div><div style="background:rgb(97,97,97); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">97</div><div style="background:rgb(98,98,98); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">98</div><div style="background:rgb(96,96,96); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">96</div><div style="background:rgb(94,94,94); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">94</div><div style="background:rgb(94,94,94); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">94</div><div style="background:rgb(93,93,93); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">93</div><div style="background:rgb(94,94,94); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">94</div><div style="background:rgb(98,98,98); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">98</div><div style="background:rgb(98,98,98); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">98</div><div style="background:rgb(95,95,95); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">95</div><div style="background:rgb(94,94,94); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">94</div><div style="background:rgb(95,95,95); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">95</div><div style="background:rgb(95,95,95); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">95</div><div style="background:rgb(93,93,93); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">93</div><div style="background:rgb(91,91,91); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">91</div><div style="background:rgb(91,91,91); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">91</div><div style="background:rgb(90,90,90); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">90</div><div style="background:rgb(89,89,89); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">89</div><div style="background:rgb(89,89,89); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">89</div><div style="background:rgb(81,81,81); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">81</div><div style="background:rgb(79,79,79); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">79</div><div style="background:rgb(80,80,80); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">80</div><div style="background:rgb(76,76,76); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">76</div><div style="background:rgb(80,80,80); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">80</div><div style="background:rgb(80,80,80); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">80</div><div style="background:rgb(81,81,81); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">81</div><div style="background:rgb(86,86,86); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">86</div><div style="background:rgb(84,84,84); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">84</div><div style="background:rgb(86,86,86); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">86</div><div style="background:rgb(76,76,76); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">76</div><div style="background:rgb(83,83,83); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">83</div><div style="background:rgb(74,74,74); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">74</div><div style="background:rgb(74,74,74); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">74</div><div style="background:rgb(76,76,76); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">76</div><div style="background:rgb(76,76,76); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">76</div><div style="background:rgb(72,72,72); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">72</div><div style="background:rgb(74,74,74); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">74</div><div style="background:rgb(75,75,75); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">75</div><div style="background:rgb(72,72,72); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">72</div><div style="background:rgb(76,76,76); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">76</div><div style="background:rgb(76,76,76); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">76</div><div style="background:rgb(76,76,76); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">76</div><div style="background:rgb(76,76,76); color:#eee; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--it-mono, monospace);">76</div></div>
+      <p style="font-size:0.82rem; color:var(--muted); text-align:center; margin:0;">
+        os <strong>valores exatos</strong> do canal B na janela marcada,
+        cruzando o horizonte (12×8 pixels, passo 8) — mesma janela nos três
+        slides: <strong>só os números mudam</strong></p>
+    </div>
+  </div>
+  <div class="rodape"><span>do registro ao pixel</span><span class="contador"></span></div>
+</section>
+
+<!-- estação 1 · imagem: a recomposição -->
+<section class="slide">
+  <div class="eyebrow">Estação 1 · matrizes</div>
+  <h1>A cor que enxergamos: multiplicar e somar</h1>
+  <div class="corpo" style="flex-direction:column; justify-content:center; gap:1.6vh;">
+    <div style="display:flex; align-items:center; justify-content:center; gap:0.8vw;">
+      <img src="figuras/canais/canal-r-cor.png" alt="o canal R multiplicado pela cor vermelha" style="width:20%; border-radius:4px;">
+      <span style="font-size:2rem; color:var(--ink2);">+</span>
+      <img src="figuras/canais/canal-g-cor.png" alt="o canal G multiplicado pela cor verde" style="width:20%; border-radius:4px;">
+      <span style="font-size:2rem; color:var(--ink2);">+</span>
+      <img src="figuras/canais/canal-b-cor.png" alt="o canal B multiplicado pela cor azul" style="width:20%; border-radius:4px;">
+      <span style="font-size:2rem; color:var(--ink2);">=</span>
+      <img src="figuras/canais/soma.png" alt="os tres canais coloridos somados: a imagem que se enxerga" style="width:24%; border-radius:4px; box-shadow:0 5px 20px rgba(20,30,50,.25);">
+    </div>
+    <p style="text-align:center; max-width:74ch; margin:0 auto;">
+      Cada canal cinza é <strong style="color:var(--azul-deep)">multiplicado
+      pela sua cor primária</strong> e os três se
+      <strong style="color:var(--azul-deep)">somam</strong> — luz soma. É esta
+      conta, feita pixel a pixel:</p>
+    <p style="text-align:center; margin:0;">
+      \(I = R\cdot(1,0,0) + G\cdot(0,1,0) + B\cdot(0,0,1)\)</p>
+    <p style="max-width:74ch; margin:0.4vh auto 0;">
+      <strong>Num pixel só:</strong> o canto inferior esquerdo da janela das
+      três tabelas anteriores tem
+      <span style="color:#b3402c; font-weight:600;">R = 237</span>,
+      <span style="color:#3f7a3a; font-weight:600;">G = 157</span> e
+      <span style="color:#3d6394; font-weight:600;">B = 74</span> — muito
+      vermelho, verde médio, pouco azul. A conta devolve
+      <span style="display:inline-block; width:1.15em; height:1.15em;
+        vertical-align:-0.22em; border-radius:3px; border:1px solid var(--muted);
+        background:rgb(237,157,74);"></span>
+      este alaranjado: é o brilho do crepúsculo logo abaixo do horizonte.</p>
+    <p style="font-size:0.85rem; color:var(--muted); max-width:74ch; margin:0 auto;">
+      "lê-se: a imagem I é o canal R vezes o vermelho puro, mais o canal G
+      vezes o verde puro, mais o canal B vezes o azul puro" — a soma acima
+      reconstrói a imagem original <strong>exata, pixel a pixel</strong>
+      (conferido por programa). Três tabelas de números, três cores, uma
+      soma: esta é toda a imagem final.</p>
+  </div>
+  <div class="rodape"><span>do registro ao pixel</span><span class="contador"></span></div>
+</section>
+
+<!-- ponte · estação 1 → 2 -->
+<!-- 9 · a ponte — RECOMPOSTA em 2026-08-17. A folha era feita de estilo
+     inline (armadilha 15 da norma): o corpo em coluna, a figura em `flex:0 0
+     30%` e o parágrafo de fecho `text-align:center` solto no meio da folha,
+     sem eixo. Resultado medido: figura 26% contra texto 35%, e 39% de nada.
+     Agora é a estrutura da casa — `.col` + `.figbox` em metades (§2.6) — e o
+     fecho, que é o que LANÇA a estação 2, ganha o tratamento de tese em vez
+     de ficar centralizado. -->
+<section class="slide">
+  <div class="eyebrow">Estação 1 → Estação 2 · a ponte</div>
+  <h1>As tabelas são planas — o mundo que elas mostram é <em>fundo</em></h1>
+  <div class="corpo">
+    <div class="col">
+      <p>A <strong>computação gráfica</strong> — do cinema, dos games, do
+        ofício da página 2 — faz o <strong>caminho inverso</strong> do que
+        acabamos de ver: primeiro constrói um <strong>mundo em três
+        dimensões</strong> (objetos, câmera, luz) e só no fim o achata nas
+        tabelas de pixels. Esse achatamento tem nome: <em>render</em>.</p>
+      <p class="tese" style="margin-top:1.4vh">Para construir esse mundo, cada
+        ponto precisa de um endereço no espaço — três números, não dois. E a
+        ferramenta que constrói esses endereços começa humilde: uma seta.</p>
+    </div>
+    <div class="figbox">
+      <!-- `cover` com proporção declarada, não `contain`: still largo dentro
+           de caixa alta letterboxa em branco e a foto encolhe. Aqui a foto
+           preenche o quadro e o corte é decisão, não acidente. -->
+      <figure style="margin:0; width:100%; display:flex; flex-direction:column; gap:1vh">
+        <div style="display:flex; gap:1vw">
+          <img class="fig" src="figuras/creditos/dna-still.jpg"
+               alt="Still de DNA do Crime"
+               style="flex:1; min-width:0; aspect-ratio:16/9; object-fit:cover; max-height:none">
+          <img class="fig" src="figuras/creditos/aruna-still.jpg"
+               alt="Still de A Magia de Aruna"
+               style="flex:1; min-width:0; aspect-ratio:16/9; object-fit:cover;
+                      object-position:center 30%; max-height:none">
+        </div>
+        <figcaption class="legenda"><strong>DNA do Crime</strong> (Netflix) e
+          <strong>A Magia de Aruna</strong> (Disney+) — o autor compôs nas duas
+          (divulgação · uso editorial)</figcaption>
+      </figure>
+    </div>
+  </div>
+  <div class="rodape"><span>do registro ao pixel</span><span class="contador"></span></div>
+</section>
+
+
+
+
+
+<!-- 4 · mapa da viagem -->
+<section class="slide">
+  <div class="eyebrow">Estação 2 · vetores</div>
+  <h1>O palco em três dimensões: onde tudo desta aula acontece</h1>
+  <div class="corpo">
+    <div class="col">
+      <p>Nenhuma figura deste seminário flutua no vazio. Todas moram no
+        mesmo palco, e ele se declara <strong>antes</strong> de desenhar
+        qualquer coisa — como se abre um arquivo novo num software 3D e a
+        primeira coisa que aparece é a <strong>grade do chão</strong>.</p>
+      <table class="simbolos">
+        <tr><td>\(x\)</td><td><strong>largura</strong> — deitado no chão,
+          para os lados</td></tr>
+        <tr><td>\(y\)</td><td><strong>profundidade</strong> — deitado no
+          chão, para dentro da cena</td></tr>
+        <tr><td>\(z\)</td><td><strong>altura</strong> — sai do chão, para
+          cima</td></tr>
+        <tr><td>\(z = 0\)</td><td>o plano do olho; é ele que a imagem
+          mostra como <strong>linha do horizonte</strong></td></tr>
+      </table>
+      <p class="leitura">"zê igual a zero".</p>
+      <div class="traducao">
+        <p>o chão é o plano \(xy\); a altura é \(z\).
+        O horizonte não é uma linha pintada no mundo: é a altura dos seus
+        olhos, vista de longe — por isso ele acompanha você.</p>
+      </div>
+      <p class="legenda">Por que a origem é o olho, e por que as letras são
+        justamente estas — Estação 2.</p>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-0-palco.png" alt="grade do chão em perspectiva com os eixos x, y, z e a linha do horizonte">
+    </div>
+  
+    
+</div>
+  <div class="rodape"><span>do registro ao pixel</span><span class="contador"></span></div>
+</section>
+
+<!-- 3 · quadro: segmento orientado -->
+<section class="slide">
+  <div class="eyebrow">Estação 2 · vetores</div>
+  <h1>Segmento orientado: uma seta com nome</h1>
+  <div class="corpo">
+    <div class="col">
+      <div class="quadro"><span class="origem">transcrição do quadro · prof. Rosivaldo · 10/08</span>
+        <p><strong>1. Segmento orientado em um espaço \(E\).</strong><br>
+        Sejam \(A, B \in E\) pontos. O segmento \((A,B)\) é
+        <em>orientado</em> quando pomos \(A\) como origem e \(B\) como
+        extremidade.</p>
+      </div>
+      <div class="traducao">
+        <p>é um pedaço de reta com ponta de seta. Começa
+        em \(A\), termina em \(B\). A ordem importa: \((A,B)\) e \((B,A)\)
+        são setas diferentes — apontam para lados opostos.</p>
+      </div>
+      <table class="simbolos">
+        <tr><td>\(E\)</td><td>o espaço: o conjunto de TODOS os pontos (o
+          nosso 3D)</td></tr>
+        <tr><td>\(A \in E\)</td><td>lê-se "\(A\) pertence a \(E\)" — \(A\) é
+          um ponto do espaço</td></tr>
+        <tr><td>\((A,B)\)</td><td>lê-se "segmento A-B" — a seta que vai de
+          \(A\) para \(B\)</td></tr>
+      </table>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-h-segmento-orientado.png" alt="segmento orientado no espaço E">
+    </div>
+  </div>
+  <div class="rodape"><span>do registro ao pixel</span><span class="contador"></span></div>
+</section>
+
+<!-- 3c · direção: o que é, e o que NÃO é -->
+<section class="slide">
+  <div class="eyebrow">Estação 2 · vetores</div>
+  <h1>Direção: a reta que a seta segue</h1>
+  <div class="corpo">
+    <div class="col">
+      <p>Uma seta tem <strong>três</strong> atributos, e o primeiro é este.
+        Sem ele não dá para dizer quando duas setas são "a mesma" — que é o
+        próximo passo.</p>
+      <div class="quadro"><span class="origem">transcrição do quadro · prof.
+        Rosivaldo · 10/08</span>
+        <p>A <strong>direção</strong> de \((A,B)\) é o <strong>ângulo</strong>
+        \(\alpha\) que o segmento forma com o plano \(xy\). Setas com o
+        <em>mesmo ângulo</em> correm sobre o <strong>mesmo trilho</strong>:
+        têm a mesma direção — o que <strong>não</strong> diz nada sobre
+        sentido nem sobre norma.</p>
+      </div>
+      <p class="leitura">"alfa".</p>
+      <p>As duas frases não se contradizem: o ângulo <strong>identifica</strong>
+        o trilho, e o trilho <strong>é</strong> a direção — como dar o CEP de
+        uma rua sem que o CEP seja a rua.</p>
+      <div class="traducao">
+        <p>direção NÃO é um número nem um ângulo: é
+        "sobre qual trilho a seta corre". Duas setas em trilhos paralelos têm
+        a mesma direção, mesmo apontando para lados contrários — e dos
+        <strong>três</strong> atributos da seta, esta folha fixa só este.</p>
+      </div>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-h2-direcao.png" alt="trilhos paralelos: mesma direcao, sentidos opostos">
+    </div>
+  </div>
+  <div class="rodape"><span>do registro ao pixel</span><span class="contador"></span></div>
+</section>
+
+<!-- 3b · quadro: equipolência + norma -->
+<section class="slide">
+  <div class="eyebrow">Estação 2 · vetores</div>
+  <h1>Quando duas setas são "a mesma": equipolência</h1>
+  <div class="corpo">
+    <div class="col">
+      <div class="quadro"><span class="origem">transcrição do quadro · prof. Rosivaldo · 10/08</span>
+        <p><strong>2. Segmentos orientados equipolentes.</strong>
+        \((A,B)\) e \((C,D)\) são equipolentes quando:<br>
+        (i) \((A,B) \parallel (C,D)\) — têm a mesma <em>direção</em>;<br>
+        (ii) têm o mesmo <em>sentido</em>;<br>
+        (iii) têm a mesma <em>norma</em>:</p>
+        \[\|(A,B)\| = \sqrt{(x_1-x_2)^2 + (y_1-y_2)^2 + (z_1-z_2)^2}\]
+      </div>
+      <p class="leitura">"a norma do segmento A-B é igual à raiz quadrada de:
+        x-um menos x-dois, ao quadrado; mais y-um menos y-dois, ao quadrado;
+        mais z-um menos z-dois, ao quadrado". O símbolo \(\parallel\) lê-se
+        "é paralelo a".</p>
+      <div class="traducao">
+        <p>a fórmula assustadora é só o
+        <strong>Pitágoras</strong> do colégio, usado duas vezes — a régua que
+        mede qualquer seta no espaço. Guarde-a: ela volta no final com outro
+        nome, \(\rho\) ("rô").</p>
+      </div>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-g1-equipolencia-def.png" alt="As tres condicoes que precisam valer: mesma direcao, mesmo sentido, mesma norma">
+    </div>
+  </div>
+  <div class="rodape"><span>do registro ao pixel</span><span class="contador"></span></div>
+</section>
+
+<!-- 13b · os três testes (dividida da 13 em 2026-08-17). Os testes são a
+     REGRA 2 do método (teste operacional) e o teste do X é do autor —
+     cortá-los violaria o método; dividir preserva os dois lados. -->
+<section class="slide">
+  <div class="eyebrow">Estação 2 · vetores</div>
+  <h1>Como descobrir na prática: <em>um teste para cada</em> atributo</h1>
+  <div class="corpo">
+    <div class="col">
+      <p>A definição diz <em>o que é</em>. Estes três dizem <strong>como
+        verificar</strong>, com a mão, sem conta nenhuma:</p>
+      <ul>
+        <li><strong>direção</strong> — prolongue as duas retas: se nunca se
+          cruzam (paralelas), mesma direção;</li>
+        <li><strong>sentido</strong> — <span class="ouro">o teste do X</span>:
+          ligue origem com origem (A–C) e extremidade com extremidade (B–D);
+          se as linhas <strong>não</strong> se cruzam, mesmo sentido; se
+          formam um X, sentidos opostos;</li>
+        <li><strong>norma</strong> — meça de \(A\) até \(B\): é o
+          <strong>comprimento</strong> do segmento, um número nunca negativo,
+          na unidade da cena (aqui, metros).</li>
+      </ul>
+      <div class="traducao">
+        <p>"tamanho" é atalho de fala; a palavra exata é
+        <strong>comprimento</strong>. E os três testes valem juntos: falhar
+        em um já basta para as setas não serem a mesma.</p>
+      </div>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-g-equipolencia.png" alt="os três testes da equipolência em conjuntos delimitados">
+    </div>
+  </div>
+  <div class="rodape"><span>do registro ao pixel</span><span class="contador"></span></div>
+</section>
+
+<!-- 5 · quadro: relação de equivalência -->
+<section class="slide">
+  <div class="eyebrow">Estação 2 · vetores</div>
+  <h1>As três regras do "ser equivalente"</h1>
+  <div class="corpo">
+    <div class="col">
+      <div class="quadro"><span class="origem">transcrição do quadro · prof. Rosivaldo · 10/08</span>
+        <p>Isso define uma <strong>relação de equivalência</strong>: \(R\) é de
+        equivalência quando:<br>
+        \(\forall a\): \(aRa\) — <em>reflexiva</em>;<br>
+        \(\forall a,b\): \(aRb \Rightarrow bRa\) — <em>simétrica</em>;<br>
+        \(\forall a,b,c\): \(aRb,\ bRc \Rightarrow aRc\) — <em>transitiva</em>.</p>
+      </div>
+      <p class="leitura">"para todo a: a se relaciona com a" · "para todos a
+        e b: se a se relaciona com b, então b se relaciona com a" · "para
+        todos a, b e c: se a se relaciona com b, e b com c, então a se
+        relaciona com c".</p>
+      <table class="simbolos">
+        <tr><td>\(\forall\)</td><td>"para todo" — vale sem exceção</td></tr>
+        <tr><td>\(aRb\)</td><td>"\(a\) se relaciona com \(b\)" (aqui: é
+          equipolente a)</td></tr>
+        <tr><td>\(\Rightarrow\)</td><td>"implica" — se vale a esquerda, vale a
+          direita</td></tr>
+      </table>
+      <div class="traducao">
+        <p>"equivalente" = igual <em>para o que nos
+        interessa</em>. As três regras só garantem que esse "igual" se
+        comporta como igual de verdade: todo mundo é igual a si mesmo; se
+        \(a\) é igual a \(b\), \(b\) é igual a \(a\); e o atalho vale. A
+        equipolência passa nas três — pode carregar o título.</p>
+      </div>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-k-relacao.png" alt="reflexiva, simétrica e transitiva">
+    </div>
+  </div>
+  <div class="rodape"><span>do registro ao pixel</span><span class="contador"></span></div>
+</section>
+
+<!-- 6 · quadro: classe → vetor -->
+<section class="slide">
+  <div class="eyebrow">Estação 2 · vetores</div>
+  <h1>O batismo: vetor é o <em>nome</em> da família de setas</h1>
+  <div class="corpo">
+    <div class="col">
+      <div class="quadro"><span class="origem">transcrição do quadro · prof. Rosivaldo · 10/08</span>
+        
+        <strong>Classe de equivalência:</strong>
+        
+        \[\overrightarrow{(A,B)} = \{(x,y) ;\ (x,y)\, R \,(A,B)\}\]
+        <p><strong>Vetor</strong> \(\vec{v}\) é uma classe de equivalência de
+        segmentos orientados equipolentes.</p>
+      </div>
+      <p class="leitura">"a classe do segmento A-B é o conjunto dos pares
+        x-y tais que x-y se relaciona com A-B" — as chaves { } leem-se
+        "o conjunto de", e o ponto-e-vírgula, "tais que". \(\vec{v}\) lê-se
+        "vetor vê" (a setinha em cima marca: é vetor, não número).</p>
+      <div class="traducao">
+        <p>a "classe" é o saco com TODAS as setas
+        equipolentes entre si — a fórmula lê-se "o conjunto dos \((x,y)\)
+        que se relacionam com \((A,B)\)". Damos UM nome ao saco:
+        \(\vec{v}\). Vetor não é uma seta — é a família inteira. Por isso
+        ele pode "morar" em qualquer lugar do espaço.</p>
+      </div>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-i-classes.png" alt="classe de equivalência vira um vetor">
+    </div>
+  </div>
+  <div class="rodape"><span>do registro ao pixel</span><span class="contador"></span></div>
+</section>
+
+<!-- 6 · quadro: soma e escalar -->
+<!-- 17 · a soma (dividida de "Operar com setas" em 2026-08-17: a folha
+     ensinava DUAS operações com DUAS figuras empilhadas a 68/26 — nenhuma
+     com meia folha. Cada operação ganha a sua, e cada figura foi regerada
+     em 1,48, a proporção de meia folha) -->
+<section class="slide">
+  <div class="eyebrow">Estação 2 · vetores</div>
+  <h1>Somar é <em>emendar</em>: o fim de uma é o começo da outra</h1>
+  <div class="corpo">
+    <div class="col">
+      <div class="quadro"><span class="origem">transcrição do quadro · prof. Rosivaldo · 10/08</span>
+        <p><strong>Soma de vetores:</strong></p>
+        \[(A,B) + (B,D) = (A,D)\]
+      </div>
+      <p class="leitura">"segmento A-B mais segmento B-D é igual a segmento
+        A-D".</p>
+      <div class="traducao">
+        <p>o fim da primeira seta é o começo da segunda, e o
+        resultado é o <strong>atalho direto</strong> — o terceiro lado do
+        triângulo.</p>
+      </div>
+      <p>Repare que o caminho do meio some: quem olha só as pontas não sabe
+        por onde se andou.</p>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-c-soma-vetores.png" alt="soma pela emenda (Chasles), com as normas conferidas">
+    </div>
+  </div>
+  <div class="rodape"><span>do registro ao pixel</span><span class="contador"></span></div>
+</section>
+
+<!-- 17b · a multiplicacao por escalar -->
+<section class="slide">
+  <div class="eyebrow">Estação 2 · vetores</div>
+  <h1>Multiplicar por um número: <em>esticar</em> e encolher</h1>
+  <div class="corpo">
+    <div class="col">
+      <div class="quadro"><span class="origem">transcrição do quadro · prof. Rosivaldo · 10/08</span>
+        <p><strong>Multiplicação de escalar por vetor:</strong>
+        \(k \in \mathbb{R}\), \(k\vec{v} \parallel \vec{v}\), com
+        \(\|k\vec{v}\| = |k|\cdot\|\vec{v}\|\):<br>
+        \(|k| &lt; 1\) "encolhe" · \(|k| &gt; 1\) "estica".</p>
+      </div>
+      <p class="leitura">"cá pertence aos reais; cá vezes o vetor vê é
+        paralelo ao vetor vê, e a norma de cá vê é igual ao módulo de cá vezes
+        a norma de vê".</p>
+      <table class="simbolos">
+        <tr><td>\(k \in \mathbb{R}\)</td><td>"cá é um número real qualquer" —
+          \(\mathbb{R}\), a letra vazada, é o conjunto de todos eles</td></tr>
+        <tr><td>\(\parallel\)</td><td>"é paralelo a" — segue o mesmo trilho,
+          para um lado ou para o outro</td></tr>
+      </table>
+      <div class="traducao">
+        <p>multiplicar por um número muda só o
+        <strong>comprimento</strong> — o trilho é o mesmo. Número negativo
+        vira a seta ao contrário; o trilho continua o mesmo.</p>
+      </div>
+      <p class="ouro">Estas <strong>duas</strong> operações são toda a base:
+        o resto da álgebra linear é consequência delas.</p>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-j-escalar.png" alt="o escalar estica ou encolhe, sem sair do trilho">
+    </div>
+  </div>
+  <div class="rodape"><span>do registro ao pixel</span><span class="contador"></span></div>
+</section>
+
+<!-- 16b · a desigualdade triangular (dividida da 16 em 2026-08-17: a folha
+     ensinava DUAS operações e emendava um TERCEIRO teorema; dividir preserva
+     o conteúdo, que cortar destruiria) -->
+<section class="slide">
+  <div class="eyebrow">Estação 2 · vetores</div>
+  <h1>O comprimento <em>não</em> soma: a desigualdade do triângulo</h1>
+  <div class="corpo">
+    <div class="col">
+      <div class="traducao">
+        <p>emendar duas setas dá um atalho — e atalho é sempre
+        <strong>mais curto</strong> que dar a volta. Só quando as duas
+        apontam para o mesmo lado é que não há atalho a ganhar, e aí os
+        comprimentos somam.</p>
+      </div>
+      <p class="ouro"><strong>Com \(u = (3,1,0)\) e \(v = (1,3,2)\):</strong>
+        \(\|u\| = \sqrt{10} \approx 3{,}16\) e
+        \(\|v\| = \sqrt{14} \approx 3{,}74\) — mas
+        \(\|u+v\| = 6\), e não \(6{,}90\).</p>
+      <p class="leitura">"a norma de u é igual à raiz quadrada de dez,
+        aproximadamente três vírgula dezesseis"; "a norma de u mais vê é
+        igual a seis".</p>
+      <div class="formula">\[\|u+v\| \le \|u\| + \|v\|\]</div>
+      <p class="leitura">"a norma de u mais vê é menor ou igual à norma de u
+        mais a norma de vê".</p>
+      <p>As <strong>coordenadas</strong> somam; o
+        <strong>comprimento</strong>, não.</p>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-c2-soma-normas.png" alt="Os mesmos vetores, agora medidos: a soma das normas nao da a norma da soma">
+    </div>
+  </div>
+  <div class="rodape"><span>do registro ao pixel</span><span class="contador"></span></div>
+</section>
+
+<!-- 7 · coordenadas -->
+<section class="slide">
+  <div class="eyebrow">Estação 3 · coordenadas</div>
+  <h1>Escolher uma origem: cada ponto vira três números</h1>
+  <div class="corpo">
+    <div class="col" style="flex:0.8">
+      <p>Até aqui, nenhum número — só desenho. A <strong>geometria
+         analítica</strong> começa no momento em que escolhemos uma
+         <strong>origem</strong> e três eixos: aí todo ponto \(P\) ganha um
+         endereço \((x, y, z)\).</p>
+      <p class="leitura">"o ponto pê ganha um endereço xis, ípsilon, zê" — a
+        vírgula separa as três coordenadas, na ordem largura, profundidade,
+        altura.</p>
+      <div class="traducao">
+        <p>é como dar CEP aos pontos. O desenho não muda —
+        nós é que passamos a poder <em>calcular</em> com ele.</p>
+      </div>
+      <p>A escolha do autor, que vai importar até o último slide:
+         <strong class="ouro">a origem é o observador</strong> — o olho de
+         quem vê a cena, a 1,6 m do chão.</p>
+      <p>O objeto de estudo: um cubo apoiado no chão, à frente do
+         observador. <strong>Cada vértice (canto), uma cor.</strong></p>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-a-cubo-vertices.png" alt="cubo com vértices coloridos em R3">
+    </div>
+  </div>
+  <div class="rodape"><span>do registro ao pixel</span><span class="contador"></span></div>
+</section>
+
+<!-- 7b · o horizonte: o plano que organiza tudo -->
+<!-- 21-21b · DIVIDIDA em 2026-08-17. Era a folha mais textual do deck — 346
+     palavras — e SEM figura nenhuma, num deck que ilustra quase todo conceito
+     (§2.6, defeito de paridade). Fazia TRÊS coisas: os dois planos, a troca de
+     letra, e o ângulo que volta. Agora são duas, cada uma com a figura que lhe
+     faltava, geradas em gerar_figuras.py na proporção 1,48 de meia folha. -->
+<section class="slide">
+  <div class="eyebrow">Estação 3 · coordenadas</div>
+  <h1>O horizonte é um <em>plano</em> — e ele dá as letras aos eixos</h1>
+  <div class="corpo">
+    <div class="col">
+      <p>Com a origem no olho, <strong>dois planos horizontais</strong>
+        organizam a cena: o <strong>plano do olho</strong> (\(z = 0\)), que
+        passa pelo observador paralelo ao chão, e o <strong>chão</strong>
+        (\(z = -h\)), com \(h = 1{,}6\) m — a altura do olho.</p>
+      <p class="leitura">"zê igual a zero" e "zê igual a menos agá".</p>
+      <div class="traducao">
+        <p>o horizonte não é uma linha que existe no mundo: é o
+        <strong>plano da altura dos seus olhos</strong>, visto de lado — por
+        isso ele sobe e desce com você, e por isso some quando você deita.</p>
+      </div>
+      <p class="ouro"><strong>Atenção à troca de letra:</strong> no plano, o
+        eixo vertical é o \(y\) — é o que se vê no colégio. Ao ganhar a
+        terceira dimensão, o plano inteiro vira <em>chão</em> e quem sobe passa
+        a ser o \(z\). Nada quebrou: mudou o número de eixos.</p>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-p-dois-planos.png"
+           alt="Vista lateral: o plano do olho e o plano do chao, e a altura entre eles">
+    </div>
+  </div>
+  <div class="rodape"><span>do registro ao pixel</span><span class="contador"></span></div>
+</section>
+
+<!-- 21b · o ângulo volta -->
+<section class="slide">
+  <div class="eyebrow">Estação 3 · coordenadas</div>
+  <h1>O ângulo volta: por que o horizonte <em>nunca chega</em></h1>
+  <div class="corpo">
+    <div class="col">
+      <p>Um ponto do chão visto \(\alpha\) <em>abaixo</em> do horizonte fica a</p>
+      <div class="formula">\[\rho = \frac{h}{\operatorname{sen}\alpha},
+        \qquad s = \frac{h}{\operatorname{tg}\alpha}\]</div>
+      <p class="leitura">"rô é igual a agá sobre seno de alfa; ésse é igual a
+        agá sobre tangente de alfa".</p>
+      <table class="simbolos">
+        <tr><td>\(\alpha\)</td><td>o ângulo entre o raio que vai até o ponto
+          e o plano do horizonte</td></tr>
+        <tr><td>\(\rho\)</td><td>a distância do <em>olho</em> até o ponto —
+          em linha reta</td></tr>
+        <tr><td>\(s\)</td><td>a distância no <em>chão</em>, do pé do
+          observador até o ponto</td></tr>
+      </table>
+      <div class="traducao">
+        <p>quanto mais perto do horizonte você olha, menor o
+        \(\alpha\) e mais longe está o chão que você vê. No horizonte,
+        \(\alpha = 0\): o seno zera, e a distância vai a infinito.</p>
+      </div>
+      <p class="ouro">Aqui se fecha a conversa da estação 1: este
+        \(\alpha\) é a <strong>elevação</strong>, uma das duas medidas que
+        uma direção exige no espaço. A outra é para que lado do horizonte se
+        aponta. <strong>Duas medidas, nunca uma.</strong></p>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-q-angulo-horizonte.png"
+           alt="A geometria de alfa, ro e s, e a curva de s contra alfa divergindo no horizonte">
+    </div>
+  </div>
+  <div class="rodape"><span>do registro ao pixel</span><span class="contador"></span></div>
+</section>
+
+<!-- 8 · matriz -->
+<section class="slide">
+  <div class="eyebrow">Estação 3 · coordenadas</div>
+  <h1>O cubo <em>é</em> uma tabela: a matriz 3×8</h1>
+  <div class="corpo" style="flex-direction:column; justify-content:center;">
+    <p style="color:var(--ink2); max-width:70ch; margin:0 0 0.6vh;">
+      Escreva o endereço \((x,y,z)\) de cada vértice como uma <strong>coluna</strong>.
+      Oito vértices, oito colunas: isso é uma <strong>matriz</strong> — uma tabela de
+      números com superpoderes. As cores são as do slide anterior.</p>
+      <p class="leitura">"xis, ípsilon, zê" — as três coordenadas de um
+        vértice, na ordem largura, profundidade, altura.</p>
+    <table class="matriz">
+      <tr>
+        <td class="rotulo"></td><td class="colch" rowspan="4">[</td>
+        <td style="color:var(--v0)">−1</td><td style="color:var(--v1)">1</td>
+        <td style="color:var(--v2)">−1</td><td style="color:var(--v3)">1</td>
+        <td style="color:var(--v4)">−1</td><td style="color:var(--v5)">1</td>
+        <td style="color:var(--v6)">−1</td><td style="color:var(--v7)">1</td>
+        <td class="colch" rowspan="4">]</td><td class="rotulo">← x (largura)</td>
+      </tr>
+      <tr>
+        <td class="rotulo">M =</td>
+        <td style="color:var(--v0)">3,5</td><td style="color:var(--v1)">3,5</td>
+        <td style="color:var(--v2)">5,5</td><td style="color:var(--v3)">5,5</td>
+        <td style="color:var(--v4)">3,5</td><td style="color:var(--v5)">3,5</td>
+        <td style="color:var(--v6)">5,5</td><td style="color:var(--v7)">5,5</td>
+        <td class="rotulo">← y (profundidade)</td>
+      </tr>
+      <tr>
+        <td class="rotulo"></td>
+        <td style="color:var(--v0)">−1,6</td><td style="color:var(--v1)">−1,6</td>
+        <td style="color:var(--v2)">−1,6</td><td style="color:var(--v3)">−1,6</td>
+        <td style="color:var(--v4)">0,4</td><td style="color:var(--v5)">0,4</td>
+        <td style="color:var(--v6)">0,4</td><td style="color:var(--v7)">0,4</td>
+        <td class="rotulo">← z (altura)</td>
+      </tr>
+      <tr>
+        <td class="rotulo"></td>
+        <td><span class="chip" style="background:var(--v0)"></span></td>
+        <td><span class="chip" style="background:var(--v1)"></span></td>
+        <td><span class="chip" style="background:var(--v2)"></span></td>
+        <td><span class="chip" style="background:var(--v3)"></span></td>
+        <td><span class="chip" style="background:var(--v4)"></span></td>
+        <td><span class="chip" style="background:var(--v5)"></span></td>
+        <td><span class="chip" style="background:var(--v6)"></span></td>
+        <td><span class="chip" style="background:var(--v7)"></span></td>
+        <td class="rotulo"></td>
+      </tr>
+    </table>
+    <div class="traducao" style="max-width:70ch; margin:0.6vh auto;">
+        <p>uma
+      coluna = um ponto. A matriz inteira = <strong>a forma</strong>. Nada
+      foi inventado: só arrumamos os números em pé, lado a lado.</p>
+      </div>
+  </div>
+  <div class="rodape"><span>do registro ao pixel</span><span class="contador"></span></div>
+</section>
+
+<!-- 9 · transformações -->
+<section class="slide">
+  <div class="eyebrow">Estação 3 · coordenadas</div>
+  <h1>Mexer na forma inteira = uma conta só</h1>
+  <div class="corpo">
+    <div class="col" style="flex:0.85">
+      <p>O \(k\vec v\) do quadro, aplicado às 8 colunas de uma vez:
+         \(k \cdot M\) — todo o cubo encolhe ou estica junto.</p>
+      <p>E <strong>girar</strong>? Girar também é uma tabela — a matriz de
+         rotação — multiplicando a nossa:</p>
+      <div class="quadro" style="text-align:center">
+        \[ R\,M, \qquad R = \begin{bmatrix} \cos\theta & 0 & \sin\theta \\[2pt]
+        0 & 1 & 0 \\[2pt] -\sin\theta & 0 & \cos\theta \end{bmatrix} \]
+      </div>
+      <p class="leitura">"érre vezes ême; érre é a matriz três por três:
+        primeira linha, cosseno de teta, zero, seno de teta; segunda linha,
+        zero, um, zero; terceira linha, menos seno de teta, zero, cosseno de
+        teta". \(\theta\) ("teta") é o ângulo do giro; seno e cosseno são os
+        do colégio.</p>
+      <div class="traducao">
+        <p>multiplicar matrizes = aplicar a MESMA receita a
+        todas as colunas de uma vez. Siga as cores na figura: cada vértice
+        foi parar exatamente onde a conta mandou. É essa conta, bilhões de
+        vezes por segundo, que uma placa de vídeo faz.</p>
+      </div>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-b-transformacoes.png" alt="kM e RM sobre o cubo colorido">
+    </div>
+  </div>
+  <div class="rodape"><span>do registro ao pixel</span><span class="contador"></span></div>
+</section>
+
+<!-- 10 · sistemas -->
+
+
+<!-- 11 · o modelo hoje -->
+
+
+<!-- estação 4 · a conta dentro do olho (sistema linear + arcos, fundidos) -->
+<section class="slide">
+  <div class="eyebrow">Estação 4 · equações — a conta dentro do olho</div>
+  <h1>Dentro do olho: um raio por pixel, uma conta por raio</h1>
+  <div class="corpo" style="align-items:center; justify-content:center; gap:2.6vw;">
+    <figure style="margin:0; flex:0 0 46%;">
+      <img src="figuras/fig-olho-raios-arcos.png" alt="O olho, o leque de raios, a oclusão e as cascas de mesma distância"
+           style="width:100%; border-radius:6px; background:#fff; box-shadow:0 4px 16px rgba(20,30,50,.14);">
+    </figure>
+    <div style="flex:0 0 42%; display:flex; flex-direction:column; gap:1.2vh; justify-content:center;">
+      <p>A luz do mundo <strong style="color:var(--azul-deep)">converge para um
+        ponto dentro do olho</strong> — de cada direção chega um raio. Ver é
+        perguntar, direção por direção: <em>"qual é a primeira coisa aqui?"</em>
+        O pixel é essa pergunta.</p>
+      <p>A resposta é um <strong style="color:var(--azul-deep)">sistema
+        linear</strong>: o raio sai do olho, \(P = t\cdot d\), e a superfície
+        vive num plano (a face do cubo: \(y = 3{,}5\)). Onde o raio a fura?
+        \(t\,d_y = 3{,}5\) ("lê-se: <em>tê vezes dê-ípsilon igual a três
+        vírgula cinco</em>"). No colégio eram duas equações e duas incógnitas;
+        aqui são três — a mesma ideia.</p>
+      <p>E a profundidade <strong style="color:var(--azul-deep)">esconde</strong>:
+        no mesmo raio, só a <strong>primeira</strong> superfície responde — o
+        que está atrás nunca chega ao olho.</p>
+      <p class="ouro"><strong>E este palco não fica na figura.</strong> É esta
+        estação que o exporta como <em>mapa de profundidade</em> e o entrega
+        ao modelo generativo: a grade do chão vira, lá, o número que diz a
+        cada pixel quão longe ele está.</p>
+      <p>Quem está à mesma distância \(\rho\) do olho mora na mesma
+        <strong style="color:var(--azul-deep)">casca</strong>: no chão, círculos
+        concêntricos de raio \(\sqrt{\rho^2 - h^2}\) ("lê-se: <em>raiz de rô
+        ao quadrado menos agá ao quadrado</em>" — Pitágoras, de novo). É a
+        régua que serve a todos os olhares.</p>
+    </div>
+  </div>
+  <div class="rodape"><span>do registro ao pixel</span><span class="contador"></span></div>
+</section>
+
+<!-- estação 5 · o recorte no tempo -->
+<section class="slide">
+  <div class="eyebrow">Estação 5 · pixels</div>
+  <h1>A fotografia é um recorte no tempo</h1>
+  <div class="corpo" style="align-items:center; justify-content:center; gap:2.6vw;">
+    <figure style="margin:0; flex:0 0 42%;">
+      <img src="figuras/fig-recorte-fatias.png" alt="O cone de visão fatiado em planos de profundidade, com quadrados na cena"
+           style="width:100%; border-radius:6px; background:#fff; box-shadow:0 4px 16px rgba(20,30,50,.14);">
+    </figure>
+    <div style="flex:0 0 44%; display:flex; flex-direction:column; gap:1.3vh; justify-content:center;">
+      <p>O clique congela <strong style="color:var(--azul-deep)">um único
+        instante</strong>: do mundo inteiro em movimento sobra uma fatia — de
+        tempo e de espaço.</p>
+      <p>Nesse recorte, o mundo 3D fica meio invisível, meio confuso: há o que
+        ficou <strong>fora</strong> do quadro, o que a borda
+        <strong style="color:var(--bronze-fundo, #a06b2a)">recortou pelo
+        meio</strong>, e o que ficou <strong>escondido</strong> atrás do que
+        veio antes.</p>
+      <p>E o recorte tem uma régua natural: <strong
+        style="color:var(--azul-deep)">fatiar a cena em planos paralelos ao
+        quadro</strong> — a profundidade \(d\) de cada coisa é a fatia em que
+        ela mora. O quadrado que <strong>encara a câmera</strong> vive inteiro
+        numa fatia só — por isso o mapa de profundidade por planos "parece" a
+        visão que a câmera tem dele; os quadrados girados atravessam fatias.</p>
+      <p style="color:var(--ink2);">Recuperar o mundo a partir da foto é
+        difícil até para nós. É o que vamos pedir às réguas a seguir: dizer,
+        só com o recorte, <strong style="color:var(--azul-deep)">quão longe
+        cada coisa estava</strong>.</p>
+    </div>
+  </div>
+  <div class="rodape"><span>do registro ao pixel</span><span class="contador"></span></div>
+</section>
+
+
+<!-- 12 · z vs rho -->
+<section class="slide">
+  <div class="eyebrow">Estação 5 · pixels</div>
+  <h1>O que o modelo generativo entende por "profundidade"</h1>
+  <div class="corpo">
+    <div class="figbox vert" style="flex:0.82">
+      <img class="fig" src="figuras/folha-cubo-perspectiva-20260810.png" alt="Z-Image: cubo por prompt puro">
+      <img class="fig" src="figuras/folha-cubo-mapa-profundidade-20260812.png" alt="Z-Image: mapa de profundidade imaginado">
+    </div>
+    <div class="col" style="flex:1.18">
+      <p>E um <strong>modelo generativo</strong> — um programa que cria
+        imagens novas e aprendeu só olhando fotografias prontas — o que será
+        que <em>ele</em> entende por "profundidade"? Sem nenhum controle
+        geométrico: à esquerda, <strong>"um cubo em perspectiva"</strong> —
+        convincente.</p>
+      <p>À direita, <strong>"o mapa de profundidade de um cubo"</strong>
+        (uma imagem onde perto = claro, longe = escuro) — e aqui a máscara
+        cai: ele pintou <span class="quente">por face</span>, uma face toda
+        branca, outra toda preta.</p>
+      <div class="traducao">
+        <p>no mapa verdadeiro, a profundidade muda
+        <em>dentro</em> de cada face — o cubo é "girado": atravessa fatias,
+        como o quadrado do slide anterior. O modelo já viu milhares de mapas
+        e imita a <em>aparência</em>, mas não fez conta nenhuma. A régua está
+        com quem estudou o quadro — não com o pintor.</p>
+      </div>
+      <p class="legenda">Z-Image Turbo local · 9 passos (as iterações do
+        pintor) · sementes fixas: mesma semente, mesma imagem.</p>
+    </div>
+  </div>
+  <div class="rodape"><span>do registro ao pixel</span><span class="contador"></span></div>
+</section>
+
+<section class="slide">
+  <div class="eyebrow">Estação 5 · pixels</div>
+  <h1>Duas réguas para a mesma cena: <em>d</em> ou <em>ρ</em></h1>
+  <div class="corpo" style="flex-direction:column; justify-content:center; gap:0.8vh;">
+    <div class="figbox" style="flex:1; width:100%;">
+      <img class="fig" src="figuras/fig-d-mapa-d-vs-rho.png" alt="mapa-d vs mapa-rho da mesma cena">
+    </div>
+    <div style="display:flex; gap:2.5vw; align-items:center; justify-content:center;">
+      <div style="text-align:center">
+        <div class="quadro" style="margin:0; padding:0.8vh 1.4vw">
+        \( d = \rho\cos\theta \)
+      </div>
+        <p class="leitura" style="margin-top:0.6vh">"dê é igual a rô vezes o
+          cosseno de teta"</p>
+      </div>
+      <p style="color:var(--ink2); max-width:62ch; font-size:clamp(0.85rem,1.3vw,0.98rem);">
+        As duas réguas já entraram em cena: as <strong>fatias d</strong> da
+        fotografia ("quantos passos à frente?") e as <strong>cascas ρ</strong>
+        do olho ("a quantos metros de <em>mim</em>?"). São dois nomes para o
+        mesmo longe — e uma linha de trigonometria os amarra: \(\theta\)
+        ("teta") é o ângulo entre o raio do pixel e o "bem em frente". Acima,
+        a MESMA cena exportada nas duas réguas.
+        <span class="ouro">Mudar de régua é mudar de coordenadas.</span></p>
+    </div>
+  </div>
+  <div class="rodape"><span>do registro ao pixel</span><span class="contador"></span></div>
+</section>
+
+<!-- 13b · a régua entregue: ControlNet -->
+<!-- NÃO migrada: à escala nova esta folha corta a linha de proveniência
+     (SDXL/xinsir/semente), que é RECIBO. Fica na escala antiga até o corte
+     editorial da estação 5. É a última folha do deck fora da escala. -->
+<section class="slide">
+  <div class="eyebrow">Estação 5 · pixels</div>
+  <h1>A régua entregue: o modelo agora <em>obedece</em> à geometria</h1>
+  <div class="corpo">
+    <div class="grid2x2">
+      <figure><img src="figuras/controle-mapa-d.png" alt="mapa de controle d">
+        <figcaption>insumo: mapa-d — calculado por nós, um raio por pixel</figcaption></figure>
+      <figure><img src="figuras/folha-controlnet-z-20260810.png" alt="folha condicionada pelo mapa-d">
+        <figcaption>resultado condicionado pelo mapa-d</figcaption></figure>
+      <figure><img src="figuras/controle-mapa-rho.png" alt="mapa de controle rho">
+        <figcaption>insumo: mapa-ρ (a mesma cena, régua dos arcos)</figcaption></figure>
+      <figure><img src="figuras/folha-controlnet-rho-20260810.png" alt="folha condicionada pelo mapa-rho">
+        <figcaption>resultado condicionado pelo mapa-ρ</figcaption></figure>
+    </div>
+    <div class="col" style="flex:0.85">
+      <p><strong>ControlNet</strong> é um acessório que obriga o modelo a
+        respeitar um mapa dado. Entregamos a ele o mapa que nós mesmos
+        calculamos: mesmo pedido, mesma semente, <strong>só a régua
+        muda</strong>.</p>
+      
+      <p class="ouro"><strong>O cubo nasce exatamente onde o sistema linear
+        mandou</strong> — compare com o cubo "solto" de dois slides atrás, que
+        caía onde o modelo quis.</p>
+      <div class="traducao">
+        <p>as duas réguas produzem a MESMA cena — a prova viva de
+        \(d = \rho\cos\theta\). A diferença não está no resultado; está em
+        <strong>quem serve a quantos enquadramentos</strong>.</p>
+      </div>
+      <p class="leitura">"dê é igual a rô vezes o cosseno de teta".</p>
+      <p class="legenda">SDXL + xinsir depth · força 0,8 · 28 passos ·
+        semente 20260810.</p>
+    </div>
+  </div>
+  <div class="rodape"><span>do registro ao pixel</span><span class="contador"></span></div>
+</section>
+
+<!-- 14 · a tese -->
+
+
+<!-- 19 · o que a régua não carrega: o mapa é 2,5D -->
+<section class="slide">
+  <div class="eyebrow">Estação 5 · pixels</div>
+  <h1>O que a régua <em>não</em> carrega: o mapa é 2,5D</h1>
+  <div class="corpo">
+    <div class="col">
+      <p>Um mapa de profundidade guarda <strong>um valor por pixel</strong>:
+        a distância da <strong>primeira</strong> superfície que o raio
+        encontra.</p>
+      <div class="formula">\( d(x,y) \) — um escalar por raio</div>
+      <p class="leitura">"dê de xis e ípsilon".</p>
+      <div class="traducao">
+        <p>onde a superfície passa <strong>atrás de si mesma</strong>, o
+        mapa anota um <em>degrau</em> — mas a superfície de trás não entra.
+        Falta a <strong>continuidade através do cruzamento</strong>, que é o
+        que separa uma <strong>faixa de Möbius</strong> — a fita com meia torção,
+        que tem <em>um lado só</em> — de um anel comum, que tem dois.</p>
+      </div>
+      <p class="ouro"><strong>Medido, não suposto.</strong> Rodada
+        pré-registrada de 2026-08-12, 32 folhas, julgamento às cegas: o mapa
+        entregou <strong>silhueta, posição e profundidade</strong>, e
+        <strong>nenhuma das 8 folhas</strong> firmou a meia-torção.</p>
+      <p class="legenda">A própria régua declarou a rodada
+        <strong>ambígua</strong> — as previsões carimbadas antes não se
+        confirmaram. O que sobrevive não é vitória, é uma distinção:
+        <strong>régua que mede distância não carrega topologia</strong> — a parte
+        da matemática que estuda o que sobrevive quando se entorta sem rasgar:
+        quantos furos, quantos lados, se a volta fecha.</p>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-g2-mapa-25d.png" alt="o mapa entregue ao modelo e a folha que voltou: anel fechado sem meia-torção">
+    </div>
+  </div>
+  <div class="rodape"><span>do registro ao pixel</span><span class="contador"></span></div>
+</section>
+
+<!-- estação 5 · a cena declarada -->
+<!-- 30-30b · DIVIDIDA em 2026-08-17. A folha fazia DUAS coisas — o que é um
+     estimador de profundidade, e o que uma foto precisa TER para ele
+     funcionar — com quatro figuras empilhadas em 40% da largura. Cada
+     pergunta ganha a sua folha, e as figuras vão para metades (§2.6). -->
+<section class="slide">
+  <div class="eyebrow">Estação 5 · pixels — o insumo das próximas seis imagens</div>
+  <h1>E quando a cena <em>já existe</em>? O estimador de profundidade</h1>
+  <div class="corpo">
+    <div class="col">
+      <p>Já sabemos medir profundidade quando <em>nós</em> construímos a cena.
+        E quando a cena já existe — uma foto qualquer? Aí entra um
+        <strong>estimador de profundidade</strong>: um programa que olha uma
+        imagem plana e chuta, pixel a pixel, quão longe estava cada coisa.</p>
+      <p>Ele devolve o <strong>mesmo mapa 2,5D</strong> da estação anterior —
+        e é dele que saem as seis imagens a seguir.</p>
+    </div>
+    <div class="figbox vert">
+      <figure style="margin:0; width:65%; flex:0 0 auto; display:flex; flex-direction:column">
+        <img src="figuras/referencia-mobius.png" alt="A foto de partida" style="width:100%; height:auto; display:block; border-radius:4px; box-shadow:0 3px 12px rgba(20,30,50,.2);">
+        <figcaption class="legenda" style="text-align:left; margin-top:0.4vh">a foto de partida — uma faixa de papel sobre a mesa</figcaption>
+      </figure>
+      <figure style="margin:0; width:65%; flex:0 0 auto; display:flex; flex-direction:column">
+        <img src="figuras/mobius-tecido/depth-referencia.png"
+             alt="Mapa de profundidade estimado" style="width:100%; height:auto; display:block; border-radius:4px; box-shadow:0 3px 12px rgba(20,30,50,.2);">
+        <figcaption class="legenda" style="text-align:left; margin-top:0.4vh">o mapa de profundidade que sai dela</figcaption>
+      </figure>
+    </div>
+  </div>
+  <div class="rodape"><span>do registro ao pixel</span><span class="contador"></span></div>
+</section>
+
+<!-- 30b · o que a foto precisa TER -->
+<section class="slide">
+  <div class="eyebrow">Estação 5 · pixels — o insumo das próximas seis imagens</div>
+  <h1>O que a régua precisa achar na foto: <em>contraste bem posto</em></h1>
+  <div class="corpo">
+    <div class="col">
+      <p>Abrindo a imagem, dá para ver o que o estimador tem para trabalhar: a
+        <strong>luminância</strong> — o brilho de cada pixel, de 0 (preto) a 1
+        (branco), sem a cor — separa o papel do chão com folga
+        (<strong>0,48</strong> de diferença); e as <strong>bordas</strong> vêm
+        realçadas: o <strong>gradiente</strong>, que é o tamanho do salto de
+        brilho de um pixel para o vizinho, chega a <strong>0,32</strong> na
+        silhueta.</p>
+      <div class="traducao">
+        <p>a foto não tem textura nenhuma: é papel liso. O que ela tem é
+        figura destacada do fundo, silhueta nítida e uma sombra que ancora a
+        peça no plano. <strong>É só disso que a régua precisa.</strong></p>
+      </div>
+      <p class="ouro">Se a <strong>geometria</strong> está guardada no mapa, o
+        modelo generativo pode pintar o que quisermos por cima — e a forma
+        continua a mesma. As seis imagens a seguir são esse teste.</p>
+    </div>
+    <div class="figbox vert">
+      <figure style="margin:0; width:65%; flex:0 0 auto; display:flex; flex-direction:column">
+        <img src="figuras/analise-luminancia.png" alt="Luminância" style="width:100%; height:auto; display:block; border-radius:4px; box-shadow:0 3px 12px rgba(20,30,50,.2);">
+        <figcaption class="legenda" style="text-align:left; margin-top:0.4vh">luminância — a separação de 0,48</figcaption>
+      </figure>
+      <figure style="margin:0; width:65%; flex:0 0 auto; display:flex; flex-direction:column">
+        <img src="figuras/analise-highpass.png" alt="Realce de borda" style="width:100%; height:auto; display:block; border-radius:4px; box-shadow:0 3px 12px rgba(20,30,50,.2);">
+        <figcaption class="legenda" style="text-align:left; margin-top:0.4vh">só as bordas — gradiente de 0,32 na silhueta</figcaption>
+      </figure>
+    </div>
+  </div>
+  <div class="rodape"><span>do registro ao pixel</span><span class="contador"></span></div>
+</section>
+
+<!-- estação 5 · quatro Brasis -->
+<section class="slide">
+  <div class="eyebrow">Estação 5 · pixels — do mapa à imaginação</div>
+  <h1>A mesma cena, seis Brasis</h1>
+  <div class="corpo" style="flex-direction:column; justify-content:center; gap:1vh;">
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:1.6vh 1.2vw; width:76%; margin:0 auto;">
+      <figure style="margin:0;"><img src="figuras/leva-v2/escolhidas/mobius-pantanal.png"
+        style="width:100%; height:auto; display:block; border-radius:5px; box-shadow:0 3px 12px rgba(20,30,50,.15);" alt="Pantanal">
+        <figcaption style="font-size:0.75rem; color:var(--muted); text-align:center;">Pantanal — o recorte-aquário</figcaption></figure>
+      <figure style="margin:0;"><img src="figuras/leva-v2/escolhidas/mobius-amazonia.png"
+        style="width:100%; height:auto; display:block; border-radius:5px; box-shadow:0 3px 12px rgba(20,30,50,.15);" alt="Amazônia">
+        <figcaption style="font-size:0.75rem; color:var(--muted); text-align:center;">Amazônia</figcaption></figure>
+      <figure style="margin:0;"><img src="figuras/leva-v2/escolhidas/mobius-cerrado.png"
+        style="width:100%; height:auto; display:block; border-radius:5px; box-shadow:0 3px 12px rgba(20,30,50,.15);" alt="Cerrado">
+        <figcaption style="font-size:0.75rem; color:var(--muted); text-align:center;">Cerrado</figcaption></figure>
+      <figure style="margin:0;"><img src="figuras/leva-v2/escolhidas/mobius-caatinga.png"
+        style="width:100%; height:auto; display:block; border-radius:5px; box-shadow:0 3px 12px rgba(20,30,50,.15);" alt="Caatinga">
+        <figcaption style="font-size:0.75rem; color:var(--muted); text-align:center;">Caatinga</figcaption></figure>
+      <figure style="margin:0;"><img src="figuras/leva-v2/escolhidas/mobius-mata-atlantica.png"
+        style="width:100%; height:auto; display:block; border-radius:5px; box-shadow:0 3px 12px rgba(20,30,50,.15);" alt="Mata Atlântica">
+        <figcaption style="font-size:0.75rem; color:var(--muted); text-align:center;">Mata Atlântica</figcaption></figure>
+      <figure style="margin:0;"><img src="figuras/leva-v2/escolhidas/mobius-pampa.png"
+        style="width:100%; height:auto; display:block; border-radius:5px; box-shadow:0 3px 12px rgba(20,30,50,.15);" alt="Pampa">
+        <figcaption style="font-size:0.75rem; color:var(--muted); text-align:center;">Pampa</figcaption></figure>
+    </div>
+    <p style="max-width:30em; margin:0.4vh auto 0; color:var(--ink2); font-size:0.92rem;">
+      Seis pedidos diferentes — os seis biomas do Brasil — e <strong>a mesma geometria declarada</strong> —
+      mesma semente, mesmo mapa, mesmo sólido por baixo. A pintura é livre;
+      o desenho é nosso. <span style="color:var(--azul-deep);"><strong>É esta
+      divisão de trabalho que a aula inteira constrói: quem imagina não mede —
+      quem mede é a geometria.</strong></span></p>
+  </div>
+  <div class="rodape"><span>do registro ao pixel</span><span class="contador"></span></div>
+</section>
+
+<!-- bioma · Amazônia -->
+<section class="slide">
+  <div class="eyebrow">Estação 5 · pixels — os seis biomas</div>
+  <h1 style="color:#1d5c3a">Amazônia</h1>
+  <div class="corpo" style="align-items:center; justify-content:center; gap:2.4vw;">
+    <figure style="margin:0; flex:0 0 55%;">
+      <img src="figuras/leva-v2/escolhidas/mobius-amazonia.png" alt="Möbius do bioma Amazônia"
+           style="width:100%; height:auto; display:block; border-radius:6px;
+                  box-shadow:0 6px 22px rgba(20,30,50,.22);">
+    </figure>
+    <div style="flex:0 0 36%; display:flex; flex-direction:column; gap:1.5vh; justify-content:center;">
+      <div>
+        <div style="font-size:0.74rem; letter-spacing:1.5px; color:#1d5c3a; font-weight:600;">FLORA · O MATERIAL</div>
+        <div style="font-size:1rem; font-weight:600;">Arumã <i>(Ischnosiphon arouma)</i></div>
+        <div style="font-size:0.86rem; color:var(--ink2); line-height:1.4;">o talo da planta é lascado em fitas e trançado em cestaria pelos povos do noroeste amazônico — a trama diagonal fechada é a assinatura desse trabalho</div>
+      </div>
+      <div>
+        <div style="font-size:0.74rem; letter-spacing:1.5px; color:#1d5c3a; font-weight:600;">FAUNA</div>
+        <div style="font-size:1rem; font-weight:600;">Arara-vermelha <i>(Ara chloropterus)</i></div>
+        <div style="font-size:0.86rem; color:var(--ink2); line-height:1.4;">a maior das araras brasileiras; vive em casal por toda a vida e nidifica em barrancos e ocos de árvores altas</div>
+      </div>
+      <div>
+        <div style="font-size:0.74rem; letter-spacing:1.5px; color:#1d5c3a; font-weight:600;">O BIOMA</div>
+        <div style="font-size:0.86rem; color:var(--ink2); line-height:1.4;">Maior floresta tropical do planeta, ocupa cerca de 49% do território brasileiro — quase metade do país num bioma só.</div>
+      </div>
+    </div>
+  </div>
+  <div class="rodape"><span>do registro ao pixel</span><span class="contador"></span></div>
+</section>
+
+<!-- bioma · Cerrado -->
+<section class="slide">
+  <div class="eyebrow">Estação 5 · pixels — os seis biomas</div>
+  <h1 style="color:#a8481f">Cerrado</h1>
+  <div class="corpo" style="align-items:center; justify-content:center; gap:2.4vw;">
+    <figure style="margin:0; flex:0 0 55%;">
+      <img src="figuras/leva-v2/escolhidas/mobius-cerrado.png" alt="Möbius do bioma Cerrado"
+           style="width:100%; height:auto; display:block; border-radius:6px;
+                  box-shadow:0 6px 22px rgba(20,30,50,.22);">
+    </figure>
+    <div style="flex:0 0 36%; display:flex; flex-direction:column; gap:1.5vh; justify-content:center;">
+      <div>
+        <div style="font-size:0.74rem; letter-spacing:1.5px; color:#a8481f; font-weight:600;">FLORA · O MATERIAL</div>
+        <div style="font-size:1rem; font-weight:600;">Capim-dourado <i>(Syngonanthus nitens)</i></div>
+        <div style="font-size:0.86rem; color:var(--ink2); line-height:1.4;">as hastes douradas do Jalapão, costuradas com seda de buriti pelas comunidades quilombolas; a colheita é regulada por lei e só pode começar em setembro, depois que a planta lança sementes</div>
+      </div>
+      <div>
+        <div style="font-size:0.74rem; letter-spacing:1.5px; color:#a8481f; font-weight:600;">FAUNA</div>
+        <div style="font-size:1rem; font-weight:600;">Ave de peito amarelo</div>
+        <div style="font-size:0.86rem; color:var(--ink2); line-height:1.4;">o modelo compôs uma ave campestre a partir do pedido; no Cerrado real, o papel seria de um gaturamo ou um bem-te-vi</div>
+      </div>
+      <div>
+        <div style="font-size:0.74rem; letter-spacing:1.5px; color:#a8481f; font-weight:600;">O BIOMA</div>
+        <div style="font-size:0.86rem; color:var(--ink2); line-height:1.4;">A savana mais rica em espécies do mundo e o berço das águas do Brasil: dele nascem rios de oito das doze grandes bacias hidrográficas.</div>
+      </div>
+    </div>
+  </div>
+  <div class="rodape"><span>do registro ao pixel</span><span class="contador"></span></div>
+</section>
+
+<!-- bioma · Caatinga -->
+<section class="slide">
+  <div class="eyebrow">Estação 5 · pixels — os seis biomas</div>
+  <h1 style="color:#a07840">Caatinga</h1>
+  <div class="corpo" style="align-items:center; justify-content:center; gap:2.4vw;">
+    <figure style="margin:0; flex:0 0 55%;">
+      <img src="figuras/leva-v2/escolhidas/mobius-caatinga.png" alt="Möbius do bioma Caatinga"
+           style="width:100%; height:auto; display:block; border-radius:6px;
+                  box-shadow:0 6px 22px rgba(20,30,50,.22);">
+    </figure>
+    <div style="flex:0 0 36%; display:flex; flex-direction:column; gap:1.5vh; justify-content:center;">
+      <div>
+        <div style="font-size:0.74rem; letter-spacing:1.5px; color:#a07840; font-weight:600;">FLORA · O MATERIAL</div>
+        <div style="font-size:1rem; font-weight:600;">Couro curtido ao tanino</div>
+        <div style="font-size:0.86rem; color:var(--ink2); line-height:1.4;">o material da cultura do vaqueiro sertanejo — gibão, perneira e chapéu de aba curta; a costura na borda é a mesma da selaria</div>
+      </div>
+      <div>
+        <div style="font-size:0.74rem; letter-spacing:1.5px; color:#a07840; font-weight:600;">FAUNA</div>
+        <div style="font-size:1rem; font-weight:600;">Periquito-da-caatinga <i>(Eupsittula cactorum)</i></div>
+        <div style="font-size:0.86rem; color:var(--ink2); line-height:1.4;">faz ninho em cupinzeiros e em cactos; sobrevive à estiagem comendo flor, fruto e semente do mandacaru</div>
+      </div>
+      <div>
+        <div style="font-size:0.74rem; letter-spacing:1.5px; color:#a07840; font-weight:600;">O BIOMA</div>
+        <div style="font-size:0.86rem; color:var(--ink2); line-height:1.4;">O único bioma exclusivamente brasileiro: floresta tropical seca que reverdece em dias quando a chuva chega.</div>
+      </div>
+    </div>
+  </div>
+  <div class="rodape"><span>do registro ao pixel</span><span class="contador"></span></div>
+</section>
+
+<!-- bioma · Mata Atlântica -->
+<section class="slide">
+  <div class="eyebrow">Estação 5 · pixels — os seis biomas</div>
+  <h1 style="color:#245c2e">Mata Atlântica</h1>
+  <div class="corpo" style="align-items:center; justify-content:center; gap:2.4vw;">
+    <figure style="margin:0; flex:0 0 55%;">
+      <img src="figuras/leva-v2/escolhidas/mobius-mata-atlantica.png" alt="Möbius do bioma Mata Atlântica"
+           style="width:100%; height:auto; display:block; border-radius:6px;
+                  box-shadow:0 6px 22px rgba(20,30,50,.22);">
+    </figure>
+    <div style="flex:0 0 36%; display:flex; flex-direction:column; gap:1.5vh; justify-content:center;">
+      <div>
+        <div style="font-size:0.74rem; letter-spacing:1.5px; color:#245c2e; font-weight:600;">FLORA · O MATERIAL</div>
+        <div style="font-size:1rem; font-weight:600;">Cipó e taboa <i>(Typha domingensis)</i></div>
+        <div style="font-size:0.86rem; color:var(--ink2); line-height:1.4;">fibras de várzea trançadas em cestaria caiçara e caipira; a taboa é colhida na beira d'água, seca à sombra e trançada úmida</div>
+      </div>
+      <div>
+        <div style="font-size:0.74rem; letter-spacing:1.5px; color:#245c2e; font-weight:600;">FAUNA</div>
+        <div style="font-size:1rem; font-weight:600;">Tucano-toco <i>(Ramphastos toco)</i></div>
+        <div style="font-size:0.86rem; color:var(--ink2); line-height:1.4;">o maior tucano do mundo; o bico enorme e leve serve de radiador — ele regula a temperatura do corpo pelo bico</div>
+      </div>
+      <div>
+        <div style="font-size:0.74rem; letter-spacing:1.5px; color:#245c2e; font-weight:600;">O BIOMA</div>
+        <div style="font-size:0.86rem; color:var(--ink2); line-height:1.4;">Restam cerca de 12% da cobertura original, e ainda assim é um dos hotspots de biodiversidade do planeta.</div>
+      </div>
+    </div>
+  </div>
+  <div class="rodape"><span>do registro ao pixel</span><span class="contador"></span></div>
+</section>
+
+<!-- bioma · Pampa -->
+<section class="slide">
+  <div class="eyebrow">Estação 5 · pixels — os seis biomas</div>
+  <h1 style="color:#5f7a4a">Pampa</h1>
+  <div class="corpo" style="align-items:center; justify-content:center; gap:2.4vw;">
+    <figure style="margin:0; flex:0 0 55%;">
+      <img src="figuras/leva-v2/escolhidas/mobius-pampa.png" alt="Möbius do bioma Pampa"
+           style="width:100%; height:auto; display:block; border-radius:6px;
+                  box-shadow:0 6px 22px rgba(20,30,50,.22);">
+    </figure>
+    <div style="flex:0 0 36%; display:flex; flex-direction:column; gap:1.5vh; justify-content:center;">
+      <div>
+        <div style="font-size:0.74rem; letter-spacing:1.5px; color:#5f7a4a; font-weight:600;">FLORA · O MATERIAL</div>
+        <div style="font-size:1rem; font-weight:600;">Lã crua e guasca</div>
+        <div style="font-size:0.86rem; color:var(--ink2); line-height:1.4;">o velo de ovelha feltrado e as tiras finas de couro trançado — a guasca — que o trabalho gaúcho usa em rédeas, laços e adornos</div>
+      </div>
+      <div>
+        <div style="font-size:0.74rem; letter-spacing:1.5px; color:#5f7a4a; font-weight:600;">FAUNA</div>
+        <div style="font-size:1rem; font-weight:600;">Ave campestre</div>
+        <div style="font-size:0.86rem; color:var(--ink2); line-height:1.4;">o modelo compôs uma ave de campo aberto; no Pampa real, o papel seria do joão-de-barro ou de um caminheiro</div>
+      </div>
+      <div>
+        <div style="font-size:0.74rem; letter-spacing:1.5px; color:#5f7a4a; font-weight:600;">O BIOMA</div>
+        <div style="font-size:0.86rem; color:var(--ink2); line-height:1.4;">Campos do extremo sul: apenas 2% do território brasileiro, com mais de 400 espécies de gramíneas nativas.</div>
+      </div>
+    </div>
+  </div>
+  <div class="rodape"><span>do registro ao pixel</span><span class="contador"></span></div>
+</section>
+
+<!-- bioma · Pantanal -->
+<section class="slide">
+  <div class="eyebrow">Estação 5 · pixels — os seis biomas</div>
+  <h1 style="color:#1f5f7a">Pantanal</h1>
+  <div class="corpo" style="align-items:center; justify-content:center; gap:2.4vw;">
+    <figure style="margin:0; flex:0 0 55%;">
+      <img src="figuras/leva-v2/escolhidas/mobius-pantanal.png" alt="Möbius do bioma Pantanal"
+           style="width:100%; height:auto; display:block; border-radius:6px;
+                  box-shadow:0 6px 22px rgba(20,30,50,.22);">
+    </figure>
+    <div style="flex:0 0 36%; display:flex; flex-direction:column; gap:1.5vh; justify-content:center;">
+      <div>
+        <div style="font-size:0.74rem; letter-spacing:1.5px; color:#1f5f7a; font-weight:600;">FLORA · O MATERIAL</div>
+        <div style="font-size:1rem; font-weight:600;">Palha de carandá <i>(Copernicia alba)</i></div>
+        <div style="font-size:0.86rem; color:var(--ink2); line-height:1.4;">a palmeira que resiste à cheia e à seca; a folha em leque vira chapéu, esteira e cesto de trama aberta, que deixa a água passar</div>
+      </div>
+      <div>
+        <div style="font-size:0.74rem; letter-spacing:1.5px; color:#1f5f7a; font-weight:600;">FAUNA</div>
+        <div style="font-size:1rem; font-weight:600;">Tuiuiú <i>(Jabiru mycteria)</i></div>
+        <div style="font-size:0.86rem; color:var(--ink2); line-height:1.4;">a ave-símbolo do Pantanal; constrói ninhos de até dois metros que a mesma família reaproveita por décadas</div>
+      </div>
+      <div>
+        <div style="font-size:0.74rem; letter-spacing:1.5px; color:#1f5f7a; font-weight:600;">O BIOMA</div>
+        <div style="font-size:0.86rem; color:var(--ink2); line-height:1.4;">A maior planície alagável do planeta: metade do ano é chão, metade é rio.</div>
+      </div>
+    </div>
+  </div>
+  <div class="rodape"><span>do registro ao pixel</span><span class="contador"></span></div>
+</section>
+
+
+
+<!-- 16 · a obra: Guariba -->
+<section class="slide">
+  <div class="eyebrow">Da régua à obra</div>
+  <h1>Onde tudo isto desagua: <em>Guariba</em></h1>
+  <div class="corpo">
+    <div class="duo">
+      <figure>
+        <img src="figuras/pranchas-turbinadas/prancha-cheia-20260816.png"
+             alt="prancha conceitual: Pantanal na cheia">
+        <figcaption>a cheia</figcaption>
+      </figure>
+      <figure>
+        <img src="figuras/pranchas-turbinadas/prancha-seca-20260816.png"
+             alt="prancha conceitual: Pantanal na seca">
+        <figcaption>a seca</figcaption>
+      </figure>
+    </div>
+    <div class="col" style="flex:0.75">
+      <p><strong>Guariba</strong> é uma obra de ficção nascendo no Pantanal —
+        e toda a matemática deste seminário é a espinha técnica dela.</p>
+      <p>A mesma paisagem, duas águas: cheia e seca.
+        <span class="ouro">A mesma cena, duas réguas</span> — o seminário
+        inteiro cabe nestas duas pranchas.</p>
+      <p>Nenhuma arte entra na obra por impressão: cada candidata passa por
+        <strong>julgamento às cegas</strong> (as imagens aparecem sem
+        identificação de origem — sobrevive só o que convence por si). As
+        duas pranchas acima são sobreviventes dessas mesas.</p>
+      <p class="legenda">Concept art gerada localmente sob direção e
+        curadoria do autor — a máquina propõe variação; a invenção e o
+        veredito não se delegam.</p>
+    </div>
+  </div>
+  <div class="rodape"><span>do registro ao pixel</span><span class="contador"></span></div>
+</section>
+
+<!-- 17 · a mão e o método -->
+<section class="slide">
+  <div class="eyebrow">Da régua à obra</div>
+  <h1>O que alimenta a obra: a <em>mão</em></h1>
+  <div class="corpo">
+    <div class="grid3x3">
+      <img src="externas/pg-01-vocabulario-retas.png" alt="caderno de traços: retas">
+      <img src="externas/pg-02-vocabulario-curvas.png" alt="caderno de traços: curvas">
+      <img src="externas/pg-03-vocabulario-hachura-paralela.png" alt="caderno de traços: hachura paralela">
+      <img src="externas/pg-04-vocabulario-hachura-cruzada-v3.png" alt="caderno de traços: hachura cruzada">
+      <img src="externas/pg-05-vocabulario-hachura-contorno.png" alt="caderno de traços: hachura de contorno">
+      <img src="externas/pg-06-vocabulario-pontilhado.png" alt="caderno de traços: pontilhado">
+      <img src="externas/pg-07-vocabulario-manchas.png" alt="caderno de traços: manchas">
+      <img src="externas/pg-08-vocabulario-rampas.png" alt="caderno de traços: rampas">
+      <img src="externas/pg-09-vocabulario-bordas-v2.png" alt="caderno de traços: bordas">
+    </div>
+    <div class="col" style="flex:0.95">
+      <p>Nove páginas — de um caderno de cinquenta — desenhadas
+        <strong>à mão</strong>. É deste caderno, e só dele, que o estilo da
+        obra vai nascer: nenhum modelo aqui aprende com obra de terceiros.</p>
+      <p>O desenho treina a mão; a geometria treina a régua; o julgamento
+        às cegas treina o olho. <span class="ouro">Os três são o mesmo
+        estudo.</span></p>
+      <p>Normalmente os dois ofícios não moram na mesma pessoa — cientista
+        não é artista, e artista não é cientista. O caso aqui é particular,
+        e não por dom: pelo <strong>treino que esta tela documenta</strong>.</p>
+      <div class="citacao">
+        <p class="frase">"Cientista não é artista, e artista não é
+          cientista — eu sou os dois."</p>
+        <p class="autor">— Mateus Alkimim, autor de Guariba</p>
+      </div>
+      <div class="citacao">
+        <p class="frase">"Art and science have their meeting point in
+          method." <span style="font-style:normal; color:var(--ink2);
+          font-size:0.85em">(a arte e a ciência têm seu ponto de encontro
+          no método.)</span></p>
+        <p class="autor">— Edward Bulwer-Lytton, <em>Eugene Aram</em>, 1832</p>
+      </div>
+      <p class="legenda">É a citação de 1832 que segura a frase acima: se o
+        ponto de encontro é o método, ser os dois não é privilégio — é
+        trabalho. E trabalho deixa recibo: as páginas ao lado.</p>
+    </div>
+  </div>
+  <div class="rodape"><span>do registro ao pixel</span><span class="contador"></span></div>
+</section>
+
+<!-- 18 · fechamento -->
+<section class="slide capa">
+  <div class="eyebrow">Fechamento</div>
+  <h1>A mesma matemática, do registro ao pixel</h1>
+  <div class="grega"></div>
+  <p class="tese">matrizes → vetores → coordenadas → equações → pixels</p>
+  <div class="grega"></div>
+  <p class="prosa">A pergunta era <strong>quão longe</strong>. A resposta tem
+     nome: um <strong>número por pixel</strong> — a distância da primeira
+     superfície que o raio encontra.</p>
+  <p class="prosa">A tabela de números da primeira folha é a mesma que sai no
+     fim. O que mudou é que agora sabemos <strong>quem decide cada
+     número</strong> — e é geometria, do começo ao fim.</p>
+  <p class="prosa">E a régua não carrega tudo: distância não é topologia. Quem
+     sabe o que ela mede — e o que ela deixa de fora —
+     <strong style="color:var(--azul-deep)">é quem estudou a
+     geometria.</strong></p>
+</section>
+
+<!-- 22 · apêndice: o dicionário inteiro em uma folha -->
+<!-- 41-42 · o apêndice DIVIDIDO em 2026-08-17: 25 verbetes numa folha só
+     cortavam as últimas linhas na escala do deck. É folha de CONSULTA,
+     e consulta que não se lê inteira não serve. -->
+<!-- apêndice · onde este seminário mora no mapa (2026-09-01) -->
+<section class="slide">
+  <div class="eyebrow">Apêndice · onde este seminário mora</div>
+  <h1>Onde a fundação <em>desemboca</em></h1>
+  <div class="corpo">
+    <div class="col">
+      <p>Este seminário ocupa <strong>seis nós</strong> — coordenadas no
+        plano, a reta, as cônicas, coordenadas no espaço, vetores e a equação
+        do plano. E é aqui que a <strong>fundação</strong> desemboca: ele
+        recebe dos <strong>negativos</strong> e do <strong>par
+        ordenado</strong>, que são os seminários 3 e 0.</p>
+      <p>Recebe também dos <strong>reais</strong>, da <strong>álgebra
+        elementar</strong> e da <strong>geometria espacial</strong> — o sólido
+        antes da terceira coordenada.</p>
+      <div class="traducao">
+        <p>e paga em <strong>espaços vetoriais</strong>, <strong>produto
+        interno</strong> e <strong>formas quadráticas</strong>, que são o
+        <strong>G4</strong>; e em <strong>várias variáveis</strong>, que é
+        cálculo além deste curso.</p>
+      </div>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/mapa-para-onde-vamos.svg" alt="o recorte do mapa de pre-requisitos com os seis nos da geometria analitica acesos, os cinco que os antecedem e os quatro que dependem deles">
+    </div>
+  </div>
+  <div class="rodape"><span>do registro ao pixel</span><span class="contador"></span></div>
+</section>
+
+<section class="slide">
+  <div class="eyebrow">Apêndice · dicionário didático · 1 de 2</div>
+  <h1>As palavras da viagem</h1>
+  <p class="legenda" style="margin:-0.4vh 0 0.8vh">Folha de consulta: cada verbete traz a definição em palavras. As <strong>leituras em voz alta</strong> de cada expressão estão no dicionário didático, verbete por verbete.</p>
+  <div class="corpo apendice" style="align-items:flex-start; padding-top:0.6vh;">
+      <div class="col">
+        <table class="simbolos">
+          <tr><td>pixel</td><td>o quadradinho da imagem; guarda <strong>um número</strong> por canal:
+          0 é preto, 255 é branco</td></tr>
+          <tr><td>ordem \(m \times n\)</td><td>o tamanho da tabela: \(m\) linhas por \(n\) colunas — altura primeiro</td></tr>
+          <tr><td>resolução</td><td>o nome do dia a dia para a ordem da matriz; o "número de pixels"
+          anunciado é a <em>área</em>: linhas vezes colunas</td></tr>
+          <tr><td>\(a_{ij}\)</td><td>a entrada da matriz: o número que mora na linha \(i\), coluna \(j\)</td></tr>
+          <tr><td>canal (R, G, B)</td><td>uma tabela de números por cor primária; multiplicadas pela sua cor e
+          somadas, as três dão a imagem</td></tr>
+          <tr><td>render</td><td>o achatamento do mundo em três dimensões nas tabelas de pixels</td></tr>
+          <tr><td>segmento orientado</td><td>seta com ordem: começa em \(A\),
+          termina em \(B\)</td></tr>
+          <tr><td>direção</td><td>o ângulo \(\alpha\) com o plano \(xy\);
+          mesmo \(\alpha\) = mesmo trilho (paralelas)</td></tr>
+        </table>
+      </div>
+      <div class="col">
+        <table class="simbolos">
+          <tr><td>sentido</td><td>para qual dos dois lados a seta aponta</td></tr>
+          <tr><td>norma \(\|\cdot\|\)</td><td>o comprimento, por Pitágoras —
+          a régua</td></tr>
+          <tr><td>equipolência</td><td>mesma direção + sentido + norma:
+          "a mesma seta" nascida noutro lugar</td></tr>
+          <tr><td>relação de equivalência</td><td>as 3 regras do igual:
+          reflexiva, simétrica, transitiva</td></tr>
+          <tr><td>classe</td><td>o saco de todas as setas iguais entre si</td></tr>
+          <tr><td>vetor \(\vec v\)</td><td>o NOME do saco — a família inteira,
+          não uma seta</td></tr>
+          <tr><td>soma (Chasles)</td><td>emendar: fim de uma = começo da outra;
+          o resultado é o atalho</td></tr>
+        </table>
+      </div>
+  </div>
+  <div class="rodape"><span>do registro ao pixel</span><span class="contador"></span></div>
+</section>
+
+<section class="slide">
+  <div class="eyebrow">Apêndice · dicionário didático · 2 de 2</div>
+  <h1>As palavras da viagem</h1>
+  <p class="legenda" style="margin:-0.4vh 0 0.8vh">Continuação — das setas e dos números às réguas de profundidade.</p>
+  <div class="corpo apendice" style="align-items:flex-start; padding-top:0.6vh;">
+      <div class="col">
+        <table class="simbolos">
+          <tr><td>escalar \(k\)</td><td>número comum; multiplicar só muda o
+          comprimento (e \(k&lt;0\) inverte o sentido)</td></tr>
+          <tr><td>origem</td><td>o marco zero que dá endereço aos pontos —
+          aqui, o observador</td></tr>
+          <tr><td>coordenadas \((x,y,z)\)</td><td>o endereço: largura, profundidade,
+          altura</td></tr>
+          <tr><td>matriz</td><td>tabela de números — a imagem é uma; no cubo, cada coluna é um
+          vértice e a tabela inteira é a forma</td></tr>
+          <tr><td>multiplicar matriz</td><td>aplicar a mesma receita a todas as
+          colunas de uma vez</td></tr>
+          <tr><td>sistema linear</td><td>várias exigências ao mesmo tempo; a
+          solução satisfaz todas</td></tr>
+          <tr><td>reta \(P = t\,d\)</td><td>"ande na direção \(d\), pare no
+          instante \(t\)" — o raio do olho</td></tr>
+          <tr><td>plano</td><td>uma parede; a face do cubo é pedaço de
+          uma</td></tr>
+        </table>
+      </div>
+      <div class="col">
+        <table class="simbolos">
+          <tr><td>interseção reta ∩ plano</td><td>onde o raio fura a parede —
+          um furo por pixel</td></tr>
+          <tr><td>profundidade</td><td>quão longe está o que o pixel mostra —
+          longe COMO é a pergunta</td></tr>
+          <tr><td>mapa-d</td><td>régua "passos à frente"; iso-d = retas no
+          chão; vale para UM enquadramento</td></tr>
+          <tr><td>mapa-ρ</td><td>régua "metros até o meu olho"; iso-ρ = arcos;
+          girar a câmera não muda nenhum ρ</td></tr>
+          <tr><td>\(d = \rho\cos\theta\)</td><td>a ponte entre as réguas —
+          mudar de régua é mudar de coordenadas</td></tr>
+          <tr><td>modelo generativo</td><td>pintor que imita a APARÊNCIA do
+          pedido, sem fazer conta de geometria</td></tr>
+          <tr><td>ControlNet (depth)</td><td>a mão que entrega a régua ao
+          pintor: "a cena é ESTA"</td></tr>
+          <tr><td>semente (seed)</td><td>o número que congela o acaso — mesma
+          semente, mesma imagem; a comparação vira justa</td></tr>
+        </table>
+      </div>
+  </div>
+  <div class="rodape"><span>do registro ao pixel</span><span class="contador"></span></div>
+</section>
+
+<script>
+const slides = [...document.querySelectorAll(".slide")];
+let i = 0;
+// cada slide carrega o SEU número (vale para a tela e para o PDF impresso)
+slides.forEach((s, k) => s.querySelectorAll(".contador").forEach(c =>
+  c.textContent = `${k + 1} / ${slides.length}`));
+function mostra(n) {
+  i = Math.max(0, Math.min(slides.length - 1, n));
+  slides.forEach((s, k) => s.classList.toggle("ativo", k === i));
+}
+addEventListener("keydown", e => {
+  if (["ArrowRight", "PageDown", " "].includes(e.key)) mostra(i + 1);
+  if (["ArrowLeft", "PageUp"].includes(e.key)) mostra(i - 1);
+  if (e.key === "Home") mostra(0);
+  if (e.key === "End") mostra(slides.length - 1);
+});
+addEventListener("click", e => {
+  if (e.clientX > innerWidth / 2) mostra(i + 1); else mostra(i - 1);
+});
+function doHash() {
+  const n = parseInt(location.hash.slice(1), 10);
+  mostra(Number.isFinite(n) ? n - 1 : 0);
+}
+addEventListener("hashchange", doHash);
+doHash();
+</script>
+</body>
+</html>

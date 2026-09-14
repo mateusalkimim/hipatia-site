@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="90 -66 1214 1004" width="1214" height="1004" role="img" aria-label="G4 · Espaços vetoriais — para onde vamos">
+<rect x="90" y="-66" width="1214" height="1004" fill="#f3f5f9"/>
+<polyline points="590.0,178.0 590.0,199.0 411.5,199.0 411.5,240.0" fill="none" stroke="#c3ccdb" stroke-width="1.0" opacity="0.35"/>
+<polyline points="1045.5,298.0 1045.5,324.0 710.5,324.0 710.5,360.0" fill="none" stroke="#a9713f" stroke-width="1.6" opacity="0.85"/>
+<polyline points="723.5,58.0 723.5,209.0 710.5,209.0 710.5,360.0" fill="none" stroke="#a9713f" stroke-width="1.6" opacity="0.85"/>
+<polyline points="710.5,418.0 710.5,454.0 550.0,454.0 550.0,480.0" fill="none" stroke="#a9713f" stroke-width="1.6" opacity="0.85"/>
+<polyline points="710.5,418.0 710.5,519.0 206.0,519.0 206.0,600.0" fill="none" stroke="#a9713f" stroke-width="1.6" opacity="0.85"/>
+<polyline points="590.0,178.0 590.0,404.0 206.0,404.0 206.0,600.0" fill="none" stroke="#a9713f" stroke-width="1.6" opacity="0.85"/>
+<polyline points="550.0,538.0 550.0,554.0 206.0,554.0 206.0,600.0" fill="none" stroke="#a9713f" stroke-width="1.6" opacity="0.85"/>
+<polyline points="1045.5,298.0 1045.5,319.0 1172.5,319.0 1172.5,360.0" fill="none" stroke="#a9713f" stroke-width="1.6" opacity="0.85"/>
+<polyline points="206.0,658.0 206.0,684.0 441.0,684.0 441.0,720.0" fill="none" stroke="#a9713f" stroke-width="1.6" opacity="0.85"/>
+<polyline points="411.5,298.0 411.5,509.0 441.0,509.0 441.0,720.0" fill="none" stroke="#a9713f" stroke-width="1.6" opacity="0.85"/>
+<polyline points="723.5,58.0 723.5,394.0 441.0,394.0 441.0,720.0" fill="none" stroke="#a9713f" stroke-width="1.6" opacity="0.85"/>
+<polyline points="366.5,418.0 366.5,639.0 660.5,639.0 660.5,840.0" fill="none" stroke="#a9713f" stroke-width="1.6" opacity="0.85"/>
+<polyline points="441.0,778.0 441.0,824.0 660.5,824.0 660.5,840.0" fill="none" stroke="#a9713f" stroke-width="1.6" opacity="0.85"/>
+<polyline points="710.5,418.0 710.5,464.0 758.0,464.0 758.0,480.0" fill="none" stroke="#a9713f" stroke-width="1.6" stroke-dasharray="5 4" opacity="0.85"/>
+<polyline points="206.0,658.0 206.0,689.0 844.0,689.0 844.0,720.0" fill="none" stroke="#a9713f" stroke-width="1.6" stroke-dasharray="5 4" opacity="0.85"/>
+<polyline points="710.5,418.0 710.5,584.0 1188.0,584.0 1188.0,720.0" fill="none" stroke="#a9713f" stroke-width="1.6" stroke-dasharray="5 4" opacity="0.85"/>
+<g transform="translate(647.5,0.0)" fill="#f3f5f9" stroke="#a9713f" stroke-width="1.6">
+<rect width="152" height="58" rx="8"></rect>
+</g>
+<text x="723.5" y="33.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">Polinômios</text>
+<g transform="translate(290.5,360.0)" fill="#f3f5f9" stroke="#3ac848" stroke-width="1.6">
+<polygon points="15,0 137,0 152,29.0 137,58 15,58 0,29.0"></polygon>
+<g fill="none" stroke="#78c4ff" stroke-width="1.2" transform="translate(5,5)"><polygon points="12,0 130,0 142,24.0 130,48 12,48 0,24.0"></polygon></g>
+</g>
+<text x="366.5" y="393.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">Cônicas</text>
+<g transform="translate(969.5,240.0)" fill="#f3f5f9" stroke="#3ac848" stroke-width="1.6">
+<polygon points="15,0 137,0 152,29.0 137,58 15,58 0,29.0"></polygon>
+<g fill="none" stroke="#78c4ff" stroke-width="1.2" transform="translate(5,5)"><polygon points="12,0 130,0 142,24.0 130,48 12,48 0,24.0"></polygon></g>
+</g>
+<text x="1045.5" y="273.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">Vetores</text>
+<g transform="translate(514.0,120.0)" fill="#f3f5f9" stroke="#3ac848" stroke-width="1.6">
+<polygon points="15,0 137,0 152,29.0 137,58 15,58 0,29.0"></polygon>
+</g>
+<text x="590.0" y="153.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">Matrizes</text>
+<g transform="translate(335.5,240.0)" fill="#f3f5f9" stroke="#3ac848" stroke-width="1.6">
+<polygon points="15,0 137,0 152,29.0 137,58 15,58 0,29.0"></polygon>
+</g>
+<text x="411.5" y="273.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">Determinantes</text>
+<g transform="translate(634.5,360.0)" fill="#ffffff" stroke="#3ac848" stroke-width="2.6">
+<polygon points="15,0 137,0 152,29.0 137,58 15,58 0,29.0"></polygon>
+</g>
+<text x="710.5" y="393.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#16233f">Espaços vetoriais</text>
+<g transform="translate(474.0,480.0)" fill="#ffffff" stroke="#3ac848" stroke-width="2.6">
+<polygon points="15,0 137,0 152,29.0 137,58 15,58 0,29.0"></polygon>
+</g>
+<text x="550.0" y="513.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#16233f">Base e dimensão</text>
+<g transform="translate(130.0,600.0)" fill="#ffffff" stroke="#3ac848" stroke-width="2.6">
+<polygon points="15,0 137,0 152,29.0 137,58 15,58 0,29.0"></polygon>
+</g>
+<text x="206.0" y="626.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#16233f">Transformações</text>
+<text x="206.0" y="640.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#16233f">lineares</text>
+<g transform="translate(1096.5,360.0)" fill="#ffffff" stroke="#3ac848" stroke-width="2.6">
+<polygon points="15,0 137,0 152,29.0 137,58 15,58 0,29.0"></polygon>
+<g fill="none" stroke="#78c4ff" stroke-width="1.2" transform="translate(5,5)"><polygon points="12,0 130,0 142,24.0 130,48 12,48 0,24.0"></polygon></g>
+</g>
+<text x="1172.5" y="393.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#16233f">Produto interno</text>
+<g transform="translate(365.0,720.0)" fill="#ffffff" stroke="#3ac848" stroke-width="2.6">
+<polygon points="15,0 137,0 152,29.0 137,58 15,58 0,29.0"></polygon>
+</g>
+<text x="441.0" y="746.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#16233f">Autovalores</text>
+<text x="441.0" y="760.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#16233f">e autovetores</text>
+<g transform="translate(584.5,840.0)" fill="#ffffff" stroke="#3ac848" stroke-width="2.6">
+<polygon points="15,0 137,0 152,29.0 137,58 15,58 0,29.0"></polygon>
+<g fill="none" stroke="#78c4ff" stroke-width="1.2" transform="translate(5,5)"><polygon points="12,0 130,0 142,24.0 130,48 12,48 0,24.0"></polygon></g>
+</g>
+<text x="660.5" y="866.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#16233f">Formas quadráticas</text>
+<text x="660.5" y="880.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#16233f">e quádricas</text>
+<g transform="translate(682.0,480.0)" fill="#f3f5f9" stroke="#3ac848" stroke-width="1.6">
+<polygon points="15,0 137,0 152,29.0 137,58 15,58 0,29.0"></polygon>
+</g>
+<text x="758.0" y="513.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">Álgebra abstrata</text>
+<g transform="translate(768.0,720.0)" fill="#f3f5f9" stroke="#978b43" stroke-width="1.6">
+<polygon points="11,0 141,0 152,11 152,47 141,58 11,58 0,47 0,11"></polygon>
+<g fill="none" stroke="#78c4ff" stroke-width="1.2" transform="translate(5,5)"><polygon points="8,0 134,0 142,8 142,40 134,48 8,48 0,40 0,8"></polygon></g>
+</g>
+<text x="844.0" y="746.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">Geometria</text>
+<text x="844.0" y="760.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">diferencial</text>
+<g transform="translate(1112.0,720.0)" fill="#f3f5f9" stroke="#978b43" stroke-width="1.6">
+<polygon points="11,0 141,0 152,11 152,47 141,58 11,58 0,47 0,11"></polygon>
+</g>
+<text x="1188.0" y="753.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">Análise funcional</text>
+<text x="96" y="-48" font-family="Inter,sans-serif" font-size="15" font-weight="600" fill="#16233f">G4 · Espaços vetoriais — para onde vamos</text>
+</svg>

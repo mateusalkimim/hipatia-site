@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="612 -66 302 404" width="302" height="404" role="img" aria-label="0b · O que é um número — para onde vamos">
+<rect x="612" y="-66" width="302" height="404" fill="#f3f5f9"/>
+<polyline points="746.5,58.0 746.5,74.0 728.5,74.0 728.5,120.0" fill="none" stroke="#a9713f" stroke-width="1.6" stroke-dasharray="2 3" opacity="0.85"/>
+<polyline points="728.5,178.0 728.5,209.0 798.0,209.0 798.0,240.0" fill="none" stroke="#a9713f" stroke-width="1.6" stroke-dasharray="2 3" opacity="0.85"/>
+<g transform="translate(722.0,240.0)" fill="#f3f5f9" stroke="#a9713f" stroke-width="1.6">
+<rect width="152" height="58" rx="8"></rect>
+</g>
+<text x="798.0" y="266.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">Aritmética</text>
+<text x="798.0" y="280.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">e as operações</text>
+<g transform="translate(670.5,0.0)" fill="#f3f5f9" stroke="#a9713f" stroke-width="1.6">
+<rect width="152" height="58" rx="29.0" ry="29.0"></rect>
+</g>
+<text x="746.5" y="33.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">Conjuntos</text>
+<g transform="translate(652.5,120.0)" fill="#ffffff" stroke="#a9713f" stroke-width="2.6">
+<rect width="152" height="58" rx="8"></rect>
+</g>
+<text x="728.5" y="146.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#16233f">Conjuntos</text>
+<text x="728.5" y="160.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#16233f">numéricos</text>
+<text x="618" y="-48" font-family="Inter,sans-serif" font-size="15" font-weight="600" fill="#16233f">0b · O que é um número — para onde vamos</text>
+</svg>

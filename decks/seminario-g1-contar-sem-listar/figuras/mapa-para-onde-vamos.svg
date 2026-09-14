@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="296 -66 567 404" width="567" height="404" role="img" aria-label="G1 · Contar sem listar — para onde vamos">
+<rect x="296" y="-66" width="567" height="404" fill="#f3f5f9"/>
+<polyline points="746.5,58.0 746.5,79.0 556.5,79.0 556.5,120.0" fill="none" stroke="#a9713f" stroke-width="1.6" stroke-dasharray="2 3" opacity="0.85"/>
+<polyline points="556.5,178.0 556.5,204.0 411.5,204.0 411.5,240.0" fill="none" stroke="#a9713f" stroke-width="1.6" opacity="0.85"/>
+<g transform="translate(670.5,0.0)" fill="#f3f5f9" stroke="#a9713f" stroke-width="1.6">
+<rect width="152" height="58" rx="29.0" ry="29.0"></rect>
+</g>
+<text x="746.5" y="33.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">Conjuntos</text>
+<g transform="translate(480.5,120.0)" fill="#ffffff" stroke="#a9713f" stroke-width="2.6">
+<rect width="152" height="58" rx="8"></rect>
+</g>
+<text x="556.5" y="146.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#16233f">Problemas</text>
+<text x="556.5" y="160.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#16233f">de contagem</text>
+<g transform="translate(335.5,240.0)" fill="#f3f5f9" stroke="#3ac848" stroke-width="1.6">
+<polygon points="15,0 137,0 152,29.0 137,58 15,58 0,29.0"></polygon>
+</g>
+<text x="411.5" y="273.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">Determinantes</text>
+<text x="302" y="-48" font-family="Inter,sans-serif" font-size="15" font-weight="600" fill="#16233f">G1 · Contar sem listar — para onde vamos</text>
+</svg>

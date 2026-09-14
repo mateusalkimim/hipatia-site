@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="422 -66 854 764" width="854" height="764" role="img" aria-label="C4 · O confronto — para onde vamos">
+<rect x="422" y="-66" width="854" height="764" fill="#f3f5f9"/>
+<polyline points="895.5,58.0 895.5,79.0 1098.0,79.0 1098.0,120.0" fill="none" stroke="#c3ccdb" stroke-width="1.0" opacity="0.35"/>
+<polyline points="1098.0,178.0 1098.0,204.0 873.5,204.0 873.5,240.0" fill="none" stroke="#a9713f" stroke-width="1.6" opacity="0.85"/>
+<polyline points="723.5,58.0 723.5,149.0 873.5,149.0 873.5,240.0" fill="none" stroke="#a9713f" stroke-width="1.6" opacity="0.85"/>
+<polyline points="895.5,58.0 895.5,154.0 873.5,154.0 873.5,240.0" fill="none" stroke="#a9713f" stroke-width="1.6" opacity="0.85"/>
+<polyline points="873.5,298.0 873.5,339.0 941.5,339.0 941.5,360.0" fill="none" stroke="#a9713f" stroke-width="1.6" opacity="0.85"/>
+<polyline points="873.5,298.0 873.5,344.0 538.5,344.0 538.5,360.0" fill="none" stroke="#a9713f" stroke-width="1.6" opacity="0.85"/>
+<polyline points="873.5,298.0 873.5,374.0 930.0,374.0 930.0,480.0" fill="none" stroke="#a9713f" stroke-width="1.6" opacity="0.85"/>
+<polyline points="538.5,418.0 538.5,449.0 930.0,449.0 930.0,480.0" fill="none" stroke="#c3ccdb" stroke-width="1.0" opacity="0.35"/>
+<polyline points="873.5,298.0 873.5,464.0 1016.0,464.0 1016.0,600.0" fill="none" stroke="#a9713f" stroke-width="1.6" opacity="0.85"/>
+<polyline points="873.5,298.0 873.5,394.0 1161.0,394.0 1161.0,480.0" fill="none" stroke="#a9713f" stroke-width="1.6" stroke-dasharray="5 4" opacity="0.85"/>
+<polyline points="941.5,418.0 941.5,459.0 1161.0,459.0 1161.0,480.0" fill="none" stroke="#c3ccdb" stroke-width="1.0" stroke-dasharray="5 4" opacity="0.35"/>
+<g transform="translate(647.5,0.0)" fill="#f3f5f9" stroke="#a9713f" stroke-width="1.6">
+<rect width="152" height="58" rx="8"></rect>
+</g>
+<text x="723.5" y="33.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">Polinômios</text>
+<g transform="translate(819.5,0.0)" fill="#f3f5f9" stroke="#a9713f" stroke-width="1.6">
+<rect width="152" height="58" rx="8"></rect>
+</g>
+<text x="895.5" y="33.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">Números reais</text>
+<g transform="translate(1022.0,120.0)" fill="#f3f5f9" stroke="#a9713f" stroke-width="1.6">
+<rect width="152" height="58" rx="8"></rect>
+</g>
+<text x="1098.0" y="153.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">Funções</text>
+<g transform="translate(797.5,240.0)" fill="#ffffff" stroke="#f44e3e" stroke-width="2.6">
+<rect width="152" height="58" rx="29.0" ry="29.0"></rect>
+</g>
+<text x="873.5" y="266.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#16233f">Limite</text>
+<text x="873.5" y="280.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#16233f">e continuidade</text>
+<g transform="translate(865.5,360.0)" fill="#f3f5f9" stroke="#f44e3e" stroke-width="1.6">
+<rect width="152" height="58" rx="29.0" ry="29.0"></rect>
+</g>
+<text x="941.5" y="393.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">Sequências</text>
+<g transform="translate(462.5,360.0)" fill="#f3f5f9" stroke="#f44e3e" stroke-width="1.6">
+<rect width="152" height="58" rx="29.0" ry="29.0"></rect>
+</g>
+<text x="538.5" y="386.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">Exponencial</text>
+<text x="538.5" y="400.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">e logaritmo</text>
+<g transform="translate(854.0,480.0)" fill="#f3f5f9" stroke="#f44e3e" stroke-width="1.6">
+<rect width="152" height="58" rx="29.0" ry="29.0"></rect>
+</g>
+<text x="930.0" y="513.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">Derivada</text>
+<g transform="translate(940.0,600.0)" fill="#f3f5f9" stroke="#f44e3e" stroke-width="1.6">
+<rect width="152" height="58" rx="29.0" ry="29.0"></rect>
+</g>
+<text x="1016.0" y="626.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">Integral</text>
+<text x="1016.0" y="640.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">de Riemann</text>
+<g transform="translate(1085.0,480.0)" fill="#f3f5f9" stroke="#f44e3e" stroke-width="1.6">
+<rect width="152" height="58" rx="29.0" ry="29.0"></rect>
+</g>
+<text x="1161.0" y="513.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">Análise real</text>
+<text x="428" y="-48" font-family="Inter,sans-serif" font-size="15" font-weight="600" fill="#16233f">C4 · O confronto — para onde vamos</text>
+</svg>

@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Antes da palavra limite — Arquimedes, Fermat e o cálculo sem o conceito</title>
+<script>
+window.MathJax = {
+  tex: { inlineMath: [["\\(", "\\)"]], displayMath: [["\\[", "\\]"]] },
+  svg: { fontCache: "global" },
+  startup: { typeset: true }
+};
+</script>
+<script src="../../vendor/tex-svg.js" id="MathJax-script" async></script>
+<style>
+/* ============================================================
+   Ítaca DS — TEMA CLARO (o "irmão claro" previsto em
+   itaca-ds/tokens.css; primitivos da paleta do roteiro ao
+   orientador; muda só a camada semântica)
+   ============================================================ */
+:root {
+  --bg: #f3f5f9; --card: #ffffff; --linha: #d9e0ec;
+  --ink: #16233f; --ink2: #3f4d6b; --muted: #7c88a1;
+  --bronze: #a9713f; --bronze-fundo: #8f5e33; --bronze-soft: #c79b6e;
+  --azul: #1e3a6b; --azul-deep: #12244a;
+  --terracota: #b35430; --verde: #4e7a49; --rubro: #a84444;
+  --it-serif: Georgia, "Cormorant Garamond", "Times New Roman", serif;
+  --it-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --it-mono: "Spline Sans Mono", ui-monospace, "Cascadia Code", monospace;
+  /* cores dos 8 vértices (as mesmas de gerar_figuras.py) */
+  /* NORMA §2.1 — a medida de linha, declarada UMA vez. Em EM, nunca em `ch`:
+     `ch` mede o glifo "0" (0,636 em na Inter) e não o caractere médio de
+     prosa (0,456 em), então 66ch entregaria 92 caracteres. */
+  --medida: 30em;
+  --v0:#a9713f; --v1:#b35430; --v2:#4e7a49; --v3:#a84444;
+  --v4:#3d6394; --v5:#6d55a3; --v6:#2e7d70; --v7:#a85577;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+/* §2.6 — a ESCALA do registro deck. Uma raiz só, porque `rem` é global:
+   subir aqui escala junto o que tem `clamp(...vw...)` e o que tem tamanho
+   FIXO em rem. Levantar só os clamps (a primeira tentativa) deixou
+   `.leitura`, `.legenda`, `.eyebrow` e todo `<p>` fora de `.col` para trás, e
+   a folha ficou com DUAS escalas ao mesmo tempo.
+   25px escolhido para que o termo proporcional continue governando a 1920:
+   o teto de `.col p` (1,04rem) passa a valer 26px, logo acima dos 25,92px do
+   `1.35vw` — a proporção manda, o teto só segura viewport maior. */
+html { font-size: 25px; }
+html, body { height: 100%; background: var(--azul-deep); }
+body { font-family: var(--it-sans); color: var(--ink); overflow: hidden; }
+
+.slide {
+  display: none; position: absolute; inset: 0;
+  background: var(--bg);
+  padding: 4vh 6vw 6vh; flex-direction: column;
+  overflow: hidden;            /* nada vaza para a página seguinte */
+}
+.slide.ativo { display: flex; animation: fade .35s ease; }
+@keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.eyebrow {
+  font-size: 0.72rem; letter-spacing: 0.22em;
+  text-transform: uppercase; color: var(--bronze); font-weight: 700;
+  margin-bottom: 1vh;
+}
+h1 { font-family: var(--it-serif); font-weight: 700; font-size: clamp(1.5rem, 3vw, 2.4rem);
+     line-height: 1.12; margin-bottom: 1.2vh; color: var(--azul-deep);
+     letter-spacing: -0.01em; }
+h1 em { color: var(--bronze); font-style: normal; }
+.tese { font-family: var(--it-serif); font-style: italic; font-size: clamp(1.05rem, 1.8vw, 1.35rem);
+        color: var(--bronze-fundo); }
+.corpo { flex: 1; display: flex; gap: 2.6vw; align-items: safe center;
+         min-height: 0; }
+/* `safe center`, não `center`: a exceção do deck (§2.4) centra a faixa única
+   na vertical — mas `center` num flex TRANSBORDA PARA OS DOIS LADOS quando o
+   item é mais alto que o container, e aí o texto sobe por cima do título e
+   desce por cima do rodapé ao mesmo tempo. Foi o que apareceu na folha 12 ao
+   subir a escala. `safe` volta a alinhar pelo topo exatamente quando não cabe:
+   a centralização vale enquanto é composição, e desliga quando viraria
+   atropelo. */
+.col { flex: 1; min-width: 0; }
+
+/* ===== NORMA DE COMPOSIÇÃO — variante B (2026-08-17) =======================
+   §2.4 (o conteúdo pende do topo) NÃO foi aplicado aqui, e é decisão em
+   aberto do operador. Motivo medido: OITO folhas trazem
+   `style="align-items:center"` INLINE na `.corpo`, e estilo inline vence a
+   folha de estilo — trocar só a regra deixaria 30 folhas no topo e 8
+   centradas, inconsistência pior que qualquer das duas. E há uma dúvida de
+   mérito: numa folha subocupada, pendurar no topo joga TODO o vazio para
+   baixo (47% na folha 21) enquanto centrar o divide. A regra nasceu para
+   blocos empilhados do caderno e pode não valer para o deck.
+   O estilo inline é também a raiz dos 407 eixos distintos.
+
+   §2.1 a medida governa a PROSA; bloco de exibição (fórmula, figura, tabela,
+   grade) é governado pelo conteúdo. A `.corpo` continua FLEX de propósito: os
+   arranjos especiais deste deck (`duo`, `grid3x3`, `grid2x2`,
+   `figbox.vert.hierarquia`) carregam proporções que o autor declarou em
+   `flex`, e trocar por grade as apagaria. O eixo fica para um segundo ato,
+   com cada arranjo convertido caso a caso.
+
+   Alcance: a prosa deste deck NÃO mora só em `.col` — há folhas com `<div>`
+   sem classe dentro de `.corpo` (a 9 é uma). Seletor estreito deixava 67
+   linhas acima do teto com a regra certa aplicada; é a armadilha 13 outra vez,
+   pelo lado do ALCANCE. Por isso a regra vale para prosa onde quer que ela
+   esteja, e o que fica de fora é nomeado, não esquecido.                      */
+.slide p,
+.slide li,
+.slide figcaption,
+.slide .legenda,
+.slide .citacao .frase { max-width: var(--medida, 30em); }
+/* Prosa CENTRADA (33 blocos neste deck) precisa continuar centrada depois de
+   limitada: sem isto a caixa encolhe mas fica ancorada à esquerda, e o texto
+   parece deslocado — regressão que a medida introduziu na folha 9. Centrar o
+   BLOCO é o que preserva a decisão do autor enquanto a medida faz seu trabalho.
+   (A §2.2 desaprova bloco centrado; convertê-los é redesenho folha a folha, e
+   não é o que esta rodada faz.) */
+.slide [style*="text-align:center"],
+.slide [style*="text-align: center"] { margin-inline: auto; }
+
+/* fora da medida, por serem BLOCO DE EXIBIÇÃO (§2.1) */
+.slide .formula,
+.slide .formula p,
+.slide table p,
+.slide .quadro mjx-container { max-width: none; }
+.col p, .col li { color: var(--ink2); font-size: clamp(0.88rem, 1.35vw, 1.04rem);
+                  line-height: 1.55; margin-bottom: 1vh; }
+.col strong { color: var(--ink); }
+.col .ouro { color: var(--bronze-fundo); }
+.col .quente { color: var(--terracota); }
+ul { list-style: none; }
+ul li { padding-left: 1.1em; position: relative; }
+ul li::before { content: "▸"; position: absolute; left: 0; color: var(--bronze);
+                font-size: 0.8em; top: 0.28em; }
+img.fig { max-width: 100%; max-height: 100%; object-fit: contain;
+          border-radius: 8px; border: 1px solid var(--linha);
+          background: var(--card);
+          box-shadow: 0 1px 4px rgba(18, 36, 74, 0.08); }
+.figbox { flex: 1.3; min-width: 0; min-height: 0; height: 100%; display: flex;
+          align-items: center; justify-content: center; gap: 1vw; }
+.figbox img.fig { flex: 0 1 auto; min-width: 0; min-height: 0; width: auto; }
+.figbox.vert { flex-direction: column; }
+.figbox.vert img.fig { max-height: 48%; }
+/* HIERARQUIA VISUAL: a figura principal ocupa espaço proporcional à sua
+   importância; a secundária não compete com ela. Sem isto, uma figura larga
+   e rasa (observação de rodapé) fica MAIOR que a figura que carrega o
+   conceito, só por causa da proporção. */
+.figbox.vert.hierarquia img.fig:first-of-type { max-height: 68%; }
+.figbox.vert.hierarquia img.fig:last-of-type  { max-height: 26%; }
+
+/* transcrição do quadro: o cartão-lousa */
+.quadro {
+  background: var(--card); border: 1px solid var(--linha);
+  border-left: 5px solid var(--bronze); border-radius: 8px;
+  padding: 1.6vh 1.4vw; margin: 1vh 0;
+  color: var(--azul-deep); font-size: clamp(0.9rem, 1.4vw, 1.08rem);
+  line-height: 1.7;
+  box-shadow: 0 1px 4px rgba(18, 36, 74, 0.08);
+}
+.quadro .origem { display: block; font-size: 0.68rem; color: var(--muted);
+                  letter-spacing: 0.14em; text-transform: uppercase;
+                  margin-bottom: 0.8vh; }
+.quadro mjx-container { color: var(--azul-deep); }
+
+/* a tradução para quem está chegando agora */
+.traducao {
+  background: color-mix(in srgb, var(--verde) 7%, var(--card));
+  border: 1px solid color-mix(in srgb, var(--verde) 30%, var(--linha));
+  border-left: 5px solid var(--verde); border-radius: 8px;
+  padding: 1.3vh 1.4vw; margin: 1vh 0;
+  color: var(--ink2); font-size: clamp(0.86rem, 1.3vw, 1rem); line-height: 1.55;
+}
+.traducao::before { content: "em bom português: "; color: var(--verde);
+                    font-weight: 700; }
+
+.formula {
+  font-family: var(--it-mono); background: var(--card);
+  border: 1px solid var(--linha); border-left: 4px solid var(--bronze);
+  border-radius: 8px;
+  padding: 1.3vh 1.2vw; color: var(--azul-deep); font-size: clamp(0.85rem, 1.35vw, 1.02rem);
+  margin: 1vh 0; overflow-x: auto;
+}
+.legenda { font-size: 0.78rem; color: var(--muted); margin-top: 0.6vh; }
+/* leitura em voz alta das expressões — parte do método didático */
+.leitura { font-size: 0.8rem; color: var(--muted); font-style: italic;
+           margin: -0.3vh 0 1vh 0.3vw; }
+.leitura::before { content: "lê-se: "; font-style: normal; font-weight: 700;
+                   color: var(--bronze); }
+.rodape { position: absolute; bottom: 1.8vh; left: 6vw; right: 6vw;
+          display: flex; justify-content: space-between;
+          font-size: 0.72rem; color: var(--muted);
+          letter-spacing: 0.08em; border-top: 1px solid var(--linha);
+          padding-top: 0.9vh; }
+.contador { font-family: var(--it-mono); }
+
+/* dicionário de símbolos */
+table.simbolos { border-collapse: collapse; margin: 0.6vh 0; width: 100%; }
+/* D4 (2026-08-18): o teto era 0.98rem (~15,7 px) enquanto o termo
+       proporcional 1.25vw vale 24 px a 1920 — o teto em `rem` suprimia a
+       escala a dois terços, e as folhas 44/45 ficavam com 36% de sobra, que
+       a §2.4 chama de DEFEITO. Mesma armadilha já registrada na norma: a
+       escala certa já estava no arquivo; o teto é que a apagava. */
+    table.simbolos td { padding: 0.72vh 0.7vw; font-size: clamp(0.95rem, 1.25vw, 1.32rem);
+                    color: var(--ink2); border-bottom: 1px solid var(--linha); }
+table.simbolos td:first-child { color: var(--azul-deep); font-weight: 600;
+                                white-space: nowrap; }
+
+/* matriz colorida */
+table.matriz { border-collapse: collapse; font-family: var(--it-mono);
+               font-size: clamp(0.8rem, 1.5vw, 1.15rem); margin: 1vh auto;
+               background: var(--card); border: 1px solid var(--linha);
+               border-radius: 8px;
+               box-shadow: 0 1px 4px rgba(18, 36, 74, 0.08); }
+table.matriz td { padding: 0.8vh 0.75vw; text-align: center; font-weight: 600; }
+table.matriz td.rotulo { color: var(--muted); font-size: 0.8em; font-weight: 400; }
+table.matriz .colch { font-size: 2.2em; color: var(--ink2); font-family: var(--it-serif);
+                      font-weight: 400; }
+.chip { display: inline-block; width: 0.85em; height: 0.85em; border-radius: 50%;
+        vertical-align: -0.08em; }
+
+/* mapa da viagem */
+.estacoes { display: flex; gap: 1.2vw; align-items: stretch; margin: 2vh 0; }
+.estacao { flex: 1; background: var(--card); border: 1px solid var(--linha);
+           border-top: 4px solid var(--bronze); border-radius: 8px;
+           padding: 1.6vh 1vw; text-align: center;
+           box-shadow: 0 1px 4px rgba(18, 36, 74, 0.08); }
+.estacao .num { font-family: var(--it-serif); font-size: 1.6rem;
+                color: var(--bronze); }
+.estacao .nome { font-weight: 700; color: var(--azul-deep);
+                 font-size: clamp(0.85rem, 1.3vw, 1.05rem); margin: 0.5vh 0; }
+.estacao .oq { font-size: clamp(0.76rem, 1.1vw, 0.9rem); color: var(--ink2);
+               line-height: 1.45; }
+.seta-estacao { align-self: center; color: var(--bronze); font-size: 1.4rem; }
+
+/* galeria da obra: pranchas lado a lado e grade 3×3 do caderno */
+.duo { flex: 1.4; min-width: 0; min-height: 0; height: 100%; display: grid;
+       grid-template-columns: 1fr 1fr; gap: 1vw; align-items: center; }
+.duo figure { min-width: 0; min-height: 0; height: 100%; display: flex;
+              flex-direction: column; align-items: center;
+              justify-content: center; }
+.duo img { max-width: 100%; min-height: 0; flex: 0 1 auto; max-height: 92%;
+           object-fit: contain; border-radius: 8px;
+           border: 1px solid var(--bronze-soft);
+           box-shadow: 0 2px 10px rgba(18, 36, 74, 0.14); }
+.duo figcaption { font-family: var(--it-serif); font-style: italic;
+                  font-size: 0.95rem; color: var(--bronze-fundo);
+                  margin-top: 0.8vh; }
+.grid3x3 { flex: 1.15; min-width: 0; min-height: 0; height: 100%;
+           display: grid; grid-template-columns: repeat(3, 1fr);
+           grid-auto-rows: 1fr; gap: 0.7vh 0.7vw; align-content: center; }
+.grid3x3 img { width: 100%; height: 100%; min-height: 0; object-fit: cover;
+               border-radius: 6px; border: 1px solid var(--linha);
+               box-shadow: 0 1px 4px rgba(18, 36, 74, 0.10); }
+.citacao { border-left: 4px solid var(--bronze); padding: 1vh 1.2vw;
+           margin: 1.2vh 0; }
+.citacao .frase { font-family: var(--it-serif); font-style: italic;
+                  font-size: clamp(1rem, 1.6vw, 1.25rem);
+                  color: var(--azul-deep); line-height: 1.45; }
+.citacao .autor { font-size: 0.78rem; color: var(--muted);
+                  margin-top: 0.5vh; }
+
+/* grade 2×2 do experimento ControlNet */
+.grid2x2 { flex: 1.5; min-width: 0; min-height: 0; display: grid;
+           grid-template-columns: 1fr 1fr; grid-auto-rows: 1fr;
+           gap: 0.8vh 0.8vw; height: 100%; }
+.grid2x2 figure { min-width: 0; min-height: 0; display: flex;
+                  flex-direction: column; align-items: center; }
+.grid2x2 img { max-width: 100%; min-height: 0; flex: 1; object-fit: contain;
+               border-radius: 6px; border: 1px solid var(--linha);
+               background: var(--card); }
+.grid2x2 figcaption { font-size: 0.72rem; color: var(--muted);
+                      margin-top: 0.4vh; }
+
+.capa { justify-content: center; align-items: center; text-align: center;
+        background: radial-gradient(ellipse at 50% 38%, var(--card) 0%, var(--bg) 62%); }
+.capa h1 { font-size: clamp(2.4rem, 5.6vw, 4rem); margin: 1.6vh 0; }
+.capa .grega { width: min(30vw, 340px); height: 1px; background: var(--bronze);
+               opacity: 0.55; margin: 2.2vh auto; }
+.capa p { color: var(--ink2); max-width: 48ch; font-size: 1.05rem; line-height: 1.6; }
+    /* D5 (2026-08-18): a folha-quadro pode centrar a COMPOSIÇÃO — é a exceção
+       declarada do registro deck —, mas parágrafo longo centralizado é o pior
+       caso de leitura: cada linha começa num ponto diferente e o olho perde a
+       volta. O bloco continua centrado; as linhas passam a alinhar à esquerda. */
+    .capa p.prosa { text-align: left; margin: 0 auto 1.5vh; }
+    .capa p.prosa:last-of-type { margin-bottom: 0; }
+    /* autoria (2026-09-09): autor, coautora e orientador nomeados na capa, por
+       decisão do operador; o G3 (registro ao pixel) é só do autor e do
+       orientador. Método, item 5 (discrição): autoria nomeada abertamente. */
+    .capa p.autoria { font-size: 0.82rem; color: var(--muted); line-height: 1.55;
+                      margin: 2.6vh auto 0; text-align: center; max-width: none; }
+    .capa p.autoria strong { color: var(--ink2); font-weight: 600; }
+
+@page { size: 1920px 1080px; margin: 0; }
+.corpo > .col { flex: 1 1 0; min-width: 34ch; }     /* trava anti-espremida */
+/* §2.6 PARIDADE: figura e texto são metades da mesma metodologia e dividem
+   espaço equivalente (banda 40–60). A figura tinha `flex: 1.3` contra `flex: 1`
+   do texto e ficava em 60–67% em ONZE folhas — desequilíbrio por omissão, não
+   por decisão. Mesma base e mesmo crescimento nos dois = 50/50; quem quiser
+   sair da paridade declara na própria folha. */
+.corpo > .figbox { flex: 1 1 0; }
+/* Figura empilhada NÃO precisa encher a coluna inteira: quando ela enche, o
+   par figura↔texto sai da banda da §2.6 por ALTURA (647pt de figura contra
+   439pt de texto) e a folha fica sem borda. O teto de 86% devolve o ar sem
+   mexer no conteúdo. */
+.figbox.vert { max-height: 86%; }
+.corpo .figbox { min-width: 0; }
+.corpo .figbox img, .corpo img.fig { max-width: 100%; height: auto; }
+
+@media print {
+  /* 2026-08-12: fixa aqui o que antes era escolhido à mão no diálogo do
+     Ctrl+P (1920×1080, sem margem). Sem isto a exportação depende de quem
+     imprime — e um PDF de submissão precisa ser REGERÁVEL, não relembrado. */
+  @page { size: 1920px 1080px; margin: 0; }
+  * { -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important; }
+  html, body { width: 1920px; height: 1080px; }
+  body { overflow: visible; }
+  .slide { display: flex !important; position: relative; page-break-after: always;
+           width: 1920px; height: 1080px; overflow: hidden !important; }
+  .slide.ativo { animation: none; }
+  .rodape { position: absolute; }
+}
+
+
+/* a medida, à escala nova, enche a coluna: 30em a 25,9px = 585pt de ~624 */
+
+/* ===== PÉ ATRÁS — a marca de procedência do rigor ==========================
+   Especificação de 2026-08-22. Guisoli conduz; Guidorizzi é guarda-corpo.
+   Toda afirmação vinda do Guisoli declara o que o Guidorizzi faz com ela.
+
+   DESENHO, e a razão dele: é RODAPÉ do cartão-lousa, irmão do `.origem` —
+   NÃO um terceiro cartão. A folha já tem duas vozes (o quadro e o "em bom
+   português"); uma terceira caixa competiria com as duas em vez de anotar.
+   Pé atrás é procedência, não voz.
+
+   O rótulo vai no HTML, nunca em `content:`. Lição de 2026-08-22: texto que
+   só existe em `content:` é invisível ao extrator, à peneira e ao auditor —
+   39 rótulos sobreviveram em português dentro do deck em inglês por isso.
+
+   REGRA DURA: `refina` SEMPRE escreve a diferença. Marca sem conteúdo em
+   folha que refina é pior que marca nenhuma — anuncia divergência e não
+   entrega.                                                                 */
+
+/* a folha que reúne os `refina` de cada deck */
+
+/* As regras do "pé atrás" (.pe-atras, .refina, .confirma, .silencioso,
+   .refino, .refinos) foram REMOVIDAS em 2026-08-24: o elemento saiu dos decks
+   por decisão do operador — primeiro as folhas, depois os spans inline. CSS
+   órfão é convite a reintroduzir o que se decidiu tirar. */
+</style>
+
+</head>
+<body>
+
+<!-- 1 · capa -->
+<section class="slide capa ativo">
+  <div class="eyebrow">Hipátia · Cálculo, seminário C2 de 4</div>
+  <h1>Antes da palavra <em>limite</em></h1>
+  <div class="grega"></div>
+  <p class="tese">Arquimedes e Fermat fizeram a conta dois mil anos antes de existir o conceito</p>
+  <p class="prosa">O cálculo não nasceu de uma definição. Nasceu de
+    <strong>duas perguntas</strong> que ninguém sabia responder: quanto vale a
+    área debaixo de uma curva, e qual é a reta tangente num ponto.</p>
+  <p class="prosa">Este seminário refaz as duas respostas antigas —
+    <strong>e mede as duas</strong>. O capítulo seguinte não vai inventar a
+    operação: vai dar <em>nome</em> ao que já estava sendo feito aqui.</p>
+  <p class="autoria">Autor · <strong>Mateus Felipe Alkimim Pereira</strong><br>
+    Coautora · <strong>Sara Catiele Nogueira Pereira</strong><br>
+    Orientador · <strong>Rosivaldo Antônio Gohnan</strong></p>
+  <div class="rodape"><span>antes da palavra limite</span><span class="contador"></span></div>
+</section>
+
+<!-- 2 · de onde viemos -->
+<section class="slide">
+  <div class="eyebrow">de onde viemos · o que já está no bolso</div>
+  <h1>O seminário <em>zero</em> deixou quatro coisas prontas</h1>
+  <div class="corpo">
+    <div class="col">
+      <p>Do <em>Ler um gráfico</em>, quatro coisas seguem valendo e serão
+        usadas sem reapresentação:</p>
+      <ul>
+        <li>uma <strong>função</strong> é uma máquina — entra \(x\), sai
+          \(f(x)\), e uma entrada nunca tem duas saídas;</li>
+        <li>o par \((x, f(x))\) vira <strong>ponto</strong>, e o rastro de
+          todos os pontos é o <strong>gráfico</strong>;</li>
+        <li>o desenho <strong>sobe</strong>, <strong>desce</strong> ou fica
+          <strong>constante</strong> — e comportamento é sempre local;</li>
+        <li><strong>buraco</strong>, <strong>salto</strong> e
+          <strong>bico</strong> são os três defeitos.</li>
+      </ul>
+      <div class="quadro"><span class="origem">o que é novo aqui</span>
+        <p><strong>reta tangente</strong> — a reta que encosta numa curva num
+        ponto e segue a inclinação dela. É a segunda das duas perguntas deste
+        deck, e <em>não</em> é o segmento de tangente do círculo.</p>
+      </div>
+      <div class="traducao">
+        <p>este deck não cobra nada da geometria
+        analítica nem dos determinantes: aquele é o outro ramo da série. O
+        chão daqui é o ensino básico mais o seminário zero.</p>
+      </div>
+    </div>
+  </div>
+  <div class="rodape"><span>antes da palavra limite</span><span class="contador"></span></div>
+</section>
+
+<!-- 3 · as duas perguntas -->
+<section class="slide">
+  <div class="eyebrow">Estação 1 · de onde vem</div>
+  <h1>Duas perguntas, e a mesma resposta acabou servindo às duas</h1>
+  <div class="corpo">
+    <div class="col">
+      <p>O cálculo não começa por uma definição — começa por
+        <strong>dois problemas</strong> que ninguém sabia resolver:</p>
+      <ul>
+        <li><span class="ouro">a área</span> — retângulo e triângulo se medem
+          desde sempre. E debaixo de uma <em>curva</em>?</li>
+        <li><span class="quente">a tangente</span> — uma reta se determina por
+          dois pontos. E se os dois pontos forem <strong>o mesmo</strong>?</li>
+      </ul>
+      <div class="traducao">
+        <p>as duas perguntas travam no mesmo lugar: é
+        preciso fazer alguma coisa <strong>infinitas vezes</strong>, ou
+        aproximar dois pontos até virarem um. Nenhuma conta finita resolve, e
+        é essa a fenda por onde o cálculo entra.</p>
+      </div>
+      <p>O que o seminário zero já deu: a curva é o <strong>gráfico</strong> de
+        uma função, e a <strong>reta tangente</strong> encosta nela num ponto,
+        seguindo a inclinação dela. É com essas duas ferramentas que se
+        ataca.</p>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-duas-perguntas.png" alt="a area debaixo da curva e a reta tangente num ponto">
+    </div>
+  </div>
+  <div class="rodape"><span>antes da palavra limite</span><span class="contador"></span></div>
+</section>
+
+<!-- 4 · o círculo -->
+<section class="slide">
+  <div class="eyebrow">Estação 2 · a área</div>
+  <h1>O círculo, por dentro</h1>
+  <div class="corpo">
+    <div class="col">
+      <p>A primeira exaustão é a mais antiga: inscreva um polígono no círculo e
+        vá dobrando os lados. A área do polígono se calcula — é só triângulo.</p>
+      <div class="formula">área do polígono de \(n\) lados \(= \dfrac{n}{2}\,
+        \operatorname{sen}\dfrac{2\pi}{n}\)</div>
+      <div class="traducao">
+        <p>nenhum polígono é o círculo. Nunca. E mesmo
+        assim a fila deles <strong>determina</strong> o número que o círculo
+        tem — porque não sobra nenhum outro lugar para o valor estar.</p>
+      </div>
+      <div class="quadro"><span class="origem">o problema da área</span>
+        <p>O cálculo de áreas por triângulos inscritos: a ideia de
+        <em>exaustão</em>, atribuída a Eudoxo e levada ao limite por
+        Arquimedes.</p>
+      </div>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-circulo-poligonos.png" alt="poligonos inscritos de 4, 8, 16 e 48 lados e suas areas">
+    </div>
+  </div>
+  <div class="rodape"><span>antes da palavra limite</span><span class="contador"></span></div>
+</section>
+
+<!-- 5 · a taxa -->
+<section class="slide">
+  <div class="eyebrow">Estação 2 · a área</div>
+  <h1>Dobrar os lados divide o erro por <em>quatro</em></h1>
+  <div class="corpo">
+    <div class="col">
+      <p>Isto não é impressão: é medida. Ajustando a reta no log-log sobre
+        catorze polígonos, de 8 a 65.536 lados:</p>
+      <div class="formula">expoente ajustado: <strong>−1,9984</strong><br>
+        ou seja, o erro cai como \(1/n^{2}\)</div>
+      <div class="traducao">
+        <p>a palavra "converge" não diz nada sozinha —
+        tudo depende de <strong>quão rápido</strong>. Aqui, cada dobra de
+        esforço compra <strong>dois dígitos</strong>. É por isso que Arquimedes
+        conseguiu chegar longe com 96 lados e uma régua.</p>
+      </div>
+      <p>Afirmar "quadrático" sem ajustar seria a preguiça de sempre. O número
+        saiu de regressão, e o resíduo do ajuste está no recibo.</p>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-taxa.png" alt="regressao log-log do erro contra o numero de lados, expoente menos 1,9984">
+    </div>
+  </div>
+  <div class="rodape"><span>antes da palavra limite</span><span class="contador"></span></div>
+</section>
+
+<!-- 6 · o Confronto de Arquimedes -->
+<section class="slide">
+  <div class="eyebrow">Estação 2 · a área</div>
+  <h1>Ele não aproximou: ele <em>aprisionou</em></h1>
+  <div class="corpo">
+    <div class="col">
+      <p>O passo de gênio não foi inscrever. Foi inscrever <strong>e</strong>
+        circunscrever — prender \(\pi\) entre duas quantidades calculáveis que
+        se aproximam uma da outra.</p>
+      <div class="formula">
+        inscrito \(&lt; \pi &lt;\) circunscrito, <strong>para todo \(n\)</strong><br>
+        largura da prisão: \(0{,}485\) em \(n=8\) → \(7{,}2\times10^{-9}\) em
+        \(n=65\,536\)
+      </div>
+      <div class="traducao">
+        <p>é exatamente o <strong>Teorema do
+        Confronto</strong> — o assunto do terceiro seminário desta série —
+        sendo executado dois mil anos antes de alguém escrever o enunciado.</p>
+      </div>
+      <p>Medido também: o polígono de fora erra cerca de <strong>metade</strong>
+        do que o de dentro erra. A prisão não é simétrica.</p>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-confronto-arquimedes.png" alt="pi aprisionado entre poligonos inscrito e circunscrito, e a largura da prisao fechando">
+    </div>
+  </div>
+  <div class="rodape"><span>antes da palavra limite</span><span class="contador"></span></div>
+</section>
+
+<!-- 7 · o 96-gono -->
+<section class="slide">
+  <div class="eyebrow">Estação 2 · a área</div>
+  <h1>E ele publicou limites <em>mais largos</em> do que tinha</h1>
+  <div class="corpo">
+    <div class="col">
+      <p>Arquimedes chegou ao polígono de <strong>96 lados</strong> e publicou:</p>
+      <div class="formula">\(\dfrac{223}{71} &lt; \pi &lt; \dfrac{22}{7}\)</div>
+      <p>Refeito o cálculo dele, o 96-gono dava um cerco <strong>mais
+        apertado</strong> — sobra de \(0{,}000187\) embaixo e \(0{,}000143\)
+        em cima.</p>
+      <div class="traducao">
+        <p>ele não errou: <strong>arredondou para o lado
+        seguro</strong>. Trabalhando com raízes à mão, preferiu um enunciado
+        que <em>certamente</em> contém \(\pi\) a um mais apertado que talvez
+        não contivesse. Isso é rigor, não imprecisão — e é a mesma decisão que
+        um enunciado de teorema toma ao escolher a hipótese mais folgada.</p>
+      </div>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-96gono.png" alt="os limites publicados por Arquimedes comparados com os do proprio poligono de 96 lados">
+    </div>
+  </div>
+  <div class="rodape"><span>antes da palavra limite</span><span class="contador"></span></div>
+</section>
+
+<!-- 8 · a parábola: a construção -->
+<section class="slide">
+  <div class="eyebrow">Estação 3 · a parábola</div>
+  <h1>O segmento de parábola, por triângulos</h1>
+  <div class="corpo">
+    <div class="col">
+      <div class="quadro"><span class="origem">o problema da quadratura</span>
+        <p>Arquimedes preenche o segmento entre a corda e a parábola com
+        triângulos. O vértice de cada um é o ponto em que a
+        <strong>tangente é paralela à corda</strong>.</p>
+      </div>
+      <p>E aqui a construção sai de graça. Na
+        parábola \(y = x^2\), a tangente tem inclinação \(2x\); a corda de
+        \(a\) a \(b\) tem inclinação \(a+b\). Igualando:</p>
+      <div class="formula">\(2x = a + b \;\Longrightarrow\; x = \dfrac{a+b}{2}\)</div>
+      <p class="leitura">"dois xis igual a a mais b, logo xis igual a a mais b
+        sobre dois".</p>
+      <div class="traducao">
+        <p>o vértice cai no <strong>ponto médio em
+        \(x\)</strong>. É esse fato que faz toda corda de uma mesma geração ter
+        o mesmo vão — e é dele que sai tudo o que vem a seguir.</p>
+      </div>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-arquimedes-construcao.png" alt="tres geracoes de triangulos preenchendo o segmento de parabola">
+    </div>
+  </div>
+  <div class="rodape"><span>antes da palavra limite</span><span class="contador"></span></div>
+</section>
+
+<!-- 9 · o um quarto -->
+<section class="slide">
+  <div class="eyebrow">Estação 3 · a parábola</div>
+  <h1>Cada geração vale <em>um quarto</em> da anterior</h1>
+  <div class="corpo">
+    <div class="col">
+      <p>Essa é a afirmação de Arquimedes, e ela foi <strong>medida</strong> —
+        construindo os triângulos, não somando a série de cabeça, que seria
+        assumir o que se quer provar.</p>
+      <div class="formula">
+        razão entre gerações: <strong>1/4</strong>, exata<br>
+        total ÷ primeiro triângulo → <strong>4/3</strong>
+      </div>
+      <div class="traducao">
+        <p>a área do segmento é <strong>quatro terços</strong>
+        do triângulo maior. Um número simples, do outro lado de uma soma
+        infinita — e é esse contraste que faz o cálculo valer a pena.</p>
+      </div>
+      <p>A conferência independente: o resultado bate com a área exata do
+        segmento, \((b-a)^3/6\), que sai de conta elementar e não do resultado
+        sob julgamento.</p>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-um-quarto.png" alt="as areas por geracao caindo por um quarto e o total se aproximando de quatro tercos">
+    </div>
+  </div>
+  <div class="rodape"><span>antes da palavra limite</span><span class="contador"></span></div>
+</section>
+
+<!-- 10 · o achado do float -->
+<section class="slide">
+  <div class="eyebrow">Estação 3 · a parábola</div>
+  <h1>A matemática não falha. A <em>máquina</em> falha na geração 28.</h1>
+  <div class="corpo">
+    <div class="col">
+      <p>Construindo os triângulos em ponto flutuante, a razão \(1/4\) se
+        mantém <strong>exata por 27 gerações</strong>. Depois:</p>
+      <div class="formula">
+        geração 28 → área \(2{,}220446049250313\times10^{-16}\)<br>
+        <span class="quente">que é exatamente o épsilon da precisão dupla</span><br>
+        geração 29 → área <strong>ZERO EXATO</strong>
+      </div>
+      <div class="traducao">
+        <p>os pontos ficam tão próximos que a subtração
+        entre eles perde toda a significância. O triângulo não encolheu até
+        sumir <em>na geometria</em> — ele sumiu <strong>na régua</strong>.</p>
+      </div>
+      <p>Refeita a <strong>mesma</strong> construção em aritmética racional
+        exata, as 29 razões dão um único valor: \(1/4\). Arquimedes está certo
+        em todas.</p>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-float-desiste.png" alt="a area por geracao em exato e em ponto flutuante, com o piso do epsilon e o zero exato">
+    </div>
+  </div>
+  <div class="rodape"><span>antes da palavra limite</span><span class="contador"></span></div>
+</section>
+
+<!-- 11 · o float mentiu -->
+<section class="slide">
+  <div class="eyebrow">Estação 3 · a parábola</div>
+  <h1>E ele <em>mentiu</em> dizendo que tinha chegado</h1>
+  <div class="corpo">
+    <div class="col">
+      <p>Somadas as 30 gerações em ponto flutuante, o erro contra \(4/3\) dá
+        <strong>zero</strong>. A máquina anuncia que o limite foi alcançado.</p>
+      <p>Em aritmética exata, não foi:</p>
+      <div class="formula">falta exatamente
+        \(\dfrac{1}{864\,691\,128\,455\,135\,232}\) \(\approx 1{,}16\times10^{-18}\)</div>
+      <div class="traducao">
+        <p>uma soma <strong>finita</strong> nunca vale
+        \(4/3\). Só o limite vale. O ponto flutuante arredondou a diferença
+        para zero e declarou encerrada uma viagem que não terminou.</p>
+      </div>
+      <p>Guarde este slide: o capítulo 3 inteiro existe para dizer
+        <strong>com precisão</strong> o que significa "chegar" — e para nunca
+        depender de uma calculadora para saber se chegou.</p>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-um-quarto.png" alt="o total se aproximando de quatro tercos sem nunca chegar">
+    </div>
+  </div>
+  <div class="rodape"><span>antes da palavra limite</span><span class="contador"></span></div>
+</section>
+
+<!-- 12 · Fermat -->
+<section class="slide">
+  <div class="eyebrow">Estação 4 · a tangente</div>
+  <h1>Fermat acha o máximo <em>sem derivada</em></h1>
+  <div class="corpo">
+    <div class="col">
+      <div class="quadro"><span class="origem">o método de Fermat</span>
+        <p>Para achar onde a curva tem tangente <strong>horizontal</strong>:
+        procure \(x\) e \(x+e\) com o <em>mesmo</em> valor, simplifique, e
+        depois faça \(e\) desaparecer.</p>
+      </div>
+      <div class="traducao">
+        <p>é derivada, sem a palavra e sem o conceito.
+        E o passo desconfortável é o último: durante a conta \(e\) é diferente
+        de zero (dá para dividir por ele) e no fim vira zero. Divisão por algo
+        que depois é nulo — foi essa a crítica que perseguiu o cálculo por
+        150 anos.</p>
+      </div>
+      <p>Tangente <strong>horizontal</strong> quer dizer inclinação
+        <strong>zero</strong>: naquele ponto o desenho não sobe nem desce —
+        fica, por um instante, <em>constante</em>. É o vocabulário do
+        seminário zero.</p>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-fermat.png" alt="cordas horizontais cada vez menores convergindo para o ponto de tangente horizontal">
+    </div>
+  </div>
+  <div class="rodape"><span>antes da palavra limite</span><span class="contador"></span></div>
+</section>
+
+<!-- 13 · secante -> tangente -->
+<section class="slide">
+  <div class="eyebrow">Estação 4 · a tangente</div>
+  <h1>A reta por dois pontos, quando os dois viram <em>um</em></h1>
+  <div class="corpo">
+    <div class="col">
+      <p>A tangente qualquer é mais difícil que a horizontal. A ideia é a
+        mesma de sempre: tome a <strong>secante</strong>, que passa por dois
+        pontos e se calcula, e aproxime um do outro.</p>
+      <div class="formula">\(m = \dfrac{f(a+h) - f(a)}{h}\)</div>
+      <p class="leitura">"eme igual a: f de a mais agá, menos f de a, sobre agá".</p>
+      <div class="traducao">
+        <p>com \(h \neq 0\) isso é uma fração comum, e a
+        reta existe. Com \(h = 0\) vira \(0/0\) e não significa nada. A
+        pergunta do cálculo é: <strong>o que acontece no caminho?</strong></p>
+      </div>
+      <p>E é exatamente aqui que o próximo seminário começa — porque essa
+        pergunta precisa de uma operação que ainda não temos.</p>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-secante.png" alt="secantes se aproximando da tangente conforme o segundo ponto se aproxima do primeiro">
+    </div>
+  </div>
+  <div class="rodape"><span>antes da palavra limite</span><span class="contador"></span></div>
+</section>
+
+<!-- 14 · a família: o método -->
+<section class="slide">
+  <div class="eyebrow">Estação 5 · a família</div>
+  <h1>Olhar a curva e dizer <em>que máquina</em> a fez</h1>
+  <div class="corpo">
+    <div class="col">
+      <p>O deck zero ensinou a ler o <strong>comportamento</strong>: sobe, desce,
+        tem buraco. Esta estação pede algo mais difícil — dizer de que
+        <strong>família</strong> a curva é. E catálogo não resolve: todo catálogo
+        é escolha de quem escreve. O que existe é um <strong>organizador</strong>
+        — o que a taxa faz.</p>
+      <p>E a taxa se <span class="ouro">mede</span> antes de o limite existir: a
+        secante da folha anterior, com passo fixo, em vários pontos.</p>
+      <div class="formula">\(m(x) = \dfrac{f(x+h) - f(x-h)}{2h}\)</div>
+      <p class="leitura">"eme de x igual a: f de x mais agá, menos f de x menos
+        agá, sobre dois agá".</p>
+      <p><strong>Atenção à palavra.</strong> Na folha 5, <em>taxa</em> era a
+        velocidade com que o <strong>erro</strong> caía; aqui é a taxa de variação
+        da <strong>própria curva</strong>. Mesma palavra, dois papéis.</p>
+      <div class="traducao">
+        <p>mede-se a inclinação de uma cordinha centrada
+        no ponto — e com passo pequeno e fixo o número sai <strong>sem que nenhum
+        limite exista</strong>.</p>
+      </div>
+      <p>Na parábola da folha 8, cinco medidas bastam: elas caem sobre uma
+        <span class="quente">reta</span>.</p>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-familia-medir.png" alt="à esquerda uma parábola com a secante medida em cinco pontos; à direita as cinco taxas medidas, alinhadas sobre uma reta">
+    </div>
+  </div>
+  <div class="rodape"><span>antes da palavra limite</span><span class="contador"></span></div>
+</section>
+
+<!-- 15 · a família: o exercício cego -->
+<section class="slide">
+  <div class="eyebrow">Estação 5 · a família</div>
+  <h1>Seis curvas, <em>nenhum</em> nome</h1>
+  <div class="corpo">
+    <div class="col">
+      <p>Para cada desenho ao lado, escolha três ou quatro pontos, meça a taxa
+        neles e olhe o que a <strong>sequência de taxas</strong> faz:</p>
+      <ul>
+        <li>ela é sempre a mesma?</li>
+        <li>ela é sempre a mesma <strong>e vale zero</strong>?</li>
+        <li>ela cresce como uma reta?</li>
+        <li>ela é a própria curva outra vez, em escala?</li>
+        <li>ela sobe e desce como a curva, só que deslocada?</li>
+        <li>ela <strong>salta</strong> em algum ponto?</li>
+      </ul>
+      <p>Decida <strong>antes</strong> de virar a folha. Não há resposta a
+        decorar aqui: o ganho é o reflexo, como no treino do deck zero.</p>
+      <p class="tese">nomear a curva de fora é decoreba; medir a taxa e concluir é leitura</p>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-familia-cegas.png" alt="seis curvas sem rótulo, marcadas de A a F">
+    </div>
+  </div>
+  <div class="rodape"><span>antes da palavra limite</span><span class="contador"></span></div>
+</section>
+
+<!-- 16 · a família: a revelação -->
+<section class="slide">
+  <div class="eyebrow">Estação 5 · a família</div>
+  <h1>O que a taxa faz <em>é</em> a família</h1>
+  <div class="corpo">
+    <div class="col">
+      <ul>
+        <li>taxa <strong>zero</strong> — constante <span class="ouro">(F)</span></li>
+        <li>taxa <strong>sempre a mesma</strong>, e não zero — reta <span class="ouro">(B)</span></li>
+        <li>taxa que é uma <strong>reta</strong> — parábola</li>
+        <li>taxa que é uma <strong>parábola</strong> — cúbica <span class="ouro">(D)</span></li>
+        <li>taxa <strong>proporcional à própria curva</strong> — exponencial <span class="ouro">(A)</span></li>
+        <li>taxa da <strong>mesma família, deslocada</strong> — seno e cosseno <span class="ouro">(C)</span></li>
+        <li>taxa que <strong>salta</strong> — não é família: é defeito <span class="ouro">(E)</span></li>
+      </ul>
+      <div class="traducao">
+        <p>a última linha é a que fecha a lista. Bico e
+        salto não são famílias de curva — são lugares onde a taxa não tem o que
+        medir, e é por isso que eles entram aqui junto das outras.</p>
+      </div>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-familia-revelacao.png" alt="as seis curvas outra vez, cada uma com a taxa medida ponto a ponto sobreposta em ouro">
+    </div>
+  </div>
+  <div class="rodape"><span>antes da palavra limite</span><span class="contador"></span></div>
+</section>
+
+<!-- 17 · a família: por que estas -->
+<section class="slide">
+  <div class="eyebrow">Estação 5 · a família</div>
+  <h1>Por que são <em>estas</em> famílias, e não outras</h1>
+  <div class="corpo">
+    <div class="col">
+      <p>A pergunta parece de gosto — alguém escolheu esses capítulos. Não
+        escolheu: <strong>são as que a taxa não tira do lugar</strong>.</p>
+      <p>Polinômio deriva em polinômio, com o grau caindo de um. A exponencial
+        \(e^{x}\) deriva nela mesma. Seno e cosseno derivam um no outro, e
+        voltam ao começo depois de quatro passos.</p>
+      <p class="leitura">"e elevado a x".</p>
+      <div class="traducao">
+        <p>uma família que a taxa levasse para fora dela
+        mesma não teria capítulo: cada conta abriria um objeto novo, e não
+        haveria o que aprender de uma vez.</p>
+      </div>
+      <p>E o deck para aqui, no mesmo lugar de sempre. <strong>Medir</strong> a
+        taxa é uma coisa; <strong>provar</strong> que ela é aquela é outra, e
+        precisa da operação que o próximo seminário traz. O bico é a prova viva
+        disso: a taxa medida nele <span class="quente">depende do passo</span> —
+        diminua o passo e a resposta muda.</p>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-familia-fechadas.png" alt="três diagramas: polinômio volta para polinômio, e elevado a x volta para si mesmo, seno e cosseno apontam um para o outro">
+    </div>
+  </div>
+  <div class="rodape"><span>antes da palavra limite</span><span class="contador"></span></div>
+</section>
+
+<!-- 18 · a âncora de imagem -->
+<section class="slide">
+  <div class="eyebrow">a régua no ofício · o que isto é numa folha de verdade</div>
+  <h1>A exaustão <em>é</em> a subdivisão de malha</h1>
+  <div class="corpo">
+    <div class="col">
+      <p>O círculo aproximado por polígonos de mais e mais lados não é
+        curiosidade de 2.200 anos atrás: é <strong>literalmente o que um
+        renderizador faz com uma esfera</strong>.</p>
+      <p>A curva lisa que se vê na tela é mentira feita de <strong>segmentos
+        retos</strong>. Aumentar a subdivisão da malha é o gesto de Arquimedes
+        com outro nome — e o erro cai do mesmo jeito que a folha 4 mediu:
+        dobrar os lados divide o erro por quatro.</p>
+      <div class="traducao">
+        <p>quando o artista arrasta o controle de
+        subdivisão até a silhueta parar de mostrar facetas, ele está fazendo
+        exaustão. A pergunta "quantos lados bastam?" é a mesma que Arquimedes
+        respondeu com noventa e seis.</p>
+      </div>
+      <p>E a tangente de Fermat emenda no mesmo lugar: a <strong>normal</strong>
+        de uma superfície — a seta que diz para onde cada pedaço dela aponta —
+        sai da derivada. <strong>Sem derivada não há sombreamento</strong>:
+        nenhuma superfície pega luz sem que se saiba para onde ela olha.</p>
+      <p class="tese">As duas perguntas que abriram este deck são, hoje, duas
+        linhas de código dentro de qualquer renderizador.</p>
+    </div>
+  </div>
+  <div class="rodape"><span>antes da palavra limite</span><span class="contador"></span></div>
+</section>
+
+<!-- 19 · dicionário -->
+<!-- apêndice · onde este seminário mora no mapa (2026-09-01) -->
+<section class="slide">
+  <div class="eyebrow">apêndice · onde este seminário mora</div>
+  <h1>O único que anda ao <em>contrário</em> do mapa</h1>
+  <div class="corpo">
+    <div class="col">
+      <p>Este seminário mora em <strong>sequências</strong> — e no mapa de
+        pré-requisitos a sequência vem <strong>depois</strong> do limite, não
+        antes. A série faz o contrário de propósito, e é o único lugar onde
+        isso acontece.</p>
+      <p>A razão é de ensino, não de estrutura: Arquimedes e Fermat
+        <strong>calculavam limites sem a palavra</strong>. A exaustão é um
+        limite ao longo dos naturais, e dá para fazer a conta inteira antes de
+        ter o nome — que é o que este seminário faz.</p>
+      <div class="traducao">
+        <p>o mapa responde <em>“o que precisa vir antes”</em>; a aula responde
+        <em>“por onde é mais fácil entrar”</em>. As duas perguntas são
+        diferentes, e aqui elas discordam — com o desacordo declarado.</p>
+      </div>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/mapa-para-onde-vamos.svg" alt="o recorte do mapa de pre-requisitos com o no sequencias aceso, o limite que o antecede e a analise real que depende dele">
+    </div>
+  </div>
+  <div class="rodape"><span>antes da palavra limite</span><span class="contador"></span></div>
+</section>
+
+<section class="slide">
+  <div class="eyebrow">apêndice</div>
+  <h1>Os símbolos que apareceram</h1>
+  <div class="corpo">
+    <div class="col">
+      <p>Nenhum é decoração: cada um entrou com o conceito que carrega, e volta
+        aqui só para conferência.</p>
+      <table class="simbolos">
+        <tr><td>\(\pi\)</td><td>lê-se "pi": a razão entre a circunferência e o
+          diâmetro</td></tr>
+        <tr><td>\(n\)</td><td>aqui, o número de lados do polígono</td></tr>
+        <tr><td>\(O(1/n^2)\)</td><td>lê-se "ó de um sobre ene ao quadrado": o
+          erro cai como \(1/n^2\)</td></tr>
+        <tr><td>\(e\)</td><td>em Fermat, o deslocamento que no fim vira zero
+          — nada a ver com o número \(e\)</td></tr>
+      </table>
+    </div>
+    <div class="col">
+      <table class="simbolos">
+        <tr><td>\(h\)</td><td>a distância entre os dois pontos da secante</td></tr>
+        <tr><td>\(m\)</td><td>a inclinação de uma reta</td></tr>
+        <tr><td>épsilon da dupla</td><td>o menor passo que a máquina distingue
+          perto de 1: \(2{,}22\times10^{-16}\)</td></tr>
+        <tr><td>exaustão</td><td>preencher uma figura com outras que se sabe
+          medir, até não sobrar nada</td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="rodape"><span>antes da palavra limite</span><span class="contador"></span></div>
+</section>
+
+<!-- 20 · de onde veio -->
+<section class="slide">
+  <div class="eyebrow">apêndice</div>
+  <h1>De onde veio cada coisa</h1>
+  <div class="corpo">
+    <div class="col">
+      <ul>
+        <li><strong>Guisoli</strong>, <em>Lições de Cálculo</em> — cap. 2
+          inteiro: a exaustão do círculo (§2.1.1), Arquimedes e o segmento de
+          parábola (§2.1.2), Fermat (§2.2.1) e o problema da tangente (§2.2.2);</li>
+        <li><strong>Guidorizzi</strong>, <em>Um Curso de Cálculo</em> vol. 1,
+          5ª ed. — a guarda-corpo: §9.6 (máximos e mínimos, com as hipóteses) e
+          §11.6 (área por integral);</li>
+        <li>as medidas de 2026-08-22:
+          <span class="ouro">medir_exaustao.py</span>, recibo em
+          <span class="ouro">evidencias-medidas.md</span> — que registra também
+          <strong>o que reprovou</strong>.</li>
+      </ul>
+      <div class="traducao">
+        <p>toda figura sai de script desta pasta, e todo
+        número tem recibo com data. Nenhuma depende de arquivo de fora.</p>
+      </div>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-confronto-arquimedes.png" alt="o aprisionamento de pi entre os dois poligonos">
+    </div>
+  </div>
+  <div class="rodape"><span>antes da palavra limite</span><span class="contador"></span></div>
+</section>
+
+<!-- 21 · fecho -->
+<section class="slide capa">
+  <div class="eyebrow">fecho</div>
+  <h1>Eles já faziam. Faltava o <em>nome</em>.</h1>
+  <div class="grega"></div>
+  <p class="tese">e faltava saber dizer, com precisão, o que significa "chegar"</p>
+  <p class="prosa">Arquimedes aprisionou \(\pi\) entre dois calculáveis que se
+    fecham. Fermat fez \(e\) desaparecer depois de dividir por ele. Os dois
+    calcularam limites — sem a palavra, sem a definição e sem nenhuma garantia
+    de que aquilo era legítimo.</p>
+  <p class="prosa">O próximo seminário dá o nome. E o terceiro mostra que
+    <strong>o aprisionamento de Arquimedes virou teorema</strong>.</p>
+  <div class="rodape"><span>antes da palavra limite</span><span class="contador"></span></div>
+</section>
+
+<script>
+const slides = [...document.querySelectorAll(".slide")];
+let i = 0;
+// cada slide carrega o SEU número (vale para a tela e para o PDF impresso)
+slides.forEach((s, k) => s.querySelectorAll(".contador").forEach(c =>
+  c.textContent = `${k + 1} / ${slides.length}`));
+function mostra(n) {
+  i = Math.max(0, Math.min(slides.length - 1, n));
+  slides.forEach((s, k) => s.classList.toggle("ativo", k === i));
+}
+addEventListener("keydown", e => {
+  if (["ArrowRight", "PageDown", " "].includes(e.key)) mostra(i + 1);
+  if (["ArrowLeft", "PageUp"].includes(e.key)) mostra(i - 1);
+  if (e.key === "Home") mostra(0);
+  if (e.key === "End") mostra(slides.length - 1);
+});
+addEventListener("click", e => {
+  if (e.clientX > innerWidth / 2) mostra(i + 1); else mostra(i - 1);
+});
+function doHash() {
+  const n = parseInt(location.hash.slice(1), 10);
+  mostra(Number.isFinite(n) ? n - 1 : 0);
+}
+addEventListener("hashchange", doHash);
+doHash();
+</script>
+</body>
+</html>

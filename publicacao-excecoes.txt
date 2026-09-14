@@ -1,0 +1,12 @@
+# Excecoes do conferir_publicacao.py -- uma por linha:
+#
+#     <sha10> | <motivo>
+#
+# O sha sai impresso ao lado de cada achado. Ele e do TERMO junto do TRECHO:
+# se o texto mudar, a excecao caduca sozinha, e isso e de proposito -- excecao
+# que sobrevive a reescrita do texto vira permissao permanente.
+#
+# Excecao sem motivo NAO vale. Nao existe excecao por categoria inteira.
+#
+# Exemplo de excecao legitima (operador MATEMATICO, nao papel de pessoa):
+# 1a2b3c4d5e | "the operator" aqui e o produto interno, nao uma pessoa

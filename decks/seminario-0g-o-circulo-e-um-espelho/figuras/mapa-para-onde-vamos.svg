@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="566 -66 653 644" width="653" height="644" role="img" aria-label="0g · O círculo é um espelho — para onde vamos">
+<rect x="566" y="-66" width="653" height="644" fill="#f3f5f9"/>
+<polyline points="918.5,58.0 918.5,134.0 1103.5,134.0 1103.5,240.0" fill="none" stroke="#a9713f" stroke-width="1.6" stroke-dasharray="2 3" opacity="0.85"/>
+<polyline points="936.5,178.0 936.5,214.0 1103.5,214.0 1103.5,240.0" fill="none" stroke="#a9713f" stroke-width="1.6" opacity="0.85"/>
+<polyline points="936.5,178.0 936.5,269.0 1098.0,269.0 1098.0,360.0" fill="none" stroke="#c3ccdb" stroke-width="1.0" opacity="0.35"/>
+<polyline points="682.5,178.0 682.5,219.0 1103.5,219.0 1103.5,240.0" fill="none" stroke="#a9713f" stroke-width="1.6" opacity="0.85"/>
+<polyline points="1103.5,298.0 1103.5,314.0 1098.0,314.0 1098.0,360.0" fill="none" stroke="#a9713f" stroke-width="1.6" opacity="0.85"/>
+<polyline points="1103.5,298.0 1103.5,394.0 1004.5,394.0 1004.5,480.0" fill="none" stroke="#a9713f" stroke-width="1.6" opacity="0.85"/>
+<g transform="translate(842.5,0.0)" fill="#f3f5f9" stroke="#a9713f" stroke-width="1.6">
+<rect width="152" height="58" rx="29.0" ry="29.0"></rect>
+</g>
+<text x="918.5" y="26.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">Geometria</text>
+<text x="918.5" y="40.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">plana</text>
+<g transform="translate(860.5,120.0)" fill="#f3f5f9" stroke="#a9713f" stroke-width="1.6">
+<rect width="152" height="58" rx="8"></rect>
+</g>
+<text x="936.5" y="146.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">Frações</text>
+<text x="936.5" y="160.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">e proporção</text>
+<g transform="translate(606.5,120.0)" fill="#f3f5f9" stroke="#a9713f" stroke-width="1.6">
+<rect width="152" height="58" rx="8"></rect>
+</g>
+<text x="682.5" y="146.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">Álgebra</text>
+<text x="682.5" y="160.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">elementar</text>
+<g transform="translate(1027.5,240.0)" fill="#ffffff" stroke="#a9713f" stroke-width="2.6">
+<rect width="152" height="58" rx="8"></rect>
+</g>
+<text x="1103.5" y="273.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#16233f">Trigonometria</text>
+<g transform="translate(1022.0,360.0)" fill="#f3f5f9" stroke="#a9713f" stroke-width="1.6">
+<rect width="152" height="58" rx="8"></rect>
+</g>
+<text x="1098.0" y="393.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">Funções</text>
+<g transform="translate(928.5,480.0)" fill="#f3f5f9" stroke="#f44e3e" stroke-width="1.6">
+<rect width="152" height="58" rx="29.0" ry="29.0"></rect>
+</g>
+<text x="1004.5" y="506.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">Coordenadas polares</text>
+<text x="1004.5" y="520.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#16233f">e aplicações</text>
+<text x="572" y="-48" font-family="Inter,sans-serif" font-size="15" font-weight="600" fill="#16233f">0g · O círculo é um espelho — para onde vamos</text>
+</svg>

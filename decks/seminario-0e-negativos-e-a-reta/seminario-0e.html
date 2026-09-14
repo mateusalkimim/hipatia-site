@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Negativos e a reta — a ordem e a distância</title>
+<script>
+window.MathJax = {
+  tex: { inlineMath: [["\\(", "\\)"]], displayMath: [["\\[", "\\]"]] },
+  svg: { fontCache: "global" },
+  startup: { typeset: true }
+};
+</script>
+<script src="../../vendor/tex-svg.js" id="MathJax-script" async></script>
+<style>
+/* ============================================================
+   Ítaca DS — TEMA CLARO (o "irmão claro" previsto em
+   itaca-ds/tokens.css; primitivos da paleta do roteiro ao
+   orientador; muda só a camada semântica)
+   ============================================================ */
+:root {
+  --bg: #f3f5f9; --card: #ffffff; --linha: #d9e0ec;
+  --ink: #16233f; --ink2: #3f4d6b; --muted: #7c88a1;
+  --bronze: #a9713f; --bronze-fundo: #8f5e33; --bronze-soft: #c79b6e;
+  --azul: #1e3a6b; --azul-deep: #12244a;
+  --terracota: #b35430; --verde: #4e7a49; --rubro: #a84444;
+  --it-serif: Georgia, "Cormorant Garamond", "Times New Roman", serif;
+  --it-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --it-mono: "Spline Sans Mono", ui-monospace, "Cascadia Code", monospace;
+  /* cores dos 8 vértices (as mesmas de gerar_figuras.py) */
+  /* NORMA §2.1 — a medida de linha, declarada UMA vez. Em EM, nunca em `ch`:
+     `ch` mede o glifo "0" (0,636 em na Inter) e não o caractere médio de
+     prosa (0,456 em), então 66ch entregaria 92 caracteres. */
+  --medida: 30em;
+  --v0:#a9713f; --v1:#b35430; --v2:#4e7a49; --v3:#a84444;
+  --v4:#3d6394; --v5:#6d55a3; --v6:#2e7d70; --v7:#a85577;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+/* §2.6 — a ESCALA do registro deck. Uma raiz só, porque `rem` é global:
+   subir aqui escala junto o que tem `clamp(...vw...)` e o que tem tamanho
+   FIXO em rem. Levantar só os clamps (a primeira tentativa) deixou
+   `.leitura`, `.legenda`, `.eyebrow` e todo `<p>` fora de `.col` para trás, e
+   a folha ficou com DUAS escalas ao mesmo tempo.
+   25px escolhido para que o termo proporcional continue governando a 1920:
+   o teto de `.col p` (1,04rem) passa a valer 26px, logo acima dos 25,92px do
+   `1.35vw` — a proporção manda, o teto só segura viewport maior. */
+html { font-size: 25px; }
+html, body { height: 100%; background: var(--azul-deep); }
+body { font-family: var(--it-sans); color: var(--ink); overflow: hidden; }
+
+.slide {
+  display: none; position: absolute; inset: 0;
+  background: var(--bg);
+  padding: 4vh 6vw 6vh; flex-direction: column;
+  overflow: hidden;            /* nada vaza para a página seguinte */
+}
+.slide.ativo { display: flex; animation: fade .35s ease; }
+@keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.eyebrow {
+  font-size: 0.72rem; letter-spacing: 0.22em;
+  text-transform: uppercase; color: var(--bronze); font-weight: 700;
+  margin-bottom: 1vh;
+}
+h1 { font-family: var(--it-serif); font-weight: 700; font-size: clamp(1.5rem, 3vw, 2.4rem);
+     line-height: 1.12; margin-bottom: 1.2vh; color: var(--azul-deep);
+     letter-spacing: -0.01em; }
+h1 em { color: var(--bronze); font-style: normal; }
+.tese { font-family: var(--it-serif); font-style: italic; font-size: clamp(1.05rem, 1.8vw, 1.35rem);
+        color: var(--bronze-fundo); }
+.corpo { flex: 1; display: flex; gap: 2.6vw; align-items: safe center;
+         min-height: 0; }
+/* `safe center`, não `center`: a exceção do deck (§2.4) centra a faixa única
+   na vertical — mas `center` num flex TRANSBORDA PARA OS DOIS LADOS quando o
+   item é mais alto que o container, e aí o texto sobe por cima do título e
+   desce por cima do rodapé ao mesmo tempo. Foi o que apareceu na folha 12 ao
+   subir a escala. `safe` volta a alinhar pelo topo exatamente quando não cabe:
+   a centralização vale enquanto é composição, e desliga quando viraria
+   atropelo. */
+.col { flex: 1; min-width: 0; }
+
+/* ===== NORMA DE COMPOSIÇÃO — variante B (2026-08-17) =======================
+   §2.4 (o conteúdo pende do topo) NÃO foi aplicado aqui, e é decisão em
+   aberto do operador. Motivo medido: OITO folhas trazem
+   `style="align-items:center"` INLINE na `.corpo`, e estilo inline vence a
+   folha de estilo — trocar só a regra deixaria 30 folhas no topo e 8
+   centradas, inconsistência pior que qualquer das duas. E há uma dúvida de
+   mérito: numa folha subocupada, pendurar no topo joga TODO o vazio para
+   baixo (47% na folha 21) enquanto centrar o divide. A regra nasceu para
+   blocos empilhados do caderno e pode não valer para o deck.
+   O estilo inline é também a raiz dos 407 eixos distintos.
+
+   §2.1 a medida governa a PROSA; bloco de exibição (fórmula, figura, tabela,
+   grade) é governado pelo conteúdo. A `.corpo` continua FLEX de propósito: os
+   arranjos especiais deste deck (`duo`, `grid3x3`, `grid2x2`,
+   `figbox.vert.hierarquia`) carregam proporções que o autor declarou em
+   `flex`, e trocar por grade as apagaria. O eixo fica para um segundo ato,
+   com cada arranjo convertido caso a caso.
+
+   Alcance: a prosa deste deck NÃO mora só em `.col` — há folhas com `<div>`
+   sem classe dentro de `.corpo` (a 9 é uma). Seletor estreito deixava 67
+   linhas acima do teto com a regra certa aplicada; é a armadilha 13 outra vez,
+   pelo lado do ALCANCE. Por isso a regra vale para prosa onde quer que ela
+   esteja, e o que fica de fora é nomeado, não esquecido.                      */
+.slide p,
+.slide li,
+.slide figcaption,
+.slide .legenda,
+.slide .citacao .frase { max-width: var(--medida, 30em); }
+/* Prosa CENTRADA (33 blocos neste deck) precisa continuar centrada depois de
+   limitada: sem isto a caixa encolhe mas fica ancorada à esquerda, e o texto
+   parece deslocado — regressão que a medida introduziu na folha 9. Centrar o
+   BLOCO é o que preserva a decisão do autor enquanto a medida faz seu trabalho.
+   (A §2.2 desaprova bloco centrado; convertê-los é redesenho folha a folha, e
+   não é o que esta rodada faz.) */
+.slide [style*="text-align:center"],
+.slide [style*="text-align: center"] { margin-inline: auto; }
+
+/* fora da medida, por serem BLOCO DE EXIBIÇÃO (§2.1) */
+.slide .formula,
+.slide .formula p,
+.slide table p,
+.slide .quadro mjx-container { max-width: none; }
+.col p, .col li { color: var(--ink2); font-size: clamp(0.88rem, 1.35vw, 1.04rem);
+                  line-height: 1.55; margin-bottom: 1vh; }
+.col strong { color: var(--ink); }
+.col .ouro { color: var(--bronze-fundo); }
+.col .quente { color: var(--terracota); }
+ul { list-style: none; }
+ul li { padding-left: 1.1em; position: relative; }
+ul li::before { content: "▸"; position: absolute; left: 0; color: var(--bronze);
+                font-size: 0.8em; top: 0.28em; }
+img.fig { max-width: 100%; max-height: 100%; object-fit: contain;
+          border-radius: 8px; border: 1px solid var(--linha);
+          background: var(--card);
+          box-shadow: 0 1px 4px rgba(18, 36, 74, 0.08); }
+.figbox { flex: 1.3; min-width: 0; min-height: 0; height: 100%; display: flex;
+          align-items: center; justify-content: center; gap: 1vw; }
+.figbox img.fig { flex: 0 1 auto; min-width: 0; min-height: 0; width: auto; }
+.figbox.vert { flex-direction: column; }
+.figbox.vert img.fig { max-height: 48%; }
+/* HIERARQUIA VISUAL: a figura principal ocupa espaço proporcional à sua
+   importância; a secundária não compete com ela. Sem isto, uma figura larga
+   e rasa (observação de rodapé) fica MAIOR que a figura que carrega o
+   conceito, só por causa da proporção. */
+.figbox.vert.hierarquia img.fig:first-of-type { max-height: 68%; }
+.figbox.vert.hierarquia img.fig:last-of-type  { max-height: 26%; }
+
+/* transcrição do quadro: o cartão-lousa */
+.quadro {
+  background: var(--card); border: 1px solid var(--linha);
+  border-left: 5px solid var(--bronze); border-radius: 8px;
+  padding: 1.6vh 1.4vw; margin: 1vh 0;
+  color: var(--azul-deep); font-size: clamp(0.9rem, 1.4vw, 1.08rem);
+  line-height: 1.7;
+  box-shadow: 0 1px 4px rgba(18, 36, 74, 0.08);
+}
+.quadro .origem { display: block; font-size: 0.68rem; color: var(--muted);
+                  letter-spacing: 0.14em; text-transform: uppercase;
+                  margin-bottom: 0.8vh; }
+.quadro mjx-container { color: var(--azul-deep); }
+
+/* a tradução para quem está chegando agora */
+.traducao {
+  background: color-mix(in srgb, var(--verde) 7%, var(--card));
+  border: 1px solid color-mix(in srgb, var(--verde) 30%, var(--linha));
+  border-left: 5px solid var(--verde); border-radius: 8px;
+  padding: 1.3vh 1.4vw; margin: 1vh 0;
+  color: var(--ink2); font-size: clamp(0.86rem, 1.3vw, 1rem); line-height: 1.55;
+}
+.traducao::before { content: "em bom português: "; color: var(--verde);
+                    font-weight: 700; }
+
+.formula {
+  font-family: var(--it-mono); background: var(--card);
+  border: 1px solid var(--linha); border-left: 4px solid var(--bronze);
+  border-radius: 8px;
+  padding: 1.3vh 1.2vw; color: var(--azul-deep); font-size: clamp(0.85rem, 1.35vw, 1.02rem);
+  margin: 1vh 0; overflow-x: auto;
+}
+.legenda { font-size: 0.78rem; color: var(--muted); margin-top: 0.6vh; }
+/* leitura em voz alta das expressões — parte do método didático */
+.leitura { font-size: 0.8rem; color: var(--muted); font-style: italic;
+           margin: -0.3vh 0 1vh 0.3vw; }
+.leitura::before { content: "lê-se: "; font-style: normal; font-weight: 700;
+                   color: var(--bronze); }
+.rodape { position: absolute; bottom: 1.8vh; left: 6vw; right: 6vw;
+          display: flex; justify-content: space-between;
+          font-size: 0.72rem; color: var(--muted);
+          letter-spacing: 0.08em; border-top: 1px solid var(--linha);
+          padding-top: 0.9vh; }
+.contador { font-family: var(--it-mono); }
+
+/* dicionário de símbolos */
+table.simbolos { border-collapse: collapse; margin: 0.6vh 0; width: 100%; }
+/* D4 (2026-08-18): o teto era 0.98rem (~15,7 px) enquanto o termo
+       proporcional 1.25vw vale 24 px a 1920 — o teto em `rem` suprimia a
+       escala a dois terços, e as folhas 44/45 ficavam com 36% de sobra, que
+       a §2.4 chama de DEFEITO. Mesma armadilha já registrada na norma: a
+       escala certa já estava no arquivo; o teto é que a apagava. */
+    table.simbolos td { padding: 0.72vh 0.7vw; font-size: clamp(0.95rem, 1.25vw, 1.32rem);
+                    color: var(--ink2); border-bottom: 1px solid var(--linha); }
+table.simbolos td:first-child { color: var(--azul-deep); font-weight: 600;
+                                white-space: nowrap; }
+
+/* matriz colorida */
+table.matriz { border-collapse: collapse; font-family: var(--it-mono);
+               font-size: clamp(0.8rem, 1.5vw, 1.15rem); margin: 1vh auto;
+               background: var(--card); border: 1px solid var(--linha);
+               border-radius: 8px;
+               box-shadow: 0 1px 4px rgba(18, 36, 74, 0.08); }
+table.matriz td { padding: 0.8vh 0.75vw; text-align: center; font-weight: 600; }
+table.matriz td.rotulo { color: var(--muted); font-size: 0.8em; font-weight: 400; }
+table.matriz .colch { font-size: 2.2em; color: var(--ink2); font-family: var(--it-serif);
+                      font-weight: 400; }
+.chip { display: inline-block; width: 0.85em; height: 0.85em; border-radius: 50%;
+        vertical-align: -0.08em; }
+
+/* mapa da viagem */
+.estacoes { display: flex; gap: 1.2vw; align-items: stretch; margin: 2vh 0; }
+.estacao { flex: 1; background: var(--card); border: 1px solid var(--linha);
+           border-top: 4px solid var(--bronze); border-radius: 8px;
+           padding: 1.6vh 1vw; text-align: center;
+           box-shadow: 0 1px 4px rgba(18, 36, 74, 0.08); }
+.estacao .num { font-family: var(--it-serif); font-size: 1.6rem;
+                color: var(--bronze); }
+.estacao .nome { font-weight: 700; color: var(--azul-deep);
+                 font-size: clamp(0.85rem, 1.3vw, 1.05rem); margin: 0.5vh 0; }
+.estacao .oq { font-size: clamp(0.76rem, 1.1vw, 0.9rem); color: var(--ink2);
+               line-height: 1.45; }
+.seta-estacao { align-self: center; color: var(--bronze); font-size: 1.4rem; }
+
+/* galeria da obra: pranchas lado a lado e grade 3×3 do caderno */
+.duo { flex: 1.4; min-width: 0; min-height: 0; height: 100%; display: grid;
+       grid-template-columns: 1fr 1fr; gap: 1vw; align-items: center; }
+.duo figure { min-width: 0; min-height: 0; height: 100%; display: flex;
+              flex-direction: column; align-items: center;
+              justify-content: center; }
+.duo img { max-width: 100%; min-height: 0; flex: 0 1 auto; max-height: 92%;
+           object-fit: contain; border-radius: 8px;
+           border: 1px solid var(--bronze-soft);
+           box-shadow: 0 2px 10px rgba(18, 36, 74, 0.14); }
+.duo figcaption { font-family: var(--it-serif); font-style: italic;
+                  font-size: 0.95rem; color: var(--bronze-fundo);
+                  margin-top: 0.8vh; }
+.grid3x3 { flex: 1.15; min-width: 0; min-height: 0; height: 100%;
+           display: grid; grid-template-columns: repeat(3, 1fr);
+           grid-auto-rows: 1fr; gap: 0.7vh 0.7vw; align-content: center; }
+.grid3x3 img { width: 100%; height: 100%; min-height: 0; object-fit: cover;
+               border-radius: 6px; border: 1px solid var(--linha);
+               box-shadow: 0 1px 4px rgba(18, 36, 74, 0.10); }
+.citacao { border-left: 4px solid var(--bronze); padding: 1vh 1.2vw;
+           margin: 1.2vh 0; }
+.citacao .frase { font-family: var(--it-serif); font-style: italic;
+                  font-size: clamp(1rem, 1.6vw, 1.25rem);
+                  color: var(--azul-deep); line-height: 1.45; }
+.citacao .autor { font-size: 0.78rem; color: var(--muted);
+                  margin-top: 0.5vh; }
+
+/* grade 2×2 do experimento ControlNet */
+.grid2x2 { flex: 1.5; min-width: 0; min-height: 0; display: grid;
+           grid-template-columns: 1fr 1fr; grid-auto-rows: 1fr;
+           gap: 0.8vh 0.8vw; height: 100%; }
+.grid2x2 figure { min-width: 0; min-height: 0; display: flex;
+                  flex-direction: column; align-items: center; }
+.grid2x2 img { max-width: 100%; min-height: 0; flex: 1; object-fit: contain;
+               border-radius: 6px; border: 1px solid var(--linha);
+               background: var(--card); }
+.grid2x2 figcaption { font-size: 0.72rem; color: var(--muted);
+                      margin-top: 0.4vh; }
+
+.capa { justify-content: center; align-items: center; text-align: center;
+        background: radial-gradient(ellipse at 50% 38%, var(--card) 0%, var(--bg) 62%); }
+.capa h1 { font-size: clamp(2.4rem, 5.6vw, 4rem); margin: 1.6vh 0; }
+.capa .grega { width: min(30vw, 340px); height: 1px; background: var(--bronze);
+               opacity: 0.55; margin: 2.2vh auto; }
+.capa p { color: var(--ink2); max-width: 48ch; font-size: 1.05rem; line-height: 1.6; }
+    /* D5 (2026-08-18): a folha-quadro pode centrar a COMPOSIÇÃO — é a exceção
+       declarada do registro deck —, mas parágrafo longo centralizado é o pior
+       caso de leitura: cada linha começa num ponto diferente e o olho perde a
+       volta. O bloco continua centrado; as linhas passam a alinhar à esquerda. */
+    .capa p.prosa { text-align: left; margin: 0 auto 1.5vh; }
+    .capa p.prosa:last-of-type { margin-bottom: 0; }
+    /* autoria (2026-09-09): autor, coautora e orientador nomeados na capa, por
+       decisão do operador; o G3 (registro ao pixel) é só do autor e do
+       orientador. Método, item 5 (discrição): autoria nomeada abertamente. */
+    .capa p.autoria { font-size: 0.82rem; color: var(--muted); line-height: 1.55;
+                      margin: 2.6vh auto 0; text-align: center; max-width: none; }
+    .capa p.autoria strong { color: var(--ink2); font-weight: 600; }
+
+@page { size: 1920px 1080px; margin: 0; }
+.corpo > .col { flex: 1 1 0; min-width: 34ch; }     /* trava anti-espremida */
+/* §2.6 PARIDADE: figura e texto são metades da mesma metodologia e dividem
+   espaço equivalente (banda 40–60). A figura tinha `flex: 1.3` contra `flex: 1`
+   do texto e ficava em 60–67% em ONZE folhas — desequilíbrio por omissão, não
+   por decisão. Mesma base e mesmo crescimento nos dois = 50/50; quem quiser
+   sair da paridade declara na própria folha. */
+.corpo > .figbox { flex: 1 1 0; }
+/* Figura empilhada NÃO precisa encher a coluna inteira: quando ela enche, o
+   par figura↔texto sai da banda da §2.6 por ALTURA (647pt de figura contra
+   439pt de texto) e a folha fica sem borda. O teto de 86% devolve o ar sem
+   mexer no conteúdo. */
+.figbox.vert { max-height: 86%; }
+.corpo .figbox { min-width: 0; }
+.corpo .figbox img, .corpo img.fig { max-width: 100%; height: auto; }
+
+@media print {
+  /* 2026-08-12: fixa aqui o que antes era escolhido à mão no diálogo do
+     Ctrl+P (1920×1080, sem margem). Sem isto a exportação depende de quem
+     imprime — e um PDF de submissão precisa ser REGERÁVEL, não relembrado. */
+  @page { size: 1920px 1080px; margin: 0; }
+  * { -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important; }
+  html, body { width: 1920px; height: 1080px; }
+  body { overflow: visible; }
+  .slide { display: flex !important; position: relative; page-break-after: always;
+           width: 1920px; height: 1080px; overflow: hidden !important; }
+  .slide.ativo { animation: none; }
+  .rodape { position: absolute; }
+}
+
+
+/* a medida, à escala nova, enche a coluna: 30em a 25,9px = 585pt de ~624 */
+
+/* ===== PÉ ATRÁS — a marca de procedência do rigor ==========================
+   Especificação de 2026-08-22. Guisoli conduz; Guidorizzi é guarda-corpo.
+   Toda afirmação vinda do Guisoli declara o que o Guidorizzi faz com ela.
+
+   DESENHO, e a razão dele: é RODAPÉ do cartão-lousa, irmão do `.origem` —
+   NÃO um terceiro cartão. A folha já tem duas vozes (o quadro e o "em bom
+   português"); uma terceira caixa competiria com as duas em vez de anotar.
+   Pé atrás é procedência, não voz.
+
+   O rótulo vai no HTML, nunca em `content:`. Lição de 2026-08-22: texto que
+   só existe em `content:` é invisível ao extrator, à peneira e ao auditor —
+   39 rótulos sobreviveram em português dentro do deck em inglês por isso.
+
+   REGRA DURA: `refina` SEMPRE escreve a diferença. Marca sem conteúdo em
+   folha que refina é pior que marca nenhuma — anuncia divergência e não
+   entrega.                                                                 */
+
+/* a folha que reúne os `refina` de cada deck */
+
+/* As regras do "pé atrás" (.pe-atras, .refina, .confirma, .silencioso,
+   .refino, .refinos) foram REMOVIDAS em 2026-08-24: o elemento saiu dos decks
+   por decisão do operador — primeiro as folhas, depois os spans inline. CSS
+   órfão é convite a reintroduzir o que se decidiu tirar. */
+</style>
+
+</head>
+<body>
+
+<!-- 1 · capa -->
+<section class="slide capa ativo">
+  <div class="eyebrow">Hipátia · a fundação, seminário 3 de 8</div>
+  <h1>Negativos e a <em>reta</em></h1>
+  <div class="grega"></div>
+  <p class="tese">a reta não decora os números: é onde eles ganham
+    <strong>ordem</strong> e <strong>distância</strong> — e as duas não são a
+    mesma coisa</p>
+  <p class="prosa">O seminário <strong>1</strong> já mostrou o
+    <strong>oposto</strong> — que subtrair é somar o oposto, que o inteiro foi
+    inventado para o oposto existir, e por que menos com menos dá mais. Nada
+    disso se repete aqui.</p>
+  <p class="prosa">Este pega o que sobrou e ninguém entrega: o que acontece com
+    a palavra <strong>“maior”</strong> quando você passa do zero para a
+    esquerda, e por que <strong>módulo não é “tirar o sinal”</strong>.</p>
+  <p class="autoria">Autor · <strong>Mateus Felipe Alkimim Pereira</strong><br>
+    Coautora · <strong>Sara Catiele Nogueira Pereira</strong><br>
+    Orientador · <strong>Rosivaldo Antônio Gohnan</strong></p>
+  <div class="rodape"><span>negativos e a reta</span><span class="contador"></span></div>
+</section>
+
+<!-- 2 · convenções -->
+<section class="slide">
+  <div class="eyebrow">antes de tudo · como ler os símbolos desta aula</div>
+  <h1>Dois sinais de <em>menos</em>, e eles não fazem a mesma coisa</h1>
+  <div class="corpo">
+    <div class="col">
+      <table class="simbolos">
+        <tr><td>\(-x\)</td><td>lê-se <strong>“o oposto de \(x\)”</strong>. É
+          um <strong>objeto</strong> — o número que somado a \(x\) dá zero.
+          Não é “\(x\) negativo”: se \(x\) já for negativo, \(-x\) é
+          positivo</td></tr>
+        <tr><td>\(a - b\)</td><td>lê-se <strong>“\(a\) menos \(b\)”</strong>.
+          É uma <strong>operação</strong> — e o seminário 1 mostrou que ela é
+          \(a + (-b)\)</td></tr>
+        <tr><td>\(a &lt; b\)</td><td>lê-se <strong>“\(a\) é menor que
+          \(b\)”</strong>, e quer dizer <strong>“\(a\) está à esquerda de
+          \(b\) na reta”</strong> — nada além disso</td></tr>
+        <tr><td>\(|x|\)</td><td>lê-se <strong>“módulo de \(x\)”</strong> ou
+          <strong>“valor absoluto de \(x\)”</strong>. É a
+          <strong>distância</strong> de \(x\) até o zero</td></tr>
+        <tr><td>\(|a - b|\)</td><td>lê-se <strong>“módulo de \(a\) menos
+          \(b\)”</strong>, e é a <strong>distância entre</strong> \(a\) e
+          \(b\)</td></tr>
+      </table>
+      <div class="traducao">
+        <p>o mesmo traço faz três trabalhos: <strong>oposto</strong> (\(-x\)),
+        <strong>subtração</strong> (\(a-b\)) e <strong>parte do numeral</strong>
+        (\(-3\)). A folha inteira depende de não confundi-los.</p>
+      </div>
+    </div>
+    <div class="col">
+      <div class="quadro"><span class="origem">de onde este seminário parte</span>
+        <p>Do <strong>oposto</strong>, que o seminário 1 construiu. Não usa
+        função, não usa gráfico, não usa geometria — e não repete a regra dos
+        sinais, que já está lá como <strong>teorema</strong>.</p>
+      </div>
+      <div class="quadro"><span class="origem">o que ele entrega adiante</span>
+        <p>A leitura de <strong>\(|x-a| &lt; \delta\)</strong> como “a
+        distância de \(x\) até \(a\) é pequena”. É a frase inteira da
+        definição de <strong>limite</strong>, e o arco do cálculo a cobra na
+        primeira aula.</p>
+      </div>
+    </div>
+  </div>
+  <div class="rodape"><span>negativos e a reta</span><span class="contador"></span></div>
+</section>
+
+<!-- 3 · o sinal foi cor antes de ser sinal -->
+<section class="slide">
+  <div class="eyebrow">Estação 1 · de onde o incômodo vem</div>
+  <h1>O sinal já foi <em>cor</em>, e nem por isso foi fácil</h1>
+  <div class="corpo">
+    <div class="col">
+      <p>Os chineses calculavam com varetas: <strong>vermelhas</strong> para o
+        positivo, <strong>pretas</strong> para o negativo. O sinal morava na
+        cor do objeto, não dentro do número — e por isso o negativo não lhes
+        deu trabalho nenhum.</p>
+      <p>Mil e setecentos anos depois, na Europa, Michael Stifel conhecia todas
+        as propriedades deles e ainda assim os chamava de
+        <strong>“numeri absurdi”</strong>. O que incomodava não era a conta:
+        era admitir que aquilo <strong>fosse um número</strong>.</p>
+      <div class="quadro"><span class="origem">Boyer, cap. 9 e cap. 13</span>
+        <p>“A ideia de números negativos parece não ter causado muita
+        dificuldade aos chineses, porque eles estavam acostumados a calcular
+        com <strong>dois conjuntos de varetas</strong> — um vermelho para
+        coeficientes positivos, um preto para negativos.”</p>
+      </div>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-varetas.png" alt="a esquerda tres varetas vermelhas e tres pretas representando positivo e negativo na china antiga; a direita a expressao numeri absurdi de stifel em 1544">
+    </div>
+  </div>
+  <div class="rodape"><span>negativos e a reta</span><span class="contador"></span></div>
+</section>
+
+<!-- 4 · a fila -->
+<section class="slide">
+  <div class="eyebrow">Estação 2 · a primeira coisa que a reta dá</div>
+  <h1>A reta é uma <em>fila</em>, e nenhum par fica sem decisão</h1>
+  <div class="corpo">
+    <div class="col">
+      <p>Pôr os números numa reta é afirmar duas coisas de uma vez. A primeira
+        é que <strong>existe uma ordem</strong>: dados dois números quaisquer,
+        um deles está à esquerda do outro.</p>
+      <p>A segunda é que essa ordem <strong>não deixa buraco de decisão</strong>
+        — não há par de números sobre o qual a reta se cale. É isso, e só isso,
+        que \(a &lt; b\) quer dizer: \(a\) está à esquerda.</p>
+      <div class="traducao">
+        <p>“menor” deixa de ser uma impressão de tamanho e vira uma
+        <strong>posição</strong>. A troca parece pequena e é ela que sustenta a
+        folha seguinte.</p>
+      </div>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-reta-ordem.png" alt="a reta numerica de menos quatro a quatro com o zero destacado e uma seta indicando que a direita fica o maior">
+    </div>
+  </div>
+  <div class="rodape"><span>negativos e a reta</span><span class="contador"></span></div>
+</section>
+
+<!-- 5 · A FOLHA DO CONCEITO -->
+<section class="slide">
+  <div class="eyebrow">Estação 2 · onde a intuição da contagem quebra</div>
+  <h1>À esquerda do zero, o <em>maior</em> tamanho é o menor número</h1>
+  <div class="corpo">
+    <div class="col">
+      <p>Contando laranjas, "maior" e "mais longe do zero" são a mesma coisa.
+        Passe para a esquerda do zero e as duas <strong>se separam</strong>:
+        \(-\tfrac{7}{2}\) é <strong>menor</strong> que \(-1\), e no entanto seu
+        tamanho é <strong>três vezes e meia</strong> maior.</p>
+      <p>Não há paradoxo — há duas perguntas diferentes sendo feitas à mesma
+        reta. <em>Onde está?</em> é ordem. <em>Quão longe do zero?</em> é
+        distância. A reta responde às duas, e as respostas divergem em metade
+        dela.</p>
+      <div class="quadro"><span class="origem">aula de álgebra linear</span>
+        <p>“A imagem de menos sete meios. Se você dividir 7 por 2 […] isso é 3
+        inteiros e mais 1[/2], ou <strong>3,5</strong>. E 3,5 é… negativo é
+        <strong>menor do que</strong> [menos um].”</p>
+      </div>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-ordem-vs-tamanho.png" alt="a reta com menos sete meios a esquerda de menos um, e a desigualdade mostrando que o de modulo maior e o numero menor">
+    </div>
+  </div>
+  <div class="rodape"><span>negativos e a reta</span><span class="contador"></span></div>
+</section>
+
+<!-- 6 · a fila vira -->
+<section class="slide">
+  <div class="eyebrow">Estação 2 · a consequência que se decora sem entender</div>
+  <h1>Multiplicar por negativo <em>vira</em> a fila inteira</h1>
+  <div class="corpo">
+    <div class="col">
+      <p>Multiplicar todo mundo por um número negativo é <strong>refletir a
+        reta no zero</strong>: quem estava à esquerda passa para a direita. Se
+        a ordem inverte para todos, ela inverte também na desigualdade.</p>
+      <p>Por isso \(-2x &lt; 6\) vira \(x &gt; -3\), e não \(x &lt; -3\). A
+        regra que se decora — <em>"ao dividir por negativo, inverta o
+        sinal"</em> — é essa reflexão, dita de outro jeito.</p>
+      <div class="traducao">
+        <p>e é conferível num ponto só: em \(x=-4\), \(-2x = 8\), que
+        <strong>não</strong> é menor que 6. O \(-4\) está fora, como
+        \(x &gt; -3\) manda.</p>
+      </div>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-inverte.png" alt="duas retas empilhadas: em cima menos dois x menor que seis, embaixo x maior que menos tres, com a solucao marcada a partir de menos tres para a direita">
+    </div>
+  </div>
+  <div class="rodape"><span>negativos e a reta</span><span class="contador"></span></div>
+</section>
+
+<!-- 7 · distância -->
+<section class="slide">
+  <div class="eyebrow">Estação 3 · a segunda coisa que a reta dá</div>
+  <h1>Distância não tem <em>lado</em></h1>
+  <div class="corpo">
+    <div class="col">
+      <p>A distância entre dois pontos da reta é \(|a-b|\), e a ordem em que
+        você os toma <strong>não importa</strong>: de \(-2\) até \(5\) são
+        sete, e de \(5\) até \(-2\) são os mesmos sete.</p>
+      <p>É a diferença entre as duas coisas que a reta carrega. A
+        <strong>ordem</strong> tem direção — trocar \(a\) por \(b\) troca o
+        sentido da desigualdade. A <strong>distância</strong> não tem, e é o
+        módulo que apaga o sentido.</p>
+      <div class="quadro"><span class="origem">aula de cálculo</span>
+        <p>“A distância, por exemplo, de \(x\) [a] \(y\) é, na verdade, o
+        [módulo] de \(x\) menos \(y\). […] A distância de \(x\) até zero
+        […] é exatamente <strong>módulo de \(x\)</strong>.”</p>
+      </div>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-distancia.png" alt="a reta com menos dois e cinco marcados e uma seta de duas pontas entre eles indicando distancia sete">
+    </div>
+  </div>
+  <div class="rodape"><span>negativos e a reta</span><span class="contador"></span></div>
+</section>
+
+<!-- 8 · módulo não é tirar o sinal -->
+<section class="slide">
+  <div class="eyebrow">Estação 3 · a receita que falha na primeira curva</div>
+  <h1>Módulo não é <em>tirar</em> o sinal</h1>
+  <div class="corpo">
+    <div class="col">
+      <p>“Tirar o sinal” funciona enquanto o número vem escrito com um sinal
+        para tirar. Escreva \(\left|\,2-\sqrt{5}\,\right|\) e a receita
+        <strong>não tem onde pegar</strong>: não há menos na frente, e o
+        conteúdo é negativo.</p>
+      <p>Pela definição a conta sai sozinha. Como \(\sqrt{5} &gt; 2\), o de
+        dentro é negativo, e o módulo é o <strong>oposto</strong> dele:
+        \(\sqrt{5}-2\). Foi preciso <strong>pôr</strong> um menos para chegar
+        a um número positivo.</p>
+      <div class="quadro"><span class="origem">aula de cálculo</span>
+        <p>“A raiz de cinco é maior do que dois […] então dois menos a raiz de
+        cinco [é] um número negativo. […] O módulo dele, no fundo, é
+        <strong>menos esse número</strong>. E menos vezes menos é mais.”</p>
+      </div>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-modulo-armadilha.png" alt="dois cartoes: a esquerda a receita de tirar o sinal falhando porque nao ha sinal na frente, a direita a definicao por distancia dando raiz de cinco menos dois">
+    </div>
+  </div>
+  <div class="rodape"><span>negativos e a reta</span><span class="contador"></span></div>
+</section>
+
+<!-- 9 · centro e raio -->
+<section class="slide">
+  <div class="eyebrow">Estação 4 · quando a distância vira um pedaço da reta</div>
+  <h1>Uma desigualdade com módulo é um <em>intervalo</em></h1>
+  <div class="corpo">
+    <div class="col">
+      <p>\(|x-2| &lt; 3\) não pede conta: pede leitura. Ela diz que a
+        <strong>distância de \(x\) até 2 é menor que 3</strong> — e quem está a
+        menos de 3 do 2 são exatamente os números entre \(-1\) e \(5\).</p>
+      <p>Os dois nomes que o professor usa fecham a folha: o 2 é o
+        <strong>centro</strong>, o 3 é o <strong>raio</strong>. Um intervalo é
+        um centro e uma tolerância em torno dele — e é assim que ele será
+        usado daqui para a frente.</p>
+      <div class="traducao">
+        <p>as pontas ficam <strong>de fora</strong> porque a desigualdade é
+        estrita: em \(x=5\) a distância é 3, e 3 não é menor que 3.</p>
+      </div>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-centro-raio.png" alt="a reta com o intervalo aberto de menos um a cinco destacado, o centro dois marcado e duas setas de raio tres para cada lado">
+    </div>
+  </div>
+  <div class="rodape"><span>negativos e a reta</span><span class="contador"></span></div>
+</section>
+
+<!-- 10 · o pagamento -->
+<section class="slide">
+  <div class="eyebrow">Estação 4 · onde isso é cobrado</div>
+  <h1>É esta frase que o <em>limite</em> vai usar</h1>
+  <div class="corpo">
+    <div class="col">
+      <p>A definição de limite assusta pela quantidade de símbolos, e não pela
+        ideia. Desmontada, ela é <strong>a mesma frase desta aula, dita duas
+        vezes</strong>: uma sobre o que entra, outra sobre o que sai.</p>
+      <p>Quem lê \(|x-a| &lt; \delta\) como “a distância de \(x\) até \(a\) é
+        menor que \(\delta\)” já entendeu metade. A outra metade é
+        \(|f(x)-L| &lt; \varepsilon\), que é a mesma leitura com outros nomes.</p>
+      <div class="quadro"><span class="origem">a mesma aula, 25 minutos depois</span>
+        <p>Ele passa da desigualdade com módulo para o \(\varepsilon\)-\(\delta\)
+        <strong>sem trocar de assunto</strong> — porque não é outro assunto. O
+        degrau que costuma parecer um abismo é uma frase relida.</p>
+      </div>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-epsilon-delta.png" alt="dois cartoes empilhados com a mesma leitura: modulo de x menos a menor que delta, e modulo de f de x menos ele menor que epsilon">
+    </div>
+  </div>
+  <div class="rodape"><span>negativos e a reta</span><span class="contador"></span></div>
+</section>
+
+<!-- 11 · o que foi construído -->
+<section class="slide">
+  <div class="eyebrow">o que foi construído</div>
+  <h1>Uma reta, e <em>duas</em> coisas em cima dela</h1>
+  <div class="corpo">
+    <div class="col">
+      <table class="simbolos">
+        <tr><td>uma ordem</td><td>\(a &lt; b\) é “\(a\) está à esquerda”, e
+          nenhum par fica sem decisão</td></tr>
+        <tr><td>uma separação</td><td>“maior” e “mais longe do zero” deixam de
+          coincidir na metade esquerda</td></tr>
+        <tr><td>uma reflexão</td><td>multiplicar por negativo vira a fila — daí
+          a desigualdade inverter</td></tr>
+        <tr><td>uma distância</td><td>\(|a-b|\), que não tem lado</td></tr>
+        <tr><td>uma definição</td><td>\(|x|\) é distância até o zero, não
+          “tirar o sinal”</td></tr>
+        <tr><td>uma leitura</td><td>\(|x-a| &lt; r\) é um intervalo: centro e
+          raio</td></tr>
+      </table>
+      <p>Este nó da base é consumido pelos <strong>números reais</strong> e
+        pelas <strong>coordenadas no plano</strong> — e é por eles que ele
+        chega aos dois troncos.</p>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/mapa-para-onde-vamos.svg" alt="o recorte do mapa de pre-requisitos com o no negativos e a reta aceso e as materias que dependem dele">
+    </div>
+  </div>
+  <div class="rodape"><span>negativos e a reta</span><span class="contador"></span></div>
+</section>
+
+<!-- 12 · fechamento -->
+<section class="slide">
+  <div class="eyebrow">o que ficou de pé</div>
+  <h1>A reta guarda <em>duas</em> perguntas, e elas discordam</h1>
+  <div class="corpo">
+    <div class="col">
+      <p>Abrimos dizendo que a reta não decora os números. O que ela faz é
+        responder a duas perguntas diferentes sobre eles: <em>onde
+        está</em> — que é ordem — e <em>quão longe do zero</em> — que é
+        distância. Do zero para a direita as duas respostas concordam, e é por
+        isso que a escola pode confundi-las por anos sem que ninguém perceba.</p>
+      <p>Do zero para a esquerda elas divergem, e a divergência tem nome:
+        \(-\tfrac{7}{2}\) é o menor dos dois e o maior em tamanho. Quem separa
+        as duas perguntas lê \(|x-a| &lt; \delta\) na primeira vez que vê.</p>
+    </div>
+    <div class="col">
+      <div class="quadro"><span class="origem">o que esta aula NÃO carrega</span>
+        <p>A construção de \(\mathbb{Z}\) a partir de \(\mathbb{N}\), a
+        demonstração de que a ordem é compatível com a soma e o produto, a
+        completude da reta — que é dos <strong>números reais</strong> — e
+        desigualdade com duas incógnitas.</p>
+      </div>
+      <div class="traducao">
+        <p>e não repete o <strong>oposto</strong> nem a regra dos sinais: são
+        do seminário <strong>1</strong>, que já existe e faz os dois como
+        teorema.</p>
+      </div>
+    </div>
+  </div>
+  <div class="rodape"><span>negativos e a reta</span><span class="contador"></span></div>
+</section>
+
+<script>
+const slides = [...document.querySelectorAll(".slide")];
+let i = 0;
+// cada slide carrega o SEU número (vale para a tela e para o PDF impresso)
+slides.forEach((s, k) => s.querySelectorAll(".contador").forEach(c =>
+  c.textContent = `${k + 1} / ${slides.length}`));
+function mostra(n) {
+  i = Math.max(0, Math.min(slides.length - 1, n));
+  slides.forEach((s, k) => s.classList.toggle("ativo", k === i));
+}
+addEventListener("keydown", e => {
+  if (["ArrowRight", "PageDown", " "].includes(e.key)) mostra(i + 1);
+  if (["ArrowLeft", "PageUp"].includes(e.key)) mostra(i - 1);
+  if (e.key === "Home") mostra(0);
+  if (e.key === "End") mostra(slides.length - 1);
+});
+addEventListener("click", e => {
+  if (e.clientX > innerWidth / 2) mostra(i + 1); else mostra(i - 1);
+});
+function doHash() {
+  const n = parseInt(location.hash.slice(1), 10);
+  mostra(Number.isFinite(n) ? n - 1 : 0);
+}
+addEventListener("hashchange", doHash);
+doHash();
+</script>
+</body>
+</html>

@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Duas operações — a aritmética que sustenta os dois arcos</title>
+<script>
+window.MathJax = {
+  tex: { inlineMath: [["\\(", "\\)"]], displayMath: [["\\[", "\\]"]] },
+  svg: { fontCache: "global" },
+  startup: { typeset: true }
+};
+</script>
+<script src="../../vendor/tex-svg.js" id="MathJax-script" async></script>
+<style>
+/* ============================================================
+   Ítaca DS — TEMA CLARO (o "irmão claro" previsto em
+   itaca-ds/tokens.css; primitivos da paleta do roteiro ao
+   orientador; muda só a camada semântica)
+   ============================================================ */
+:root {
+  --bg: #f3f5f9; --card: #ffffff; --linha: #d9e0ec;
+  --ink: #16233f; --ink2: #3f4d6b; --muted: #7c88a1;
+  --bronze: #a9713f; --bronze-fundo: #8f5e33; --bronze-soft: #c79b6e;
+  --azul: #1e3a6b; --azul-deep: #12244a;
+  --terracota: #b35430; --verde: #4e7a49; --rubro: #a84444;
+  --it-serif: Georgia, "Cormorant Garamond", "Times New Roman", serif;
+  --it-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --it-mono: "Spline Sans Mono", ui-monospace, "Cascadia Code", monospace;
+  /* cores dos 8 vértices (as mesmas de gerar_figuras.py) */
+  /* NORMA §2.1 — a medida de linha, declarada UMA vez. Em EM, nunca em `ch`:
+     `ch` mede o glifo "0" (0,636 em na Inter) e não o caractere médio de
+     prosa (0,456 em), então 66ch entregaria 92 caracteres. */
+  --medida: 30em;
+  --v0:#a9713f; --v1:#b35430; --v2:#4e7a49; --v3:#a84444;
+  --v4:#3d6394; --v5:#6d55a3; --v6:#2e7d70; --v7:#a85577;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+/* §2.6 — a ESCALA do registro deck. Uma raiz só, porque `rem` é global:
+   subir aqui escala junto o que tem `clamp(...vw...)` e o que tem tamanho
+   FIXO em rem. Levantar só os clamps (a primeira tentativa) deixou
+   `.leitura`, `.legenda`, `.eyebrow` e todo `<p>` fora de `.col` para trás, e
+   a folha ficou com DUAS escalas ao mesmo tempo.
+   25px escolhido para que o termo proporcional continue governando a 1920:
+   o teto de `.col p` (1,04rem) passa a valer 26px, logo acima dos 25,92px do
+   `1.35vw` — a proporção manda, o teto só segura viewport maior. */
+html { font-size: 25px; }
+html, body { height: 100%; background: var(--azul-deep); }
+body { font-family: var(--it-sans); color: var(--ink); overflow: hidden; }
+
+.slide {
+  display: none; position: absolute; inset: 0;
+  background: var(--bg);
+  padding: 4vh 6vw 6vh; flex-direction: column;
+  overflow: hidden;            /* nada vaza para a página seguinte */
+}
+.slide.ativo { display: flex; animation: fade .35s ease; }
+@keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.eyebrow {
+  font-size: 0.72rem; letter-spacing: 0.22em;
+  text-transform: uppercase; color: var(--bronze); font-weight: 700;
+  margin-bottom: 1vh;
+}
+h1 { font-family: var(--it-serif); font-weight: 700; font-size: clamp(1.5rem, 3vw, 2.4rem);
+     line-height: 1.12; margin-bottom: 1.2vh; color: var(--azul-deep);
+     letter-spacing: -0.01em; }
+h1 em { color: var(--bronze); font-style: normal; }
+.tese { font-family: var(--it-serif); font-style: italic; font-size: clamp(1.05rem, 1.8vw, 1.35rem);
+        color: var(--bronze-fundo); }
+.corpo { flex: 1; display: flex; gap: 2.6vw; align-items: safe center;
+         min-height: 0; }
+/* `safe center`, não `center`: a exceção do deck (§2.4) centra a faixa única
+   na vertical — mas `center` num flex TRANSBORDA PARA OS DOIS LADOS quando o
+   item é mais alto que o container, e aí o texto sobe por cima do título e
+   desce por cima do rodapé ao mesmo tempo. Foi o que apareceu na folha 12 ao
+   subir a escala. `safe` volta a alinhar pelo topo exatamente quando não cabe:
+   a centralização vale enquanto é composição, e desliga quando viraria
+   atropelo. */
+.col { flex: 1; min-width: 0; }
+
+/* ===== NORMA DE COMPOSIÇÃO — variante B (2026-08-17) =======================
+   §2.4 (o conteúdo pende do topo) NÃO foi aplicado aqui, e é decisão em
+   aberto do operador. Motivo medido: OITO folhas trazem
+   `style="align-items:center"` INLINE na `.corpo`, e estilo inline vence a
+   folha de estilo — trocar só a regra deixaria 30 folhas no topo e 8
+   centradas, inconsistência pior que qualquer das duas. E há uma dúvida de
+   mérito: numa folha subocupada, pendurar no topo joga TODO o vazio para
+   baixo (47% na folha 21) enquanto centrar o divide. A regra nasceu para
+   blocos empilhados do caderno e pode não valer para o deck.
+   O estilo inline é também a raiz dos 407 eixos distintos.
+
+   §2.1 a medida governa a PROSA; bloco de exibição (fórmula, figura, tabela,
+   grade) é governado pelo conteúdo. A `.corpo` continua FLEX de propósito: os
+   arranjos especiais deste deck (`duo`, `grid3x3`, `grid2x2`,
+   `figbox.vert.hierarquia`) carregam proporções que o autor declarou em
+   `flex`, e trocar por grade as apagaria. O eixo fica para um segundo ato,
+   com cada arranjo convertido caso a caso.
+
+   Alcance: a prosa deste deck NÃO mora só em `.col` — há folhas com `<div>`
+   sem classe dentro de `.corpo` (a 9 é uma). Seletor estreito deixava 67
+   linhas acima do teto com a regra certa aplicada; é a armadilha 13 outra vez,
+   pelo lado do ALCANCE. Por isso a regra vale para prosa onde quer que ela
+   esteja, e o que fica de fora é nomeado, não esquecido.                      */
+.slide p,
+.slide li,
+.slide figcaption,
+.slide .legenda,
+.slide .citacao .frase { max-width: var(--medida, 30em); }
+/* Prosa CENTRADA (33 blocos neste deck) precisa continuar centrada depois de
+   limitada: sem isto a caixa encolhe mas fica ancorada à esquerda, e o texto
+   parece deslocado — regressão que a medida introduziu na folha 9. Centrar o
+   BLOCO é o que preserva a decisão do autor enquanto a medida faz seu trabalho.
+   (A §2.2 desaprova bloco centrado; convertê-los é redesenho folha a folha, e
+   não é o que esta rodada faz.) */
+.slide [style*="text-align:center"],
+.slide [style*="text-align: center"] { margin-inline: auto; }
+
+/* fora da medida, por serem BLOCO DE EXIBIÇÃO (§2.1) */
+.slide .formula,
+.slide .formula p,
+.slide table p,
+.slide .quadro mjx-container { max-width: none; }
+.col p, .col li { color: var(--ink2); font-size: clamp(0.88rem, 1.35vw, 1.04rem);
+                  line-height: 1.55; margin-bottom: 1vh; }
+.col strong { color: var(--ink); }
+.col .ouro { color: var(--bronze-fundo); }
+.col .quente { color: var(--terracota); }
+ul { list-style: none; }
+ul li { padding-left: 1.1em; position: relative; }
+ul li::before { content: "▸"; position: absolute; left: 0; color: var(--bronze);
+                font-size: 0.8em; top: 0.28em; }
+img.fig { max-width: 100%; max-height: 100%; object-fit: contain;
+          border-radius: 8px; border: 1px solid var(--linha);
+          background: var(--card);
+          box-shadow: 0 1px 4px rgba(18, 36, 74, 0.08); }
+.figbox { flex: 1.3; min-width: 0; min-height: 0; height: 100%; display: flex;
+          align-items: center; justify-content: center; gap: 1vw; }
+.figbox img.fig { flex: 0 1 auto; min-width: 0; min-height: 0; width: auto; }
+.figbox.vert { flex-direction: column; }
+.figbox.vert img.fig { max-height: 48%; }
+/* HIERARQUIA VISUAL: a figura principal ocupa espaço proporcional à sua
+   importância; a secundária não compete com ela. Sem isto, uma figura larga
+   e rasa (observação de rodapé) fica MAIOR que a figura que carrega o
+   conceito, só por causa da proporção. */
+.figbox.vert.hierarquia img.fig:first-of-type { max-height: 68%; }
+.figbox.vert.hierarquia img.fig:last-of-type  { max-height: 26%; }
+
+/* transcrição do quadro: o cartão-lousa */
+.quadro {
+  background: var(--card); border: 1px solid var(--linha);
+  border-left: 5px solid var(--bronze); border-radius: 8px;
+  padding: 1.6vh 1.4vw; margin: 1vh 0;
+  color: var(--azul-deep); font-size: clamp(0.9rem, 1.4vw, 1.08rem);
+  line-height: 1.7;
+  box-shadow: 0 1px 4px rgba(18, 36, 74, 0.08);
+}
+.quadro .origem { display: block; font-size: 0.68rem; color: var(--muted);
+                  letter-spacing: 0.14em; text-transform: uppercase;
+                  margin-bottom: 0.8vh; }
+.quadro mjx-container { color: var(--azul-deep); }
+
+/* a tradução para quem está chegando agora */
+.traducao {
+  background: color-mix(in srgb, var(--verde) 7%, var(--card));
+  border: 1px solid color-mix(in srgb, var(--verde) 30%, var(--linha));
+  border-left: 5px solid var(--verde); border-radius: 8px;
+  padding: 1.3vh 1.4vw; margin: 1vh 0;
+  color: var(--ink2); font-size: clamp(0.86rem, 1.3vw, 1rem); line-height: 1.55;
+}
+.traducao::before { content: "em bom português: "; color: var(--verde);
+                    font-weight: 700; }
+
+.formula {
+  font-family: var(--it-mono); background: var(--card);
+  border: 1px solid var(--linha); border-left: 4px solid var(--bronze);
+  border-radius: 8px;
+  padding: 1.3vh 1.2vw; color: var(--azul-deep); font-size: clamp(0.85rem, 1.35vw, 1.02rem);
+  margin: 1vh 0; overflow-x: auto;
+}
+.legenda { font-size: 0.78rem; color: var(--muted); margin-top: 0.6vh; }
+/* leitura em voz alta das expressões — parte do método didático */
+.leitura { font-size: 0.8rem; color: var(--muted); font-style: italic;
+           margin: -0.3vh 0 1vh 0.3vw; }
+.leitura::before { content: "lê-se: "; font-style: normal; font-weight: 700;
+                   color: var(--bronze); }
+.rodape { position: absolute; bottom: 1.8vh; left: 6vw; right: 6vw;
+          display: flex; justify-content: space-between;
+          font-size: 0.72rem; color: var(--muted);
+          letter-spacing: 0.08em; border-top: 1px solid var(--linha);
+          padding-top: 0.9vh; }
+.contador { font-family: var(--it-mono); }
+
+/* dicionário de símbolos */
+table.simbolos { border-collapse: collapse; margin: 0.6vh 0; width: 100%; }
+/* D4 (2026-08-18): o teto era 0.98rem (~15,7 px) enquanto o termo
+       proporcional 1.25vw vale 24 px a 1920 — o teto em `rem` suprimia a
+       escala a dois terços, e as folhas 44/45 ficavam com 36% de sobra, que
+       a §2.4 chama de DEFEITO. Mesma armadilha já registrada na norma: a
+       escala certa já estava no arquivo; o teto é que a apagava. */
+    table.simbolos td { padding: 0.72vh 0.7vw; font-size: clamp(0.95rem, 1.25vw, 1.32rem);
+                    color: var(--ink2); border-bottom: 1px solid var(--linha); }
+table.simbolos td:first-child { color: var(--azul-deep); font-weight: 600;
+                                white-space: nowrap; }
+
+/* matriz colorida */
+table.matriz { border-collapse: collapse; font-family: var(--it-mono);
+               font-size: clamp(0.8rem, 1.5vw, 1.15rem); margin: 1vh auto;
+               background: var(--card); border: 1px solid var(--linha);
+               border-radius: 8px;
+               box-shadow: 0 1px 4px rgba(18, 36, 74, 0.08); }
+table.matriz td { padding: 0.8vh 0.75vw; text-align: center; font-weight: 600; }
+table.matriz td.rotulo { color: var(--muted); font-size: 0.8em; font-weight: 400; }
+table.matriz .colch { font-size: 2.2em; color: var(--ink2); font-family: var(--it-serif);
+                      font-weight: 400; }
+.chip { display: inline-block; width: 0.85em; height: 0.85em; border-radius: 50%;
+        vertical-align: -0.08em; }
+
+/* mapa da viagem */
+.estacoes { display: flex; gap: 1.2vw; align-items: stretch; margin: 2vh 0; }
+.estacao { flex: 1; background: var(--card); border: 1px solid var(--linha);
+           border-top: 4px solid var(--bronze); border-radius: 8px;
+           padding: 1.6vh 1vw; text-align: center;
+           box-shadow: 0 1px 4px rgba(18, 36, 74, 0.08); }
+.estacao .num { font-family: var(--it-serif); font-size: 1.6rem;
+                color: var(--bronze); }
+.estacao .nome { font-weight: 700; color: var(--azul-deep);
+                 font-size: clamp(0.85rem, 1.3vw, 1.05rem); margin: 0.5vh 0; }
+.estacao .oq { font-size: clamp(0.76rem, 1.1vw, 0.9rem); color: var(--ink2);
+               line-height: 1.45; }
+.seta-estacao { align-self: center; color: var(--bronze); font-size: 1.4rem; }
+
+/* galeria da obra: pranchas lado a lado e grade 3×3 do caderno */
+.duo { flex: 1.4; min-width: 0; min-height: 0; height: 100%; display: grid;
+       grid-template-columns: 1fr 1fr; gap: 1vw; align-items: center; }
+.duo figure { min-width: 0; min-height: 0; height: 100%; display: flex;
+              flex-direction: column; align-items: center;
+              justify-content: center; }
+.duo img { max-width: 100%; min-height: 0; flex: 0 1 auto; max-height: 92%;
+           object-fit: contain; border-radius: 8px;
+           border: 1px solid var(--bronze-soft);
+           box-shadow: 0 2px 10px rgba(18, 36, 74, 0.14); }
+.duo figcaption { font-family: var(--it-serif); font-style: italic;
+                  font-size: 0.95rem; color: var(--bronze-fundo);
+                  margin-top: 0.8vh; }
+.grid3x3 { flex: 1.15; min-width: 0; min-height: 0; height: 100%;
+           display: grid; grid-template-columns: repeat(3, 1fr);
+           grid-auto-rows: 1fr; gap: 0.7vh 0.7vw; align-content: center; }
+.grid3x3 img { width: 100%; height: 100%; min-height: 0; object-fit: cover;
+               border-radius: 6px; border: 1px solid var(--linha);
+               box-shadow: 0 1px 4px rgba(18, 36, 74, 0.10); }
+.citacao { border-left: 4px solid var(--bronze); padding: 1vh 1.2vw;
+           margin: 1.2vh 0; }
+.citacao .frase { font-family: var(--it-serif); font-style: italic;
+                  font-size: clamp(1rem, 1.6vw, 1.25rem);
+                  color: var(--azul-deep); line-height: 1.45; }
+.citacao .autor { font-size: 0.78rem; color: var(--muted);
+                  margin-top: 0.5vh; }
+
+/* grade 2×2 do experimento ControlNet */
+.grid2x2 { flex: 1.5; min-width: 0; min-height: 0; display: grid;
+           grid-template-columns: 1fr 1fr; grid-auto-rows: 1fr;
+           gap: 0.8vh 0.8vw; height: 100%; }
+.grid2x2 figure { min-width: 0; min-height: 0; display: flex;
+                  flex-direction: column; align-items: center; }
+.grid2x2 img { max-width: 100%; min-height: 0; flex: 1; object-fit: contain;
+               border-radius: 6px; border: 1px solid var(--linha);
+               background: var(--card); }
+.grid2x2 figcaption { font-size: 0.72rem; color: var(--muted);
+                      margin-top: 0.4vh; }
+
+.capa { justify-content: center; align-items: center; text-align: center;
+        background: radial-gradient(ellipse at 50% 38%, var(--card) 0%, var(--bg) 62%); }
+.capa h1 { font-size: clamp(2.4rem, 5.6vw, 4rem); margin: 1.6vh 0; }
+.capa .grega { width: min(30vw, 340px); height: 1px; background: var(--bronze);
+               opacity: 0.55; margin: 2.2vh auto; }
+.capa p { color: var(--ink2); max-width: 48ch; font-size: 1.05rem; line-height: 1.6; }
+    /* D5 (2026-08-18): a folha-quadro pode centrar a COMPOSIÇÃO — é a exceção
+       declarada do registro deck —, mas parágrafo longo centralizado é o pior
+       caso de leitura: cada linha começa num ponto diferente e o olho perde a
+       volta. O bloco continua centrado; as linhas passam a alinhar à esquerda. */
+    .capa p.prosa { text-align: left; margin: 0 auto 1.5vh; }
+    .capa p.prosa:last-of-type { margin-bottom: 0; }
+    /* autoria (2026-09-09): autor, coautora e orientador nomeados na capa, por
+       decisão do operador; o G3 (registro ao pixel) é só do autor e do
+       orientador. Método, item 5 (discrição): autoria nomeada abertamente. */
+    .capa p.autoria { font-size: 0.82rem; color: var(--muted); line-height: 1.55;
+                      margin: 2.6vh auto 0; text-align: center; max-width: none; }
+    .capa p.autoria strong { color: var(--ink2); font-weight: 600; }
+
+@page { size: 1920px 1080px; margin: 0; }
+.corpo > .col { flex: 1 1 0; min-width: 34ch; }     /* trava anti-espremida */
+/* §2.6 PARIDADE: figura e texto são metades da mesma metodologia e dividem
+   espaço equivalente (banda 40–60). A figura tinha `flex: 1.3` contra `flex: 1`
+   do texto e ficava em 60–67% em ONZE folhas — desequilíbrio por omissão, não
+   por decisão. Mesma base e mesmo crescimento nos dois = 50/50; quem quiser
+   sair da paridade declara na própria folha. */
+.corpo > .figbox { flex: 1 1 0; }
+/* Figura empilhada NÃO precisa encher a coluna inteira: quando ela enche, o
+   par figura↔texto sai da banda da §2.6 por ALTURA (647pt de figura contra
+   439pt de texto) e a folha fica sem borda. O teto de 86% devolve o ar sem
+   mexer no conteúdo. */
+.figbox.vert { max-height: 86%; }
+.corpo .figbox { min-width: 0; }
+.corpo .figbox img, .corpo img.fig { max-width: 100%; height: auto; }
+
+@media print {
+  /* 2026-08-12: fixa aqui o que antes era escolhido à mão no diálogo do
+     Ctrl+P (1920×1080, sem margem). Sem isto a exportação depende de quem
+     imprime — e um PDF de submissão precisa ser REGERÁVEL, não relembrado. */
+  @page { size: 1920px 1080px; margin: 0; }
+  * { -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important; }
+  html, body { width: 1920px; height: 1080px; }
+  body { overflow: visible; }
+  .slide { display: flex !important; position: relative; page-break-after: always;
+           width: 1920px; height: 1080px; overflow: hidden !important; }
+  .slide.ativo { animation: none; }
+  .rodape { position: absolute; }
+}
+
+
+/* a medida, à escala nova, enche a coluna: 30em a 25,9px = 585pt de ~624 */
+
+/* ===== PÉ ATRÁS — a marca de procedência do rigor ==========================
+   Especificação de 2026-08-22. Guisoli conduz; Guidorizzi é guarda-corpo.
+   Toda afirmação vinda do Guisoli declara o que o Guidorizzi faz com ela.
+
+   DESENHO, e a razão dele: é RODAPÉ do cartão-lousa, irmão do `.origem` —
+   NÃO um terceiro cartão. A folha já tem duas vozes (o quadro e o "em bom
+   português"); uma terceira caixa competiria com as duas em vez de anotar.
+   Pé atrás é procedência, não voz.
+
+   O rótulo vai no HTML, nunca em `content:`. Lição de 2026-08-22: texto que
+   só existe em `content:` é invisível ao extrator, à peneira e ao auditor —
+   39 rótulos sobreviveram em português dentro do deck em inglês por isso.
+
+   REGRA DURA: `refina` SEMPRE escreve a diferença. Marca sem conteúdo em
+   folha que refina é pior que marca nenhuma — anuncia divergência e não
+   entrega.                                                                 */
+
+/* a folha que reúne os `refina` de cada deck */
+
+/* As regras do "pé atrás" (.pe-atras, .refina, .confirma, .silencioso,
+   .refino, .refinos) foram REMOVIDAS em 2026-08-24: o elemento saiu dos decks
+   por decisão do operador — primeiro as folhas, depois os spans inline. CSS
+   órfão é convite a reintroduzir o que se decidiu tirar. */
+</style>
+
+</head>
+<body>
+
+<!-- 1 · capa -->
+<!-- 1 · capa -->
+<section class="slide capa ativo">
+  <div class="eyebrow">Hipátia · a fundação, seminário 1 de 8 · o chão dos dois arcos</div>
+  <h1>Duas <em>operações</em></h1>
+  <div class="grega"></div>
+  <p class="tese">não existem quatro operações — existem duas, e cada uma tem um desfazedor</p>
+  <p class="prosa">A escola ensina quatro contas: somar, subtrair, multiplicar
+    e dividir. É uma lista prática, e é <strong>falsa como estrutura</strong>.
+    Subtrair é somar; dividir é multiplicar. O que muda em cada caso é
+    <em>com quem</em> se soma e <em>por quem</em> se multiplica.</p>
+  <p class="prosa">Este seminário não pertence a nenhum dos dois arcos:
+    é o chão dos dois. Sai daqui com a aritmética arrumada, a contagem
+    como origem das operações, e a letra pronta para receber tudo isso.</p>
+  <p class="autoria">Autor · <strong>Mateus Felipe Alkimim Pereira</strong><br>
+    Coautora · <strong>Sara Catiele Nogueira Pereira</strong><br>
+    Orientador · <strong>Rosivaldo Antônio Gohnan</strong></p>
+  <div class="rodape"><span>duas operações</span><span class="contador"></span></div>
+</section>
+
+<section class="slide">
+  <div class="eyebrow">antes de tudo · como ler os símbolos</div>
+  <h1>As convenções que valem <em>o seminário inteiro</em></h1>
+  <div class="corpo">
+    <div class="col">
+      <p>Nada aparece adiante sem estar nesta folha. Se um símbolo não está
+        aqui, ele será apresentado no momento em que for usado.</p>
+      <table class="simbolos">
+        <tr><td>\(a + b\)</td><td>"a mais b" — a <strong>soma</strong></td></tr>
+        <tr><td>\(a \cdot b\)</td><td>"a vezes b" — o <strong>produto</strong></td></tr>
+        <tr><td>\(-a\)</td><td>"o oposto de a" — o que somado a \(a\) dá zero</td></tr>
+        <tr><td>\(a^{-1}\)</td><td>"o inverso de a" — o que multiplicado por \(a\) dá um</td></tr>
+        <tr><td>\(\mathbb{N}\)</td><td>"ene" — os números de contar: 0, 1, 2, 3, …</td></tr>
+        <tr><td>\(\mathbb{Z}\)</td><td>"zê" — os inteiros, com os negativos</td></tr>
+        <tr><td>\(\mathbb{Q}\)</td><td>"quê" — os racionais, as frações</td></tr>
+        <tr><td>\(|A|\)</td><td>"tamanho de A" — quantos elementos o conjunto A tem</td></tr>
+      </table>
+    </div>
+    <div class="col">
+      <div class="traducao">
+        <p>O traço em \(-a\) e o expoente em \(a^{-1}\) não são contas para
+          fazer: são <strong>nomes</strong>. \(-a\) é o nome de um número, e
+          \(a^{-1}\) é o nome de outro. Quando \(a\) vale 3, o primeiro se
+          chama \(-3\) e o segundo se chama um terço.</p>
+        <p>E cuidado com um hábito da escola: \(-a\) <strong>não</strong>
+          quer dizer "número negativo". Se \(a\) já for negativo, \(-a\) é
+          positivo. O nome diz "o que desfaz a soma com \(a\)", e nada mais.</p>
+      </div>
+      <p class="leitura">\(a^{-1}\) lê-se "a elevado a menos um", ou
+        simplesmente "o inverso de a".</p>
+    </div>
+  </div>
+  <div class="rodape"><span>duas operações</span><span class="contador"></span></div>
+</section>
+
+<section class="slide">
+  <div class="eyebrow">Estação 1 · contar é a origem</div>
+  <h1>Contar é responder <em>quantos</em> sem listar</h1>
+  <div class="corpo">
+    <div class="col">
+      <p>Um <strong>conjunto</strong> é uma coleção de coisas. As coisas dentro
+        dele são seus <strong>elementos</strong>, e a pergunta mais simples que
+        se faz a um conjunto é: quantos são?</p>
+      <p>Para conjuntos pequenos, conta-se no dedo. O assunto começa quando
+        contar no dedo deixa de ser possível — e a pergunta continua tendo
+        resposta exata.</p>
+      <div class="formula">
+        \(|A|\) é o <strong>tamanho</strong> de \(A\): quantos elementos ele tem
+      </div>
+      <p class="leitura">"o tamanho de A".</p>
+      <div class="traducao">
+        <p>Uma senha de quatro dígitos tem dez mil possibilidades. Ninguém
+          listou as dez mil para descobrir isso — e é justamente por não ter
+          listado que a conta serve para alguma coisa. Contar sem listar é o que
+          esta estação ensina, e as duas operações da aritmética nascem dela.</p>
+      </div>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-conjunto-tamanho.png" alt="dois conjuntos desenhados como sacos, com seus elementos, e o tamanho de cada um">
+    </div>
+  </div>
+  <div class="rodape"><span>duas operações</span><span class="contador"></span></div>
+</section>
+
+<section class="slide">
+  <div class="eyebrow">Estação 1 · contar é a origem</div>
+  <h1>Coisas separadas se juntam: nasce a <em>soma</em></h1>
+  <div class="corpo">
+    <div class="col">
+      <p>Se dois conjuntos não têm nenhum elemento em comum, o tamanho da união
+        é a soma dos tamanhos. É o <strong>princípio aditivo</strong>.</p>
+      <div class="formula">
+        \(|A \cup B| = |A| + |B|\) &nbsp;— quando nada se repete
+      </div>
+      <p class="leitura">"o tamanho de A união B é o tamanho de A mais o
+        tamanho de B".</p>
+      <p>A soma <strong>não foi inventada como conta</strong>. Ela é o nome que
+        se dá ao resultado de juntar coisas separadas e contar de novo.</p>
+      <div class="traducao">
+        <p>A condição "nada se repete" carrega o peso todo. Numa turma com 12
+          pessoas que jogam futebol e 9 que jogam vôlei, não há 21 pessoas: há
+          21 <em>menos</em> quem joga os dois. Quando os conjuntos se cruzam, a
+          soma simples mente — e o conserto disso é assunto da contagem, no
+          episódio G1.</p>
+      </div>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-principio-aditivo.png" alt="dois conjuntos sem elementos comuns, e a uniao deles com o tamanho somado">
+    </div>
+  </div>
+  <div class="rodape"><span>duas operações</span><span class="contador"></span></div>
+</section>
+
+<section class="slide">
+  <div class="eyebrow">Estação 1 · contar é a origem</div>
+  <h1>Escolhas encadeadas: nasce o <em>produto</em></h1>
+  <div class="corpo">
+    <div class="col">
+      <p>Agora não se junta: <strong>combina-se</strong>. Se a primeira escolha
+        tem \(m\) opções e, para cada uma delas, a segunda tem \(n\), o total de
+        combinações é \(m \cdot n\). É o <strong>princípio multiplicativo</strong>.</p>
+      <div class="formula">
+        \(|A \times B| = |A| \cdot |B|\)
+      </div>
+      <p class="leitura">"o tamanho de A vezes B é o tamanho de A vezes o
+        tamanho de B".</p>
+      <p>Três camisas e quatro calças dão doze roupas. Ninguém precisa vestir as
+        doze para saber que são doze.</p>
+      <div class="traducao">
+        <p>Repare no que aconteceu: as duas operações da aritmética apareceram
+          respondendo a <strong>duas perguntas diferentes sobre coisas</strong>
+          — quantos são ao todo, e de quantos jeitos posso combinar. Não são
+          duas contas que alguém escolheu ensinar: são duas perguntas que o
+          mundo faz.</p>
+      </div>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-principio-multiplicativo.png" alt="uma grade de tres camisas por quatro calcas formando doze combinacoes">
+    </div>
+  </div>
+  <div class="rodape"><span>duas operações</span><span class="contador"></span></div>
+</section>
+
+<section class="slide">
+  <div class="eyebrow">Estação 1 · contar é a origem</div>
+  <h1>Uma muleta que vai <em>quebrar</em> — e é melhor saber antes</h1>
+  <div class="corpo">
+    <div class="col">
+      <p>Enquanto se conta coisa, multiplicar parece somar repetido: \(3 \cdot 4\)
+        é somar 4 três vezes. A imagem funciona, e por isso ela é ensinada.</p>
+      <p>Ela <strong>quebra</strong> assim que os números deixam de contar
+        coisas:</p>
+      <div class="formula">
+        \(2{,}5 \cdot 3{,}7\) não é somar 3,7 &nbsp;"duas vírgula cinco vezes"
+      </div>
+      <p>Não existe repetir duas vírgula cinco vezes. A conta continua tendo
+        resposta — o que acabou foi a explicação.</p>
+      <div class="traducao">
+        <p>Isto está escrito aqui de propósito, e cedo. Uma imagem que ajuda no
+          começo e quebra depois deixa um buraco silencioso: o aluno não percebe
+          que ela caiu, continua usando, e conclui que não entendeu a matéria —
+          quando o que falhou foi a muleta.</p>
+        <p>O que <strong>não</strong> quebra é a estrutura: soma e produto
+          continuam sendo duas operações com as mesmas propriedades, valendo
+          para qualquer número. É nela que este seminário se apoia daqui em
+          diante.</p>
+      </div>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-muleta-quebra.png" alt="tres barras de quatro unidades ao lado de um retangulo de dois virgula cinco por tres virgula sete">
+    </div>
+  </div>
+  <div class="rodape"><span>duas operações</span><span class="contador"></span></div>
+</section>
+<section class="slide">
+  <div class="eyebrow">Estação 2 · as duas operações e seus desfazedores</div>
+  <h1>Desfazer é uma <em>pergunta</em>, não uma quinta conta</h1>
+  <div class="corpo">
+    <div class="col">
+      <p>Toda operação levanta a pergunta contrária. Somei alguma coisa a 5 e
+        cheguei em 12: <strong>o que somei?</strong> Multipliquei alguma coisa
+        por 3 e cheguei em 12: <strong>por quanto multipliquei?</strong></p>
+      <p>A escola dá um nome novo para cada uma dessas perguntas — subtração e
+        divisão — e passa a ensinar quatro contas. O que vem a seguir mostra que
+        não são contas novas: são <strong>a mesma operação</strong>, aplicada a
+        outro número.</p>
+      <div class="traducao">
+        <p>Repare que a pergunta contrária é de um tipo diferente da operação.
+          Somar é fazer; desfazer é <em>procurar</em>. E procurar tem uma
+          resposta só quando existe um número que serve — o que nem sempre é
+          verdade, e é disso que esta estação vive.</p>
+      </div>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-desfazer-pergunta.png" alt="duas setas: uma de ida somando e outra de volta perguntando o que foi somado">
+    </div>
+  </div>
+  <div class="rodape"><span>duas operações</span><span class="contador"></span></div>
+</section>
+
+<section class="slide">
+  <div class="eyebrow">Estação 2 · as duas operações e seus desfazedores</div>
+  <h1>Subtrair é somar <em>o oposto</em></h1>
+  <div class="corpo">
+    <div class="col">
+      <p>Para cada número \(a\) existe outro, chamado <strong>oposto</strong> de
+        \(a\) e escrito \(-a\), com uma propriedade só:</p>
+      <div class="formula">
+        \(a + (-a) = 0\)
+      </div>
+      <p class="leitura">"a mais o oposto de a é zero".</p>
+      <p>Com ele, a subtração some como operação própria:</p>
+      <div class="formula">
+        \(a - b\) &nbsp;é apenas outro jeito de escrever&nbsp; \(a + (-b)\)
+      </div>
+      <p>\(7 - 3\) é \(7 + (-3)\). Não há uma segunda conta: há a soma, e um
+        número diferente entrando nela.</p>
+    </div>
+    <div class="col">
+      <div class="traducao">
+        <p><strong>Cuidado com uma frase que quase todo mundo diz e que está
+          errada:</strong> "subtrair é somar números de sinais opostos".</p>
+        <p>Não é. Veja: \(5 - (-3) = 5 + 3\). Os dois números que estão sendo
+          somados aqui têm o <em>mesmo</em> sinal, e ainda assim isto é uma
+          subtração. O que se soma não é "um número de sinal contrário" — é
+          <strong>o oposto do segundo</strong>, seja ele qual for.</p>
+        <p>A diferença parece pequena e é ela que faz a regra funcionar em
+          todos os casos em vez de na maioria deles.</p>
+      </div>
+      <img class="fig" src="figuras/fig-oposto-reta.png" alt="a reta numerica com a e o oposto de a a mesma distancia do zero, em lados contrarios">
+    </div>
+  </div>
+  <div class="rodape"><span>duas operações</span><span class="contador"></span></div>
+</section>
+
+<section class="slide">
+  <div class="eyebrow">Estação 2 · as duas operações e seus desfazedores</div>
+  <h1>Para o oposto existir, foi preciso <em>inventar</em> o inteiro</h1>
+  <div class="corpo">
+    <div class="col">
+      <p>Nos números de contar, \(\mathbb{N}\), a conta \(3 - 5\)
+        <strong>não tem resposta</strong>. Não é que a resposta seja difícil:
+        ela não existe ali. Não há como tirar cinco coisas de um monte de três.</p>
+      <p>O oposto de 3 não mora em \(\mathbb{N}\). Para que ele exista, o
+        conjunto teve de crescer:</p>
+      <div class="formula">
+        \(\mathbb{N} \subset \mathbb{Z}\) &nbsp;— o inteiro é o natural
+        <strong>mais os opostos</strong>
+      </div>
+      <p class="leitura">"ene está contido em zê".</p>
+      <div class="traducao">
+        <p>Vale inverter a frase, porque é assim que ela ensina mais: os números
+          negativos <strong>não</strong> foram inventados para representar
+          dívida ou temperatura. Eles foram inventados para que toda subtração
+          tenha resposta — ou seja, para que a subtração possa
+          <em>deixar de existir</em> como operação separada.</p>
+      </div>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-n-para-z.png" alt="a reta dos naturais e a reta dos inteiros, com os opostos aparecendo do outro lado do zero">
+    </div>
+  </div>
+  <div class="rodape"><span>duas operações</span><span class="contador"></span></div>
+</section>
+
+<section class="slide">
+  <div class="eyebrow">Estação 2 · as duas operações e seus desfazedores</div>
+  <h1>Dividir é multiplicar <em>pelo inverso</em></h1>
+  <div class="corpo">
+    <div class="col">
+      <p>A multiplicação tem o mesmo arranjo. Para cada número \(a\), com uma
+        exceção que vem na folha seguinte, existe o <strong>inverso</strong> de
+        \(a\), escrito \(a^{-1}\):</p>
+      <div class="formula">
+        \(a \cdot a^{-1} = 1\)
+      </div>
+      <p class="leitura">"a vezes o inverso de a é um".</p>
+      <p>E a divisão some do mesmo jeito que a subtração sumiu:</p>
+      <div class="formula">
+        \(a \div b\) &nbsp;é apenas outro jeito de escrever&nbsp; \(a \cdot b^{-1}\)
+      </div>
+      <p>\(12 \div 4\) é \(12 \cdot \frac{1}{4}\).</p>
+    </div>
+    <div class="col">
+      <div class="traducao">
+        <p>Note a simetria, porque ela é o argumento inteiro deste seminário:</p>
+        <p>a soma tem o <strong>zero</strong> como elemento neutro, e o
+          <strong>oposto</strong> como desfazedor. O produto tem o
+          <strong>um</strong> como elemento neutro, e o <strong>inverso</strong>
+          como desfazedor. São duas operações com a mesma arquitetura, e é por
+          isso que tudo o que se aprende de uma se aproveita na outra.</p>
+      </div>
+      <table class="simbolos">
+        <tr><td>neutro da soma</td><td>\(a + 0 = a\)</td></tr>
+        <tr><td>neutro do produto</td><td>\(a \cdot 1 = a\)</td></tr>
+        <tr><td>desfaz a soma</td><td>\(a + (-a) = 0\)</td></tr>
+        <tr><td>desfaz o produto</td><td>\(a \cdot a^{-1} = 1\)</td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="rodape"><span>duas operações</span><span class="contador"></span></div>
+</section>
+
+<section class="slide">
+  <div class="eyebrow">Estação 2 · as duas operações e seus desfazedores</div>
+  <h1>Para o inverso existir, foi preciso inventar <em>a fração</em></h1>
+  <div class="corpo">
+    <div class="col">
+      <p>Nos inteiros, \(3 \div 2\) <strong>não tem resposta</strong>. O inverso
+        de 3 não é um inteiro — não existe número inteiro que multiplicado por 3
+        dê 1.</p>
+      <div class="formula">
+        \(\mathbb{Z} \subset \mathbb{Q}\) &nbsp;— o racional é o inteiro
+        <strong>mais os inversos</strong>
+      </div>
+      <p>É a mesma história contada uma segunda vez, e é por isso que ela
+        convence: cada conjunto numérico novo aparece porque uma pergunta
+        legítima ficou sem resposta no anterior.</p>
+      <div class="traducao">
+        <p>Duas invenções, dois desfazedores:</p>
+        <p>\(\mathbb{Z}\) existe para que <strong>a subtração possa
+          morrer</strong>. \(\mathbb{Q}\) existe para que <strong>a divisão
+          possa morrer</strong>. Depois dos dois, sobram exatamente duas
+          operações — que é onde este seminário queria chegar.</p>
+      </div>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-z-para-q.png" alt="a reta dos inteiros e a reta dos racionais, com as fracoes preenchendo os espacos entre eles">
+    </div>
+  </div>
+  <div class="rodape"><span>duas operações</span><span class="contador"></span></div>
+</section>
+
+<section class="slide">
+  <div class="eyebrow">Estação 2 · as duas operações e seus desfazedores</div>
+  <h1>A única assimetria — e ela explica <em>a proibição</em></h1>
+  <div class="corpo">
+    <div class="col">
+      <p>As duas operações são gêmeas em quase tudo. Em um ponto, não:</p>
+      <div class="formula">
+        <strong>todo</strong> número tem oposto<br>
+        todo número <strong>exceto o zero</strong> tem inverso
+      </div>
+      <p>Não existe número que multiplicado por zero dê 1 — multiplicar por zero
+        sempre dá zero. Logo, \(0^{-1}\) não existe.</p>
+      <p>E como dividir é multiplicar pelo inverso, dividir por zero seria
+        multiplicar por um número que <strong>não existe</strong>.</p>
+      <div class="traducao">
+        <p>"Não se divide por zero" deixa de ser uma regra que alguém decidiu, e
+          vira uma <strong>ausência</strong>: não há proibição nenhuma, há um
+          número faltando. Ninguém proíbe você de escrever o nome do rei da
+          França — é que não há rei.</p>
+      </div>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-assimetria-zero.png" alt="duas colunas: todos os numeros com seus opostos, e todos menos o zero com seus inversos">
+    </div>
+  </div>
+  <div class="rodape"><span>duas operações</span><span class="contador"></span></div>
+</section>
+<section class="slide">
+  <div class="eyebrow">Estação 3 · o terceiro andar</div>
+  <h1>A potência, chegando <em>pela contagem</em></h1>
+  <div class="corpo">
+    <div class="col">
+      <p>Volte à primeira estação. Uma senha de 4 dígitos: cada posição tem 10
+        opções, e as escolhas são encadeadas. Pelo princípio multiplicativo:</p>
+      <div class="formula">
+        \(10 \cdot 10 \cdot 10 \cdot 10 = 10^4 = 10\,000\)
+      </div>
+      <p class="leitura">"dez elevado a quatro".</p>
+      <p>Quando o mesmo número se repete no produto, escreve-se assim. A
+        <strong>potência</strong> é o terceiro andar: a soma junta, o produto
+        combina, a potência combina <em>o mesmo</em> muitas vezes.</p>
+      <div class="traducao">
+        <p>É a mesma pergunta de contagem da estação 1, feita a um caso
+          particular. Por isso a potência não é um assunto novo que aparece do
+          nada no meio da aritmética: ela é a terceira resposta a "quantos são",
+          e nasce onde as outras duas nasceram.</p>
+      </div>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-potencia-contagem.png" alt="quatro caixas de senha com dez opcoes cada, e a arvore de escolhas resultando em dez mil">
+    </div>
+  </div>
+  <div class="rodape"><span>duas operações</span><span class="contador"></span></div>
+</section>
+
+<section class="slide">
+  <div class="eyebrow">Estação 3 · o terceiro andar</div>
+  <h1>A potência <em>não</em> é como as outras duas</h1>
+  <div class="corpo">
+    <div class="col">
+      <p>Soma e produto não se importam com a ordem:</p>
+      <div class="formula">
+        \(3 + 4 = 4 + 3\) &nbsp;e&nbsp; \(3 \cdot 4 = 4 \cdot 3\)
+      </div>
+      <p>Isso se chama ser <strong>comutativo</strong>. A potência não é:</p>
+      <div class="formula">
+        \(2^3 = 8\) &nbsp;mas&nbsp; \(3^2 = 9\)
+      </div>
+      <p>A base e o expoente fazem <strong>trabalhos diferentes</strong>. Trocar
+        os dois de lugar muda o resultado.</p>
+      <div class="traducao">
+        <p>Guarde este fato: ele parece um detalhe curioso e é a causa de tudo o
+          que vem na próxima folha. Uma operação que trata seus dois números de
+          maneiras diferentes precisa de <strong>duas perguntas contrárias</strong>,
+          não de uma.</p>
+      </div>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-nao-comutativa.png" alt="dois blocos: dois elevado a tres com oito unidades e tres elevado a dois com nove unidades">
+    </div>
+  </div>
+  <div class="rodape"><span>duas operações</span><span class="contador"></span></div>
+</section>
+
+<section class="slide">
+  <div class="eyebrow">Estação 3 · o terceiro andar</div>
+  <h1>Por isso ela tem <em>duas</em> inversas</h1>
+  <div class="corpo">
+    <div class="col">
+      <p>Em \(2^3 = 8\) há três números. Esconda um de cada vez e veja o que
+        cada pergunta pede:</p>
+      <table class="simbolos">
+        <tr><td>\(2^3 = \;?\)</td><td>é a <strong>potência</strong>: dá o resultado</td></tr>
+        <tr><td>\(?^3 = 8\)</td><td>é a <strong>raiz</strong>: acha a <em>base</em></td></tr>
+        <tr><td>\(2^? = 8\)</td><td>é o <strong>logaritmo</strong>: acha o <em>expoente</em></td></tr>
+      </table>
+      <p class="leitura">o segundo lê-se "raiz cúbica de 8"; o terceiro,
+        "logaritmo de 8 na base 2".</p>
+      <p>Soma e produto são comutativos, então cada um tem <strong>uma</strong>
+        inversa. A potência não é, então tem <strong>duas</strong>.</p>
+    </div>
+    <div class="col">
+      <div class="traducao">
+        <p>Este é o motivo de o logaritmo existir, e ele não tem nada de
+          misterioso: alguém escondeu o expoente e perguntou qual era.</p>
+        <p>Na escola o logaritmo costuma aparecer muito depois, num capítulo
+          próprio, como se fosse um assunto avançado sem parentesco com o resto.
+          Ele é o irmão da raiz — os dois desfazem a mesma operação, cada um
+          por um lado.</p>
+      </div>
+      <img class="fig" src="figuras/fig-duas-inversas.png" alt="a igualdade dois elevado a tres igual oito lida de tres maneiras, com um numero escondido em cada">
+    </div>
+  </div>
+  <div class="rodape"><span>duas operações</span><span class="contador"></span></div>
+</section>
+
+<section class="slide">
+  <div class="eyebrow">Estação 3 · o terceiro andar</div>
+  <h1>O logaritmo, <em>por inteiro</em></h1>
+  <div class="corpo">
+    <div class="col">
+      <p>O logaritmo de \(c\) na base \(b\) é o expoente que falta:</p>
+      <div class="formula">
+        \(\log_b c = a\) &nbsp;quer dizer exatamente&nbsp; \(b^a = c\)
+      </div>
+      <p class="leitura">"logaritmo de cê na base bê é igual a a".</p>
+      <p>São a <strong>mesma frase</strong> escrita de dois jeitos. Ler uma e
+        escrever a outra é o exercício inteiro.</p>
+      <table class="simbolos">
+        <tr><td>\(\log_2 8 = 3\)</td><td>porque \(2^3 = 8\)</td></tr>
+        <tr><td>\(\log_{10} 1000 = 3\)</td><td>porque \(10^3 = 1000\)</td></tr>
+        <tr><td>\(\log_2 1 = 0\)</td><td>porque \(2^0 = 1\)</td></tr>
+      </table>
+    </div>
+    <div class="col">
+      <div class="traducao">
+        <p>Onde isto aparece: sempre que a pergunta for <strong>"quantas vezes
+          preciso dobrar?"</strong>. Um valor que dobra a cada período, e a
+          pergunta de quantos períodos até chegar em certo ponto, é um logaritmo
+          — e ninguém precisa chamá-lo pelo nome para estar usando.</p>
+        <p>Ele aparece de novo mais adiante na série, com o limite por baixo, e
+          aí muda de tamanho. Aqui ele é o que é agora: <strong>uma
+          operação</strong>, a segunda inversa da potência, e o lugar dela é
+          este.</p>
+      </div>
+    </div>
+  </div>
+  <div class="rodape"><span>duas operações</span><span class="contador"></span></div>
+</section>
+
+<section class="slide">
+  <div class="eyebrow">Estação 4 · a letra</div>
+  <h1>A letra diz de uma vez o que o número diz <em>um por um</em></h1>
+  <div class="corpo">
+    <div class="col">
+      <p>Até aqui tudo foi dito com números. Mas cada frase valia para todos
+        eles:</p>
+      <div class="formula">
+        \(2 + 0 = 2\), \(7 + 0 = 7\), \(-4 + 0 = -4\), … &nbsp;→&nbsp;
+        \(a + 0 = a\)
+      </div>
+      <p>A letra não é um número desconhecido esperando para ser descoberto. Ela
+        é <strong>qualquer número</strong>, e é isso que permite dizer numa
+        linha o que levaria infinitas.</p>
+      <div class="traducao">
+        <p>É a diferença entre dizer "3 mais 5 é o mesmo que 5 mais 3", e depois
+          repetir para outro par, e outro — e dizer \(a + b = b + a\), que
+          resolve todos de uma vez, inclusive os que ninguém escreveu.</p>
+        <p>Quando a letra aparece numa equação a resolver, ela tem outro papel:
+          ali é um valor específico que ainda não se sabe. <strong>Mesmo
+          símbolo, dois trabalhos</strong> — e vale saber qual dos dois está em
+          curso.</p>
+      </div>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-letra-generaliza.png" alt="uma pilha de igualdades numericas se condensando em uma unica igualdade com letras">
+    </div>
+  </div>
+  <div class="rodape"><span>duas operações</span><span class="contador"></span></div>
+</section>
+<section class="slide">
+  <div class="eyebrow">Estação 4 · a letra</div>
+  <h1>O que a letra <em>herda</em> — e é só isto</h1>
+  <div class="corpo">
+    <div class="col">
+      <p>A letra não traz regras novas. Ela obedece às mesmas três propriedades
+        que os números já obedeciam:</p>
+      <table class="simbolos">
+        <tr><td>comutativa</td><td>\(a + b = b + a\) &nbsp;·&nbsp; \(a \cdot b = b \cdot a\)</td></tr>
+        <tr><td>associativa</td><td>\((a + b) + c = a + (b + c)\)</td></tr>
+        <tr><td>distributiva</td><td>\(a \cdot (b + c) = a \cdot b + a \cdot c\)</td></tr>
+      </table>
+      <p>A <strong>distributiva</strong> é a única das três que envolve as duas
+        operações ao mesmo tempo — e é por isso que ela é a mais poderosa.</p>
+      <div class="traducao">
+        <p>Toda a "álgebra" do ensino básico — abrir parênteses, fatorar, juntar
+          termos semelhantes — é essas três propriedades sendo usadas. Não há
+          uma quarta guardada em algum lugar.</p>
+      </div>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-distributiva.png" alt="um retangulo de largura b mais c e altura a, cortado em dois retangulos de areas a b e a c">
+    </div>
+  </div>
+  <div class="rodape"><span>duas operações</span><span class="contador"></span></div>
+</section>
+
+<section class="slide">
+  <div class="eyebrow">Estação 4 · a letra</div>
+  <h1>"Menos com menos dá mais" deixa de ser <em>decoreba</em></h1>
+  <div class="corpo">
+    <div class="col">
+      <p>A regra mais decorada da escola é uma <strong>consequência</strong>, e
+        cabe em três linhas. Comece pelo que já se sabe: \(1 + (-1) = 0\).
+        Multiplique os dois lados por \(-1\):</p>
+      <div class="formula">
+        \((-1) \cdot \big(1 + (-1)\big) = (-1) \cdot 0 = 0\)
+      </div>
+      <p>Agora abra o lado esquerdo pela distributiva:</p>
+      <div class="formula">
+        \((-1) \cdot 1 \;+\; (-1) \cdot (-1) = 0\)<br>
+        \(-1 \;+\; (-1) \cdot (-1) = 0\)
+      </div>
+      <p>Se somado a \(-1\) o resultado é zero, então \((-1) \cdot (-1)\) é o
+        <strong>oposto de \(-1\)</strong>, que é \(1\).</p>
+    </div>
+    <div class="col">
+      <div class="traducao">
+        <p>Ninguém escolheu que menos com menos desse mais. Essa é a
+          <strong>única</strong> resposta possível se a distributiva continuar
+          valendo com números negativos — e ela precisa continuar valendo, senão
+          os inteiros seriam um conjunto onde a álgebra deixa de funcionar.</p>
+        <p>É a diferença entre uma regra e um teorema: a regra você decora e
+          esquece; o teorema você reconstrói quando esquecer.</p>
+      </div>
+      <img class="fig" src="figuras/fig-regra-sinais.png" alt="as tres linhas da demonstracao de que menos um vezes menos um e igual a um">
+    </div>
+  </div>
+  <div class="rodape"><span>duas operações</span><span class="contador"></span></div>
+</section>
+
+<section class="slide">
+  <div class="eyebrow">o que foi construído</div>
+  <h1>O andar de baixo, <em>inteiro</em></h1>
+  <div class="corpo">
+    <div class="col">
+      <table class="simbolos">
+        <tr><td>duas operações</td><td>soma e produto — e nada mais</td></tr>
+        <tr><td>dois desfazedores</td><td>o oposto e o inverso</td></tr>
+        <tr><td>duas invenções</td><td>\(\mathbb{Z}\) para o oposto existir, \(\mathbb{Q}\) para o inverso</td></tr>
+        <tr><td>uma ausência</td><td>o zero não tem inverso — daí a divisão por zero</td></tr>
+        <tr><td>um terceiro andar</td><td>a potência, com <strong>duas</strong> inversas: raiz e logaritmo</td></tr>
+        <tr><td>uma letra</td><td>que herda três propriedades e nenhuma regra nova</td></tr>
+      </table>
+      <p>Daqui a série se abre em dois caminhos que <strong>não dependem um do
+        outro</strong>. Os dois cobram esta folha, e só esta.</p>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/mapa-para-onde-vamos.svg" alt="o recorte do mapa de pre-requisitos mostrando as materias deste seminario e as que dependem delas">
+    </div>
+  </div>
+  <div class="rodape"><span>duas operações</span><span class="contador"></span></div>
+</section>
+
+<section class="slide">
+  <div class="eyebrow">apêndice · de onde veio cada coisa</div>
+  <h1>Fontes, e o que é <em>afirmação própria</em></h1>
+  <div class="corpo">
+    <div class="col">
+      <p><strong>A tese deste seminário</strong> — que não existem quatro
+        operações, e sim duas com seus desfazedores — é a estrutura de
+        <em>corpo</em>, que a álgebra abstrata formaliza. O recorte, a ordem das
+        estações e a escolha de chegar às operações <em>pela contagem</em> são
+        do autor.</p>
+      <p>A frase que abre a estação 2 nasceu de uma
+        <strong>orientação acadêmica registrada em 2026-08-25</strong>, e foi
+        corrigida na formulação: o que se soma não é "um número de sinal
+        oposto", é <strong>o oposto do segundo número</strong>.</p>
+      <p>O argumento das <strong>duas inversas da potência</strong> — raiz para
+        a base, logaritmo para o expoente, porque a operação não é comutativa —
+        é construção do autor sobre a mesma orientação.</p>
+      <div class="traducao">
+        <p>O mapa de pré-requisitos que abre e fecha este seminário é público:
+          <em>mateusalkimim.github.io/math-prerequisite-map</em>. Cada seta dele
+          declara de onde veio.</p>
+      </div>
+    </div>
+    <div class="col">
+      <p class="prosa">Seminário <strong>0</strong> da série
+        <em>Um curso de visão computacional e geometria da imagem</em>.
+        É o chão dos dois arcos: nem o GAAL nem o cálculo se sustentam sem ele,
+        e nenhum dos dois se sustenta no outro.</p>
+      <p class="prosa">Autoria e composição: <strong>Mateus Felipe Alkimim Pereira</strong>, com
+        <strong>Sara Catiele Nogueira Pereira</strong> (coautora); orientação de
+        <strong>Rosivaldo Antônio Gohnan</strong>.
+        Sob a <em>norma de composição</em>, a <em>norma de notação</em> e a
+        <em>norma de diagramas</em> da Hipátia.</p>
+    </div>
+  </div>
+  <div class="rodape"><span>duas operações</span><span class="contador"></span></div>
+</section>
+
+
+
+<script>
+const slides = [...document.querySelectorAll(".slide")];
+let i = 0;
+// cada slide carrega o SEU número (vale para a tela e para o PDF impresso)
+slides.forEach((s, k) => s.querySelectorAll(".contador").forEach(c =>
+  c.textContent = `${k + 1} / ${slides.length}`));
+function mostra(n) {
+  i = Math.max(0, Math.min(slides.length - 1, n));
+  slides.forEach((s, k) => s.classList.toggle("ativo", k === i));
+}
+addEventListener("keydown", e => {
+  if (["ArrowRight", "PageDown", " "].includes(e.key)) mostra(i + 1);
+  if (["ArrowLeft", "PageUp"].includes(e.key)) mostra(i - 1);
+  if (e.key === "Home") mostra(0);
+  if (e.key === "End") mostra(slides.length - 1);
+});
+addEventListener("click", e => {
+  if (e.clientX > innerWidth / 2) mostra(i + 1); else mostra(i - 1);
+});
+function doHash() {
+  const n = parseInt(location.hash.slice(1), 10);
+  mostra(Number.isFinite(n) ? n - 1 : 0);
+}
+addEventListener("hashchange", doHash);
+doHash();
+</script>
+</body>
+</html>

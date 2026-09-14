@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Os dois pilares — um corte no tempo</title>
+<script>
+  // macros definidos vencem o autoload; autoload que falha mata TODAS as
+  // fórmulas da página em silêncio (armadilhas 1 e 2 da norma)
+  window.MathJax = { tex: { inlineMath: [['\\(', '\\)']],
+                            displayMath: [['\\[', '\\]']],
+                            macros: { boldsymbol: ['{#1}', 1] } },
+                     svg: { fontCache: 'global' } };
+</script>
+<script src="../../vendor/tex-svg.js"></script>
+<style>
+/* ============================================================
+   Ítaca DS — tema claro. Forma: norma-de-composicao.md da Hipátia,
+   registro CADERNO (lido de perto, denso).
+   ============================================================ */
+:root {
+  --bg: #f3f5f9; --card: #ffffff; --linha: #d9e0ec;
+  --ink: #16233f; --ink2: #3f4d6b; --muted: #7c88a1;
+  --bronze: #a9713f; --bronze-fundo: #8f5e33; --bronze-soft: #c79b6e;
+  --azul: #1e3a6b; --azul-deep: #12244a; --azul-fig: #3d6394;
+  --terracota: #b35430; --verde: #4e7a49; --rubro: #a84444;
+  --it-serif: Georgia, "Cormorant Garamond", "Times New Roman", serif;
+  --it-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --it-mono: "Spline Sans Mono", ui-monospace, "Cascadia Code", monospace;
+  /* §2.1 — a medida de linha, declarada UMA vez, em EM e nunca em `ch`:
+     `ch` mede o glifo "0" (0,636 em na Inter) e não o caractere médio de
+     prosa (0,456 em), então 66ch entregaria 92 caracteres. */
+  --medida: 30em;
+  --margem: 6vw;          /* §3.1 */
+  --medianiz: 1.25vw;     /* = 24 px a 1920, §3.2 */
+}
+/* §2.6 — a ESCALA. Uma raiz só, porque `rem` é global: subir aqui escala
+   junto o que tem clamp e o que tem tamanho fixo. Levantar só os clamps
+   deixa `.leitura` e `.legenda` para trás e a folha fica com DUAS escalas. */
+html { font-size: 25px; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; background: var(--azul-deep); }
+body { font-family: var(--it-sans); color: var(--ink); overflow: hidden; }
+
+.folha { display: none; position: absolute; inset: 0; background: var(--bg);
+         padding: 4vh var(--margem) 6vh; flex-direction: column;
+         /* sem isto, bloco alto demais SOME no PDF em vez de acusar o erro */
+         overflow: hidden; }
+.folha.ativo { display: flex; }
+.eyebrow { font-size: 0.72rem; letter-spacing: 0.22em; text-transform: uppercase;
+           color: var(--bronze); font-weight: 700; margin-bottom: 1vh; }
+h1 { font-family: var(--it-serif); font-weight: 700;
+     font-size: clamp(1.4rem, 2.7vw, 2.2rem); line-height: 1.12;
+     margin-bottom: 1.2vh; color: var(--azul-deep); letter-spacing: -0.01em; }
+h1 em { color: var(--bronze); font-style: normal; }
+
+/* §3.2 grade real de 12 colunas · §2.4 o conteúdo pende do topo
+   (a exceção do §2.4 é do registro DECK; este é caderno) */
+.folha .corpo {
+  display: grid; grid-template-columns: repeat(12, 1fr);
+  gap: var(--medianiz); align-items: start;
+  flex: 1; min-height: 0; overflow: hidden; padding-top: 0.5vh;
+}
+.folha .corpo > * { grid-column: span 6; min-width: 0; }
+.folha .corpo:has(> *:nth-child(3)):not(:has(> *:nth-child(4))) > * {
+  grid-column: span 4;
+}
+.col.larga { grid-column: span 12 !important; }
+.figbox { display: flex; align-items: flex-start; justify-content: center;
+          min-width: 0; }
+img.fig { max-width: 100%; height: auto; border-radius: 8px;
+          border: 1px solid var(--linha); background: var(--card);
+          box-shadow: 0 1px 4px rgba(18,36,74,.08); }
+
+/* §2.1 a medida governa a PROSA; bloco de exibição é governado pelo conteúdo */
+.folha p, .folha li, .leitura, .legenda { max-width: var(--medida); }
+.folha .formula, .folha .formula p, .folha table, .folha table p,
+.folha .respostas { max-width: none; }
+
+.col p { color: var(--ink2); font-size: clamp(0.84rem, 1.25vw, 0.99rem);
+         line-height: 1.55; margin-bottom: 0.9vh; }
+.col strong { color: var(--ink); }
+.col .ouro { color: var(--bronze-fundo); }
+.tese { font-family: var(--it-serif); font-style: italic;
+        font-size: clamp(1.05rem, 1.8vw, 1.35rem); color: var(--bronze-fundo);
+        line-height: 1.4; }
+.quadro { background: var(--card); border: 1px solid var(--linha);
+          border-left: 5px solid var(--bronze); border-radius: 8px;
+          padding: 1.1vh 1.1vw; margin: 0.8vh 0; color: var(--azul-deep);
+          font-size: clamp(0.86rem, 1.3vw, 1.02rem); line-height: 1.65;
+          box-shadow: 0 1px 4px rgba(18,36,74,.08); }
+.quadro .origem { display: block; font-size: 0.68rem; color: var(--muted);
+                  letter-spacing: 0.14em; text-transform: uppercase;
+                  margin-bottom: 0.6vh; }
+.traducao { background: color-mix(in srgb, var(--verde) 7%, var(--card));
+            border: 1px solid color-mix(in srgb, var(--verde) 30%, var(--linha));
+            border-left: 5px solid var(--verde); border-radius: 8px;
+            padding: 1vh 1.1vw; margin: 0.8vh 0; color: var(--ink2);
+            font-size: clamp(0.82rem, 1.22vw, 0.96rem); line-height: 1.55; }
+.traducao::before { content: "em bom português: "; color: var(--verde);
+                    font-weight: 700; }
+.recibo { background: color-mix(in srgb, var(--azul) 5%, var(--card));
+          border: 1px solid color-mix(in srgb, var(--azul) 28%, var(--linha));
+          border-left: 5px solid var(--azul); border-radius: 8px;
+          padding: 1vh 1.1vw; margin: 0.8vh 0; color: var(--ink2);
+          font-size: clamp(0.8rem, 1.18vw, 0.94rem); line-height: 1.6; }
+.recibo::before { content: "o recibo: "; color: var(--azul); font-weight: 700; }
+.leitura { font-size: 0.78rem; color: var(--muted); font-style: italic;
+           margin: -0.2vh 0 0.9vh 0.3vw; line-height: 1.45; }
+.leitura::before { content: "lê-se: "; font-style: normal; font-weight: 700;
+                   color: var(--bronze); }
+.legenda { font-size: 0.74rem; color: var(--muted); margin-top: 0.6vh; }
+.formula { font-family: var(--it-mono); background: var(--card);
+           border: 1px solid var(--linha); border-left: 4px solid var(--bronze);
+           border-radius: 8px; padding: 1.1vh 1.1vw; color: var(--azul-deep);
+           margin: 0.8vh 0; overflow-x: auto; }
+table.simbolos { border-collapse: collapse; margin: 0.6vh 0; width: 100%; }
+table.simbolos td { padding: 0.5vh 0.6vw; font-size: clamp(0.8rem, 1.2vw, 0.95rem);
+                    color: var(--ink2); border-bottom: 1px solid var(--linha);
+                    vertical-align: top; }
+table.simbolos td:first-child { color: var(--azul-deep); font-weight: 600;
+                                white-space: nowrap; }
+.rodape { position: absolute; bottom: 1.8vh; left: var(--margem);
+          right: var(--margem); display: flex; justify-content: space-between;
+          font-size: 0.72rem; color: var(--muted); letter-spacing: 0.08em;
+          border-top: 1px solid var(--linha); padding-top: 0.9vh; }
+.contador { font-family: var(--it-mono); }
+.grega { height: 1px; background: linear-gradient(90deg, transparent,
+         var(--bronze) 22%, var(--bronze) 78%, transparent); margin: 2vh auto;
+         width: 46%; }
+.folha.capa { align-items: center; justify-content: center; text-align: center; }
+.folha.capa h1 { font-size: clamp(2rem, 4.4vw, 3.4rem); }
+.folha.capa p { max-width: 34em; color: var(--ink2); margin-inline: auto; }
+    /* §2.8 e §2.10 da norma-de-diagramas/composição: parágrafo é bloco, e
+       na folha-quadro o espaço entre blocos é o único ritmo. Prosa longa
+       centralizada é o pior caso de leitura — o bloco segue centrado, as
+       LINHAS alinham à esquerda. */
+    .folha.capa p.prosa { text-align: left; margin: 0 auto 1.6vh; }
+    .folha.capa p.prosa:last-of-type { margin-bottom: 0; }
+
+@media print {
+  @page { size: 1920px 1080px; margin: 0; }
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  html, body { width: 1920px; height: 1080px; }
+  body { overflow: visible; }
+  .folha { display: flex !important; position: relative;
+           page-break-after: always; width: 1920px; height: 1080px;
+           overflow: hidden !important; }
+  .rodape { position: absolute; }
+}
+</style>
+</head>
+<body>
+
+<!-- 1 · capa -->
+<section class="folha capa ativo">
+  <div class="eyebrow">Hipátia · mapa da matéria</div>
+  <h1>Três fluxogramas:<br><em>a história, o sistema e a base</em></h1>
+  <div class="grega"></div>
+  <p class="prosa">Nenhum conhecimento nasce arrumado. A ciência estuda <strong>sem saber o que está estudando</strong>, e a organização vem depois — quando alguém percebe que peças soltas eram a mesma máquina.</p>
+  <p class="prosa">Logo o mapa das matérias que se ensina hoje é um <strong>estado</strong>, não uma verdade. Estes três fluxogramas mostram como ele se formou, como ele se sustenta, e o que ele deixa de fora.</p>
+  <div class="grega"></div>
+  <p class="legenda">A frase de partida é do prof. Rosivaldo. O recorte, a tese da fronteira e a construção são de <strong>Mateus Alkimim</strong>.</p>
+</section>
+
+<section class="folha">
+  <div class="eyebrow">A tese</div>
+  <h1>Toda matéria tem uma fronteira <em>positiva</em> e uma <em>negativa</em></h1>
+  <div class="corpo">
+    <div class="col">
+      <div class="quadro">
+        <p>Todo conhecimento — de uma pessoa ou de um campo — tem uma <strong>fronteira positiva</strong>, o que se sabe, e uma <strong>fronteira negativa</strong>, o que não se sabe. A arrumação vem depois, e o tempo é que manda nisso.</p>
+      </div>
+      <div class="traducao">
+        <p>é por isso que um mapa de matérias não pode ser lido como ordem de descoberta: ele é o desenho de quem já sabe o fim.</p>
+      </div>
+    </div>
+    <div class="col">
+      <p>A régua da casa manda levantar a vizinhança antes de afirmar novidade. O vizinho existe e se chama: <strong>Lakatos</strong>, em <em>Proofs and Refutations</em> (1976), mostra que a definição vem <strong>por último</strong> — remendada à luz de provas que falharam.</p>
+      <p class="origem">A diferença é de escala, e é ela que sustenta o material: Lakatos descreve a vida de <strong>um conceito</strong>; aqui se descreve a arquitetura de <strong>um campo</strong>, e se usa isso como critério para desenhar mapa. Citar Lakatos fortalece; omiti-lo seria o defeito.</p>
+    </div>
+  </div>
+  <div class="rodape"><span>o mapa da matéria · três fluxogramas</span><span class="contador"></span></div>
+</section>
+
+<section class="folha">
+  <div class="eyebrow">Fluxograma 1 · a história</div>
+  <h1>Quando uma matéria ficou <em>esperando</em> a outra</h1>
+  <div class="corpo">
+    <div class="col larga"><p>As datas correm da esquerda para a direita. As duas faixas hachuradas são <strong>esperas</strong>: tempo em que a matéria não andou porque dependia de outra que ainda não existia.</p></div>
+    <div class="col larga" style="margin:0.6vh 0;"><img class="fig" src="figuras/fig-1-historia.png" alt="Duas faixas do tempo com autores, lugares e as duas esperas medidas"
+         style="width:100%; height:auto;"></div>
+    <div class="col"><p class="legenda">Na faixa de baixo as quatro peças <strong>não se ligam entre si</strong> — e essa ausência é o conteúdo: Hamilton, Grassmann, Cayley e os Peirce não sabiam que eram a mesma máquina.</p></div>
+    <div class="col"><p class="legenda">Foi Peano, em 1888, quem as juntou num sistema de axiomas, e o título do livro dele credita Grassmann — quarenta e quatro anos depois. Datas e nomes conferidos no Boyer; o Peano de 1888, conferido também em segunda fonte independente.</p></div>
+  </div>
+  <div class="rodape"><span>o mapa da matéria · três fluxogramas</span><span class="contador"></span></div>
+</section>
+
+<section class="folha">
+  <div class="eyebrow">A prova da defasagem</div>
+  <h1>Um pilar tem nome na história. O outro tem <em>cinco</em></h1>
+  <div class="corpo">
+    <div class="col">
+      <p>No Boyer dissecado — 811 páginas equivalentes, a história canônica da matemática — a palavra <strong>calculus</strong> aparece <strong>194</strong> vezes. <strong>linear algebra</strong> aparece <strong>zero</strong>.</p>
+      <p>Não é lacuna do livro: é que o nome não existia. O que existia eram cinco nomes para pedaços — <em>Ausdehnungslehre</em>, quatérnions, álgebra de matrizes, álgebras associativas lineares, análise vetorial.</p>
+      <div class="traducao">
+        <p>a Álgebra Linear não foi descoberta: foi <strong>nomeada depois</strong>, quando se percebeu que aquelas coisas eram a mesma. É a tese da fronteira em miniatura.</p>
+      </div>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-194-a-zero.png"
+           alt="A contagem dos termos no Boyer: 194 contra zero">
+    </div>
+  </div>
+  <div class="rodape"><span>o mapa da matéria · três fluxogramas</span><span class="contador"></span></div>
+</section>
+
+<section class="folha">
+  <div class="eyebrow">Fluxograma 2 · o sistema de hoje</div>
+  <h1>Reflexivo e transitivo — mas <em>não</em> simétrico</h1>
+  <div class="corpo">
+    <div class="col larga"><p>As três matérias formam um sistema, e a relação que as liga é <strong>“X é pré-requisito de Y”</strong>. Ela é reflexiva — toda matéria usa a si mesma — e transitiva: se A é pré-requisito de B e B de C, então A é pré-requisito de C. Mas não é simétrica.</p></div>
+    <div class="col larga" style="margin:0.6vh 0;"><img class="fig" src="figuras/fig-2-sistema.png" alt="O sistema fechado como pre-ordem, com a unica seta dupla na fusao"
+         style="width:100%; height:auto;"></div>
+    <div class="col"><p class="legenda">Por isso o sistema é uma <strong>pré-ordem</strong>, e não uma relação de equivalência: o Cálculo multivariável precisa de Álgebra Linear, e a Álgebra Linear não precisa dele.</p></div>
+    <div class="col"><p class="legenda">A seta dupla aparece <strong>uma única vez</strong> no diagrama — e é onde os dois pilares deixam de ser dois.</p></div>
+  </div>
+  <div class="rodape"><span>o mapa da matéria · três fluxogramas</span><span class="contador"></span></div>
+</section>
+
+<section class="folha">
+  <div class="eyebrow">Onde os dois viram um</div>
+  <h1>Em <em>n</em> variáveis, a derivada é uma transformação linear</h1>
+  <div class="corpo">
+    <div class="col">
+      <p>Em uma variável, derivar é <strong>aproximar por uma reta</strong>. Em várias, a derivada num ponto deixa de ser um número e passa a ser uma <strong>transformação linear</strong> — a jacobiana, a matriz das derivadas parciais.</p>
+      <div class="traducao">
+        <p>é por isso que o Cálculo 3 não é o Cálculo 2 com mais detalhe: ele <strong>não existe</strong> sem Álgebra Linear.</p>
+      </div>
+      <p class="origem">E a fusão continua depois: análise funcional é álgebra linear em dimensão infinita; geometria diferencial é cálculo sobre variedades com álgebra linear no espaço tangente.</p>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-jacobiana.png"
+           alt="De reta tangente a transformacao linear: a jacobiana">
+    </div>
+  </div>
+  <div class="rodape"><span>o mapa da matéria · três fluxogramas</span><span class="contador"></span></div>
+</section>
+
+<section class="folha">
+  <div class="eyebrow">Fluxograma 3 · a camada de baixo</div>
+  <h1>O que o mapa dos dois pilares <em>não</em> desenha</h1>
+  <div class="corpo">
+    <div class="col larga"><p>Abaixo dos dois pilares há uma camada que quase nenhum mapa desenha — e não por ser simples. É por estar em <strong>tudo</strong>.</p></div>
+    <div class="col larga" style="margin:0.6vh 0;"><img class="fig" src="figuras/fig-3-base.png" alt="A cadeia da base: aritmetica, algebra elementar, trigonometria e funcoes"
+         style="width:100%; height:auto;"></div>
+    <div class="col"><p class="legenda">Cada peça tem profundidade própria: trigonometria não é “seno e cosseno”, é a razão que volta como rotação, como fase e na base de Fourier.</p></div>
+    <div class="col"><p class="legenda">E as propriedades das operações são o que faz a matemática ser <strong>dedutiva</strong> — o que a torna ciência, e não contagem. Esta é a fronteira negativa do <strong>currículo</strong>: o que não se mapeia porque se pressupõe.</p></div>
+  </div>
+  <div class="rodape"><span>o mapa da matéria · três fluxogramas</span><span class="contador"></span></div>
+</section>
+
+<section class="folha">
+  <div class="eyebrow">Três ordens que discordam</div>
+  <h1>Como aconteceu, como se ensina, como se <em>organiza</em></h1>
+  <div class="corpo">
+    <div class="col">
+      <p>Os mesmos três objetos, ordenados de três maneiras — e as três discordam. A ordem <strong>histórica</strong> põe Descartes em 1637. A <strong>curricular</strong> põe o Cálculo antes. A <strong>lógica de hoje</strong> põe a Álgebra Linear antes do Cálculo 3.</p>
+      <div class="quadro">
+        <p>“Entre a morte de Maurolico, em 1575, e a publicação de <em>La géométrie</em> por Descartes, em 1637, a geometria marcava passo até que os desenvolvimentos em álgebra alcançassem um nível que tornasse possível a geometria algébrica.”</p>
+      </div>
+      <p class="origem">Boyer. <strong>A geometria esperou a álgebra</strong> — e quem olha só o currículo não vê isso.</p>
+    </div>
+    <div class="figbox">
+      <img class="fig" src="figuras/fig-tres-ordens.png"
+           alt="As tres ordens: historica, curricular e logica">
+    </div>
+  </div>
+  <div class="rodape"><span>o mapa da matéria · três fluxogramas</span><span class="contador"></span></div>
+</section>
+
+<section class="folha capa">
+  <div class="eyebrow">Fechamento</div>
+  <h1>O mapa é de <em>hoje</em> — e é isso que o torna honesto</h1>
+  <div class="grega"></div>
+  <p class="tese">a história · o sistema · a base</p>
+  <div class="grega"></div>
+  <p class="prosa">Os três fluxogramas dizem a mesma coisa por caminhos diferentes: o que hoje parece arquitetura foi, em cada época, <strong>peça solta</strong>.</p>
+  <p class="prosa">Nomear o mapa como datado não o enfraquece. É o que permite ensiná-lo sem fingir que a ordem do currículo é a ordem das coisas — e é o que deixa espaço para o que ainda não tem nome.</p>
+</section>
+
+
+
+<script>
+  const folhas = [...document.querySelectorAll('.folha')];
+  folhas.forEach((f, i) => {
+    f.querySelector('.contador').textContent = `${i + 1} / ${folhas.length}`;
+  });
+  let atual = 0;
+  const mostrar = i => {
+    folhas[atual].classList.remove('ativo');
+    atual = Math.max(0, Math.min(folhas.length - 1, i));
+    folhas[atual].classList.add('ativo');
+  };
+  addEventListener('keydown', e => {
+    if (['ArrowRight', 'PageDown', ' '].includes(e.key)) mostrar(atual + 1);
+    if (['ArrowLeft', 'PageUp'].includes(e.key)) mostrar(atual - 1);
+  });
+</script>
+</body>
+</html>
