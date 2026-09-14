@@ -29,10 +29,20 @@ cd hipatia-site
 xdg-open index.html        # Linux · no macOS: open index.html · no Windows: duplo clique
 ```
 
-Dentro de um seminário: **setas**, **espaço** ou *Page Down* avançam;
-**F11** deixa a folha inteira. O botão **tema escuro** vale para o índice e
-para a barra do visor; os decks são claros por norma de composição e não
-mudam.
+O índice desenha a árvore, numera os três passos e traz um botão de começo
+que passa a **lembrar onde a leitura parou**. Cada cartão abre o seminário
+no visor; no pé ficam o PDF, a versão em inglês quando existe e "só o deck",
+que abre a apresentação sozinha.
+
+No visor: **setas**, **espaço** ou *Page Down* avançam; na última folha, a
+seta de novo abre o seminário seguinte. A barra mostra a posição na série,
+a folha atual com uma linha de progresso, os vizinhos **pelo nome**, e o
+sumário inteiro fica ao lado em tela larga (gaveta em tela estreita). <kbd>?</kbd>
+lista os atalhos; ⛶ põe em tela cheia. O interruptor **Tema escuro** fica à
+vista em todas as páginas e vale para a moldura; os decks são claros por
+norma de composição e não mudam. Os decks copiados recebem uma **ponte** de
+poucas linhas que conversa com o visor (folha atual, salto, gesto de
+arrastar); fora do visor ela não faz nada.
 
 ## O que tem aqui
 

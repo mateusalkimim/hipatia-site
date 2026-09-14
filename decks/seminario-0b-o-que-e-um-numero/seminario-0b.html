@@ -758,5 +758,34 @@ function doHash() {
 addEventListener("hashchange", doHash);
 doHash();
 </script>
+
+<script>
+(function () {
+  if (window.parent === window || typeof mostra !== "function") return;
+  var original = mostra;
+  window.mostra = function (n) {
+    var antes = i, ultimo = slides.length - 1;
+    original(n);
+    if (n > ultimo && antes === ultimo) parent.postMessage({hs: "fim"}, "*");
+    else if (n < 0 && antes === 0) parent.postMessage({hs: "inicio"}, "*");
+    parent.postMessage({hs: "folha", i: i, total: slides.length}, "*");
+  };
+  addEventListener("message", function (e) {
+    var m = e.data;
+    if (!m || !m.hs) return;
+    if (m.hs === "ir") mostra(m.n);
+    if (m.hs === "tecla") dispatchEvent(new KeyboardEvent("keydown", {key: m.key}));
+  });
+  var x0 = null;
+  addEventListener("touchstart", function (e) { x0 = e.touches[0].clientX; }, {passive: true});
+  addEventListener("touchend", function (e) {
+    if (x0 === null) return;
+    var dx = e.changedTouches[0].clientX - x0;
+    if (Math.abs(dx) > 50) mostra(dx < 0 ? i + 1 : i - 1);
+    x0 = null;
+  });
+  parent.postMessage({hs: "pronto", i: i, total: slides.length}, "*");
+})();
+</script>
 </body>
 </html>

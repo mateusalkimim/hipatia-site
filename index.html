@@ -6,20 +6,22 @@
 <title>Um curso de visão computacional e geometria da imagem</title>
 <style>
 :root {
-  --bg: #f3f5f9; --card: #ffffff; --linha: #d9e0ec;
+  --bg: #f3f5f9; --card: #ffffff; --linha: #d9e0ec; --linha-forte: #c3cbd9;
   --ink: #16233f; --ink2: #3f4d6b; --muted: #7c88a1;
   --bronze: #a9713f; --bronze-fundo: #8f5e33; --bronze-soft: #c79b6e;
-  --terracota: #b35430; --azul: #1e3a6b;
+  --terracota: #b35430; --azul: #1e3a6b; --verde: #4e7a49;
+  --sobre-ouro: #ffffff;
   --serif: Georgia, "Cormorant Garamond", "Times New Roman", serif;
   --sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --medida: 34em;
+  --medida: 30em;
   color-scheme: light;
 }
 html[data-tema="escuro"] {
-  --bg: #0a1424; --card: #111e34; --linha: #2a3d5e;
+  --bg: #0a1424; --card: #111e34; --linha: #2a3d5e; --linha-forte: #3a5078;
   --ink: #f0e4cc; --ink2: #ded2ba; --muted: #8b98b3;
   --bronze: #c9a266; --bronze-fundo: #d4af6a; --bronze-soft: #b98f52;
-  --terracota: #cf7550; --azul: #d4af6a;
+  --terracota: #cf7550; --azul: #d4af6a; --verde: #7fa87a;
+  --sobre-ouro: #0a1424;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -27,90 +29,138 @@ html { font-size: 17px; }
 body {
   margin: 0; background: var(--bg); color: var(--ink);
   font-family: var(--sans); line-height: 1.5;
-  padding-inline: clamp(16px, 4vw, 48px); padding-block: 0 4rem;
 }
 a { color: var(--azul); }
-.topo {
-  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
-  padding-block: 1rem; border-bottom: 1px solid var(--linha); flex-wrap: wrap;
-}
+:focus-visible { outline: 2px solid var(--bronze); outline-offset: 2px; }
 .eyebrow {
-  font-size: .78rem; letter-spacing: .12em; text-transform: uppercase;
+  font-size: .72rem; letter-spacing: .22em; text-transform: uppercase;
   color: var(--bronze); font-weight: 600;
 }
 .botao {
-  font: inherit; font-size: .85rem; cursor: pointer;
-  border: 1px solid var(--linha); background: var(--card); color: var(--ink2);
-  padding: .35rem .8rem; border-radius: .4rem;
+  font: inherit; font-size: .85rem; cursor: pointer; line-height: 1.2;
+  border: 1px solid var(--linha-forte); background: var(--card); color: var(--ink2);
+  padding: .4rem .8rem; border-radius: .4rem; text-decoration: none;
+  display: inline-flex; align-items: center; gap: .4rem;
 }
 .botao:hover { border-color: var(--bronze); color: var(--ink); }
-.cabeca { max-width: 46em; padding-block: 2.5rem 1.5rem; }
+.botao.pri { background: var(--bronze); border-color: var(--bronze); color: var(--sobre-ouro); font-weight: 600; }
+.botao.pri:hover { background: var(--bronze-fundo); border-color: var(--bronze-fundo); }
+.botao[aria-disabled="true"] { opacity: .4; pointer-events: none; }
+
+/* o interruptor de tema: rótulo fixo, estado no aria-checked; visível sempre */
+.tema {
+  display: inline-flex; align-items: center; gap: .55rem; cursor: pointer;
+  font: inherit; font-size: .85rem; color: var(--ink2); background: var(--card);
+  border: 1px solid var(--linha-forte); border-radius: 2rem; padding: .3rem .75rem .3rem .5rem;
+}
+.tema:hover { border-color: var(--bronze); color: var(--ink); }
+.tema .trilho {
+  width: 2.3rem; height: 1.25rem; border-radius: 1rem; background: var(--linha-forte);
+  position: relative; flex: none; transition: background .15s;
+}
+.tema .trilho::after {
+  content: ""; position: absolute; top: .15rem; left: .15rem; width: .95rem; height: .95rem;
+  border-radius: 50%; background: var(--card); transition: transform .15s;
+  box-shadow: 0 1px 2px rgba(0,0,0,.25);
+}
+.tema[aria-checked="true"] .trilho { background: var(--bronze); }
+.tema[aria-checked="true"] .trilho::after { transform: translateX(1.05rem); }
+.tema svg { width: 1rem; height: 1rem; flex: none; }
+.tema .sol { display: block; } .tema .lua { display: none; }
+.tema[aria-checked="true"] .sol { display: none; } .tema[aria-checked="true"] .lua { display: block; }
+
+body { padding-inline: clamp(16px, 4vw, 48px); padding-block: 0 4rem; }
+.topo {
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  padding-block: .9rem; border-bottom: 1px solid var(--linha); flex-wrap: wrap;
+}
+.cabeca { display: grid; grid-template-columns: minmax(0, 36rem) minmax(16rem, 24rem);
+  gap: 2rem 3rem; align-items: start; padding-block: 2.2rem 1rem; }
 h1 {
-  font-family: var(--serif); font-weight: 500; font-size: clamp(2rem, 5vw, 3.2rem);
+  font-family: var(--serif); font-weight: 500; font-size: clamp(2rem, 4.6vw, 3rem);
   line-height: 1.08; margin: .4rem 0 1rem; letter-spacing: -.01em;
 }
 h1 em { font-style: italic; color: var(--bronze); }
 .tese {
-  font-family: var(--serif); font-style: italic; font-size: 1.25rem;
+  font-family: var(--serif); font-style: italic; font-size: 1.22rem;
   border-left: 3px solid var(--bronze); padding-left: 1rem; margin: 0 0 1rem;
   color: var(--ink2); max-width: var(--medida);
 }
 .prosa { max-width: var(--medida); color: var(--ink2); margin: .5rem 0; }
+.comeco { display: flex; gap: .6rem; flex-wrap: wrap; align-items: center; margin-top: 1.2rem; }
+.comeco .nota { color: var(--muted); font-size: .85rem; }
 .grega {
-  height: 8px; width: 96px; margin: 1.2rem 0;
+  height: 8px; width: 96px; margin: 1.4rem 0 0;
   background: repeating-linear-gradient(90deg, var(--bronze) 0 8px, transparent 8px 16px);
 }
+
+/* a árvore desenhada — nó é caixa com o nome dentro; a linha pontilhada
+   dourada é o caminho; legenda na mesma tela */
+.arvore-fig { margin: 0; }
+.arvore-fig svg { width: 100%; height: auto; max-height: 40vh; display: block; }
+.arvore-fig a { text-decoration: none; }
+.arvore-fig .no rect { fill: var(--card); stroke: var(--linha-forte); }
+.arvore-fig a:hover .no rect, .arvore-fig a:focus-visible .no rect { stroke: var(--bronze); }
+.arvore-fig .no text { fill: var(--ink); font-family: var(--serif); font-size: 15px; }
+.arvore-fig .no .mini { fill: var(--muted); font-family: var(--sans); font-size: 10.5px; letter-spacing: .08em; }
+.arvore-fig .caminho { stroke: var(--bronze); stroke-width: 1.5; stroke-dasharray: 2 4; fill: none; }
+.arvore-fig .ponto { fill: var(--bronze); }
+.arvore-fig figcaption { color: var(--muted); font-size: .8rem; margin-top: .4rem; }
+
+.passos { list-style: none; padding: 0; margin: 1.6rem 0 0; display: grid; gap: .5rem; max-width: 40rem; }
+.passos li { display: grid; grid-template-columns: 1.7rem 1fr; gap: .6rem; align-items: baseline; color: var(--ink2); }
+.passos .n {
+  width: 1.7rem; height: 1.7rem; border-radius: 50%; border: 1px solid var(--bronze);
+  color: var(--bronze); font-size: .8rem; font-weight: 600; display: inline-grid; place-items: center;
+}
+.passos strong { color: var(--ink); font-weight: 600; }
+
 h2 {
   font-family: var(--serif); font-weight: 500; font-size: 1.55rem;
-  margin: 2.6rem 0 .2rem; line-height: 1.2;
+  margin: 2.6rem 0 .2rem; line-height: 1.2; scroll-margin-top: 1rem;
 }
-h2 .num { color: var(--bronze); font-family: var(--sans); font-size: .8rem;
-  letter-spacing: .12em; margin-right: .6rem; vertical-align: middle; }
+h2 .num { color: var(--bronze); font-family: var(--sans); font-size: .75rem;
+  letter-spacing: .22em; margin-right: .6rem; vertical-align: middle; }
 .legenda { color: var(--muted); font-size: .9rem; margin: 0 0 1rem; max-width: var(--medida); }
-.arvore { display: grid; grid-template-columns: 1fr 1fr; gap: 0 2.5rem; }
-.arvore > section { min-width: 0; }
-.tronco { position: relative; }
-.tronco::after {
-  content: ""; display: block; height: 2.2rem; width: 2px; margin: .4rem auto 0;
-  background: linear-gradient(var(--bronze), transparent);
-}
-.grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: 1rem; }
+.arcos { display: grid; grid-template-columns: 1fr 1fr; gap: 0 2.5rem; }
+.arcos > section { min-width: 0; }
+.grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(15.5rem, 1fr)); gap: .9rem; }
+
+/* cartão: o corpo inteiro é UM link; as ações secundárias ficam no pé */
 .card {
   background: var(--card); border: 1px solid var(--linha); border-radius: .6rem;
-  padding: 1rem 1.1rem 1rem; display: flex; flex-direction: column; gap: .45rem;
-  min-width: 0;
+  display: flex; flex-direction: column; min-width: 0; position: relative;
 }
-.card:hover { border-color: var(--bronze-soft); }
-.chave {
-  font-size: .75rem; letter-spacing: .1em; color: var(--bronze); font-weight: 600;
-  display: flex; justify-content: space-between; align-items: baseline;
+.card:hover, .card:focus-within { border-color: var(--bronze-soft); }
+.card .capa { display: block; padding: .9rem 1rem .6rem; color: inherit; text-decoration: none; flex: 1; border-radius: .6rem .6rem 0 0; }
+.card .chave {
+  font-size: .72rem; letter-spacing: .12em; color: var(--bronze); font-weight: 600;
+  display: flex; justify-content: space-between; align-items: baseline; gap: .5rem;
 }
-.chave .meta { color: var(--muted); font-weight: 400; letter-spacing: 0; text-transform: none; }
-.card h3 {
-  font-family: var(--serif); font-weight: 500; font-size: 1.28rem; line-height: 1.18; margin: 0;
+.card .chave .meta { color: var(--muted); font-weight: 400; letter-spacing: 0; text-transform: none; white-space: nowrap; }
+.card h3 { font-family: var(--serif); font-weight: 500; font-size: 1.25rem; line-height: 1.18; margin: .3rem 0 .2rem; }
+.card .sub { color: var(--ink2); font-size: .9rem; margin: 0; }
+.card .estado { font-size: .78rem; color: var(--muted); margin-top: .5rem; min-height: 1.1em; }
+.card.visto .estado::before { content: "aberto"; }
+.card.concluido .estado::before { content: "✓ concluído"; color: var(--verde); }
+.card.ultimo { border-color: var(--bronze); }
+.card.ultimo .estado::before { content: "▶ continuar daqui"; color: var(--bronze); font-weight: 600; }
+.card .pe {
+  display: flex; gap: .3rem; flex-wrap: wrap; padding: .4rem .7rem .6rem;
+  border-top: 1px solid var(--linha); font-size: .8rem;
 }
-.card .sub { color: var(--ink2); font-size: .92rem; margin: 0; }
-.card .tese {
-  font-size: .95rem; margin: .2rem 0 .3rem; padding-left: .7rem; border-width: 2px;
-  display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;
-}
-.acoes { margin-top: auto; display: flex; gap: .5rem; flex-wrap: wrap; padding-top: .4rem; }
-.acoes a {
-  text-decoration: none; font-size: .85rem; padding: .35rem .8rem; border-radius: .4rem;
-  border: 1px solid var(--linha); color: var(--ink2);
-}
-.acoes a.abrir { background: var(--bronze); border-color: var(--bronze); color: #fff; }
-html[data-tema="escuro"] .acoes a.abrir { color: #0a1424; }
-.acoes a:hover { border-color: var(--bronze); }
+.card .pe a { color: var(--ink2); text-decoration: none; padding: .2rem .5rem; border-radius: .3rem; }
+.card .pe a:hover { color: var(--ink); background: var(--bg); }
 .rodape {
   margin-top: 3.5rem; padding-top: 1.2rem; border-top: 1px solid var(--linha);
   color: var(--muted); font-size: .85rem; display: grid; gap: .3rem;
 }
 .rodape strong { color: var(--ink2); font-weight: 500; }
-@media (max-width: 760px) {
-  .arvore { grid-template-columns: 1fr; }
-  html { font-size: 16px; }
+@media (max-width: 900px) {
+  .cabeca { grid-template-columns: 1fr; }
+  .arcos { grid-template-columns: 1fr; }
 }
+@media (max-width: 600px) { html { font-size: 16px; } }
 </style>
 <script>
 (function () {
@@ -118,8 +168,9 @@ html[data-tema="escuro"] .acoes a.abrir { color: #0a1424; }
   function aplica(t) {
     if (t === 'escuro') raiz.setAttribute('data-tema', 'escuro');
     else raiz.removeAttribute('data-tema');
-    var b = document.getElementById('tema');
-    if (b) b.textContent = t === 'escuro' ? 'tema claro' : 'tema escuro';
+    document.querySelectorAll('.tema').forEach(function (b) {
+      b.setAttribute('aria-checked', t === 'escuro' ? 'true' : 'false');
+    });
   }
   // Claro é o padrão. Escuro só por escolha guardada — ou, sem escolha,
   // se a página já veio marcada (é o que permite testar o tema sem clique).
@@ -129,32 +180,86 @@ html[data-tema="escuro"] .acoes a.abrir { color: #0a1424; }
   inicial = inicial === 'escuro' ? 'escuro' : 'claro';
   aplica(inicial);
   document.addEventListener('DOMContentLoaded', function () {
-    var b = document.getElementById('tema');
-    if (!b) return;
     aplica(inicial);
-    b.addEventListener('click', function () {
-      var novo = raiz.getAttribute('data-tema') === 'escuro' ? 'claro' : 'escuro';
-      aplica(novo);
-      try { localStorage.setItem('hs-tema', novo); } catch (e) {}
+    document.querySelectorAll('.tema').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var novo = raiz.getAttribute('data-tema') === 'escuro' ? 'claro' : 'escuro';
+        aplica(novo);
+        try { localStorage.setItem('hs-tema', novo); } catch (e) {}
+      });
     });
   });
 })();
+</script>
+<script>
+var Leitura = {
+  ler: function (k, padrao) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : padrao; } catch (e) { return padrao; } },
+  gravar: function (k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
+  vistos: function () { return this.ler('hs-vistos', {}); },
+  marcar: function (chave, campo) { var v = this.vistos(); v[chave] = v[chave] || {}; v[chave][campo] = true; this.gravar('hs-vistos', v); },
+  ultimo: function () { return this.ler('hs-ultimo', null); },
+  parou: function (chave, folha) { this.gravar('hs-ultimo', {chave: chave, folha: folha}); }
+};
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var vistos = Leitura.vistos(), ultimo = Leitura.ultimo();
+  document.querySelectorAll('.card').forEach(function (c) {
+    var k = c.dataset.chave, v = vistos[k];
+    if (v && v.aberto) c.classList.add('visto');
+    if (v && v.concluido) c.classList.add('concluido');
+  });
+  var botao = document.getElementById('continuar'), nota = document.getElementById('continuar-nota');
+  if (ultimo && ultimo.chave && document.getElementById('card-' + ultimo.chave)) {
+    var card = document.getElementById('card-' + ultimo.chave);
+    card.classList.add('ultimo');
+    var nome = card.querySelector('h3').textContent;
+    botao.textContent = 'Continuar: ' + ultimo.chave + ' · ' + nome;
+    botao.href = 'ver.html?d=' + encodeURIComponent(ultimo.chave) + '&f=' + (ultimo.folha || 1);
+    nota.textContent = 'folha ' + (ultimo.folha || 1) + ' — a leitura parou aqui';
+  }
+});
 </script>
 </head>
 <body>
 <header class="topo">
   <div class="eyebrow">Apresentações · 17 seminários · 314 folhas</div>
-  <button class="botao" id="tema" type="button">tema escuro</button>
+  <button class="tema" type="button" role="switch" aria-checked="false"><svg class="sol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="lua" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg><span class="trilho" aria-hidden="true"></span><span class="rotulo">Tema escuro</span></button>
 </header>
 <div class="cabeca">
-  <h1>Um curso de <em>visão computacional</em> e geometria da imagem</h1>
-  <p class="tese">A série é uma árvore, não uma fila: a fundação alimenta os dois arcos, e os arcos não dependem um do outro.</p>
-  <p class="prosa">Abra um seminário e avance com as setas do teclado, espaço ou <em>Page Down</em>. Cada deck é uma página inteira em 16:9; o PDF é a mesma sequência, folha a folha, para o tablet e o projetor.</p>
-  <div class="grega"></div>
+  <div>
+    <h1>Um curso de <em>visão computacional</em> e geometria da imagem</h1>
+    <p class="tese">A série é uma árvore, não uma fila: a fundação alimenta os dois arcos, e os arcos não dependem um do outro.</p>
+    <ol class="passos">
+      <li><span class="n">1</span><span><strong>A fundação</strong>, do 0 ao 7, na ordem.</span></li>
+      <li><span class="n">2</span><span><strong>Um dos arcos</strong> — GAAL ou cálculo, em qualquer ordem; depois o outro.</span></li>
+      <li><span class="n">3</span><span><strong>Os extras</strong> acompanham a série e não são aula.</span></li>
+    </ol>
+    <div class="comeco">
+      <a class="botao pri" id="continuar" href="ver.html?d=0">Começar pelo 0 · O que é um número</a>
+      <span class="nota" id="continuar-nota">o botão passa a lembrar onde a leitura parou</span>
+    </div>
+    <div class="grega"></div>
+  </div>
+  <figure class="arvore-fig">
+<svg viewBox="0 0 360 200" role="img" aria-label="A fundação alimenta dois arcos independentes: GAAL e Cálculo">
+  <path class="caminho" d="M180 62 V 100 M180 100 H 90 V 122 M180 100 H 270 V 122"/>
+  <circle class="ponto" cx="180" cy="100" r="3"/>
+  <a href="#fundacao"><g class="no"><rect x="100" y="14" width="160" height="48" rx="6"/>
+    <text x="112" y="34" class="mini">00 · 8 SEMINÁRIOS</text><text x="112" y="53">a fundação</text></g></a>
+  <a href="#gaal"><g class="no"><rect x="14" y="122" width="152" height="48" rx="6"/>
+    <text x="26" y="142" class="mini">10 · 4 SEMINÁRIOS</text><text x="26" y="161">arco GAAL</text></g></a>
+  <a href="#calculo"><g class="no"><rect x="194" y="122" width="152" height="48" rx="6"/>
+    <text x="206" y="142" class="mini">20 · 4 SEMINÁRIOS</text><text x="206" y="161">arco do cálculo</text></g></a>
+  <text x="180" y="192" class="mini" text-anchor="middle" style="fill: var(--muted); font-family: var(--sans); font-size: 10.5px">em qualquer ordem, um arco não depende do outro</text>
+</svg>
+<figcaption>A linha pontilhada é o caminho. Clique numa caixa para ir à lista.</figcaption>
+</figure>
 </div>
-<section class="tronco"><h2><span class="num">00</span>a fundação</h2><p class="legenda">O chão comum. Cada seminário aqui é pré-requisito dos dois arcos, e a ordem é a de conteúdo.</p><div class="grade"><article class="card" id="0"><div class="chave"><span>0</span><span class="meta">12 folhas · 1 matéria do mapa</span></div><h3>O que é um número</h3><p class="sub">a ideia, a escrita e o sinal</p><p class="tese">o que você escreve não é o número — é a roupa dele</p><div class="acoes"><a class="abrir" href="ver.html?d=0">Abrir</a><a href="pdf/0 · O que é um número.pdf">PDF</a></div></article><article class="card" id="1"><div class="chave"><span>1</span><span class="meta">21 folhas · 11 matérias do mapa</span></div><h3>Duas operações</h3><p class="sub">a aritmética que sustenta os dois arcos</p><p class="tese">não existem quatro operações — existem duas, e cada uma tem um desfazedor</p><div class="acoes"><a class="abrir" href="ver.html?d=1">Abrir</a><a href="pdf/1 · Duas operações.pdf">PDF</a></div></article><article class="card" id="2"><div class="chave"><span>2</span><span class="meta">13 folhas · 1 matéria do mapa</span></div><h3>Quem vem antes</h3><p class="sub">a ordem que a soma define</p><p class="tese">“maior” não é uma impressão: é uma conta — e o que sobra dela é o número negativo</p><div class="acoes"><a class="abrir" href="ver.html?d=2">Abrir</a><a href="pdf/2 · Quem vem antes — a ordem que a soma define.pdf">PDF</a></div></article><article class="card" id="3"><div class="chave"><span>3</span><span class="meta">12 folhas · 1 matéria do mapa</span></div><h3>Negativos e a reta</h3><p class="sub">a ordem e a distância</p><p class="tese">a reta não decora os números: é onde eles ganham ordem e distância — e as duas não são a mesma coisa</p><div class="acoes"><a class="abrir" href="ver.html?d=3">Abrir</a><a href="pdf/3 · Negativos e a reta — a ordem e a distância.pdf">PDF</a></div></article><article class="card" id="4"><div class="chave"><span>4</span><span class="meta">15 folhas · 1 matéria do mapa</span></div><h3>Divisibilidade e fatoração</h3><p class="sub">quem divide quem</p><p class="tese">“máximo divisor comum” não fala de tamanho — fala de quem divide quem</p><div class="acoes"><a class="abrir" href="ver.html?d=4">Abrir</a><a href="pdf/4 · Divisibilidade e fatoração — quem divide quem.pdf">PDF</a></div></article><article class="card" id="5"><div class="chave"><span>5</span><span class="meta">13 folhas · 1 matéria do mapa</span></div><h3>Números trigonométricos</h3><p class="sub">três razões que não mudam de tamanho</p><p class="tese">seno, cosseno e tangente não são botões — são números</p><div class="acoes"><a class="abrir" href="ver.html?d=5">Abrir</a><a href="pdf/5 · Números trigonométricos.pdf">PDF</a></div></article><article class="card" id="6"><div class="chave"><span>6</span><span class="meta">14 folhas · 1 matéria do mapa</span></div><h3>O círculo é um espelho</h3><p class="sub">três números, e o resto é reflexão</p><p class="tese">o círculo trigonométrico parece uma tabela de trinta e dois valores para decorar. São três números e um jogo de espelhos</p><div class="acoes"><a class="abrir" href="ver.html?d=6">Abrir</a><a href="pdf/6 · O círculo é um espelho — três números, e o resto é reflexão.pdf">PDF</a></div></article><article class="card" id="7"><div class="chave"><span>7</span><span class="meta">16 folhas · 1 matéria do mapa</span></div><h3>A balança</h3><p class="sub">fazer o mesmo nos dois lados</p><p class="tese">o sinal de igual diz que os dois pratos pesam o mesmo — e tudo o que se faz com uma equação é fazer o mesmo nos dois lados</p><div class="acoes"><a class="abrir" href="ver.html?d=7">Abrir</a><a href="pdf/7 · A balança — fazer o mesmo nos dois lados.pdf">PDF</a></div></article></div></section><div class="arvore"><section class=""><h2><span class="num">10</span>arco GAAL — o que se PRESERVA</h2><p class="legenda">Geometria analítica e álgebra linear: o que uma transformação preserva.</p><div class="grade"><article class="card" id="G1"><div class="chave"><span>G1</span><span class="meta">18 folhas · 1 matéria do mapa</span></div><h3>Contar sem listar</h3><p class="sub">a combinatória que o determinante cobra</p><p class="tese">quantos são, quando escrever um por um deixou de ser possível</p><div class="acoes"><a class="abrir" href="ver.html?d=G1">Abrir</a><a href="pdf/G1 · Contar sem listar.pdf">PDF</a></div></article><article class="card" id="G2"><div class="chave"><span>G2</span><span class="meta">30 folhas · 3 matérias do mapa</span></div><h3>Determinantes</h3><p class="sub">o número que mede o avesso</p><p class="tese">determinantes: do volume da caixa ao filtro do pixel</p><div class="acoes"><a class="abrir" href="ver.html?d=G2">Abrir</a><a href="pdf/G2 · Determinantes — o número que mede o avesso.pdf">PDF</a></div></article><article class="card" id="G3"><div class="chave"><span>G3</span><span class="meta">47 folhas · 6 matérias do mapa</span></div><h3>Geometria analítica</h3><p class="sub">do registro ao pixel</p><p class="tese">geometria analítica e álgebra linear, do primeiro desenho à imagem gerada por computador</p><div class="acoes"><a class="abrir" href="ver.html?d=G3">Abrir</a><a href="pdf/G3 · Geometria analítica — do registro ao pixel.pdf">PDF</a><a href="ver.html?d=G3&v=en" lang="en">English version</a></div></article><article class="card" id="G4"><div class="chave"><span>G4</span><span class="meta">28 folhas · 6 matérias do mapa</span></div><h3>Espaços vetoriais</h3><p class="sub">a sacola e o que não vaza</p><p class="tese">espaços e subespaços vetoriais: que regras a sacola precisa cumprir</p><div class="acoes"><a class="abrir" href="ver.html?d=G4">Abrir</a><a href="pdf/G4 · Espaços vetoriais — a sacola e o que não vaza.pdf">PDF</a></div></article></div></section><section class=""><h2><span class="num">20</span>arco do cálculo — PERTO DE UM PONTO</h2><p class="legenda">Cálculo: o que acontece com uma função perto de um ponto.</p><div class="grade"><article class="card" id="C1"><div class="chave"><span>C1</span><span class="meta">18 folhas · 5 matérias do mapa</span></div><h3>Ler um gráfico</h3><p class="sub">a leitura que o cálculo cobra e ninguém ensina</p><p class="tese">a leitura que o cálculo cobra — e que ninguém ensina</p><div class="acoes"><a class="abrir" href="ver.html?d=C1">Abrir</a><a href="pdf/C1 · Ler um gráfico.pdf">PDF</a></div></article><article class="card" id="C2"><div class="chave"><span>C2</span><span class="meta">22 folhas · 1 matéria do mapa</span></div><h3>Antes da palavra limite</h3><p class="sub">Arquimedes, Fermat e o cálculo sem o conceito</p><p class="tese">Arquimedes e Fermat fizeram a conta dois mil anos antes de existir o conceito</p><div class="acoes"><a class="abrir" href="ver.html?d=C2">Abrir</a><a href="pdf/C2 · Antes da palavra limite.pdf">PDF</a></div></article><article class="card" id="C3"><div class="chave"><span>C3</span><span class="meta">17 folhas · 1 matéria do mapa</span></div><h3>Limites e continuidade</h3><p class="sub">limites e continuidade</p><p class="tese">limites e continuidade — e o teorema que licencia a busca binária</p><div class="acoes"><a class="abrir" href="ver.html?d=C3">Abrir</a><a href="pdf/C3 · Limites e continuidade.pdf">PDF</a></div></article><article class="card" id="C4"><div class="chave"><span>C4</span><span class="meta">18 folhas · 1 matéria do mapa</span></div><h3>O confronto</h3><p class="sub">propriedades e o Teorema do Confronto</p><p class="tese">propriedades, indeterminações e o Teorema do Confronto</p><div class="acoes"><a class="abrir" href="ver.html?d=C4">Abrir</a><a href="pdf/C4 · O confronto.pdf">PDF</a></div></article></div></section></div><section class=""><h2><span class="num">90</span>extras</h2><p class="legenda">Documentos que acompanham a série e não são aula.</p><div class="grade"><article class="card" id="map"><div class="chave"><span>map</span><span class="meta">documento</span></div><h3>Os dois pilares</h3><p class="sub">um corte no tempo</p><p class="tese">a história · o sistema · a base</p><div class="acoes"><a class="abrir" href="ver.html?d=map">Abrir</a><a href="pdf/Os dois pilares — um corte no tempo.pdf">PDF</a></div></article></div></section>
+<section id="fundacao"><h2><span class="num">00</span>a fundação</h2><p class="legenda">O chão comum. Cada seminário aqui é pré-requisito dos dois arcos, e a ordem é a de conteúdo.</p><div class="grade"><article class="card" id="card-0" data-chave="0"><a class="capa" href="ver.html?d=0"><div class="chave"><span>0</span><span class="meta">12 folhas</span></div><h3>O que é um número</h3><p class="sub">a ideia, a escrita e o sinal</p><div class="estado"></div></a><div class="pe"><a href="pdf/0 · O que é um número.pdf">PDF</a><a href="decks/seminario-0b-o-que-e-um-numero/seminario-0b.html" title="abre o deck sozinho, sem o visor">só o deck</a></div></article><article class="card" id="card-1" data-chave="1"><a class="capa" href="ver.html?d=1"><div class="chave"><span>1</span><span class="meta">21 folhas</span></div><h3>Duas operações</h3><p class="sub">a aritmética que sustenta os dois arcos</p><div class="estado"></div></a><div class="pe"><a href="pdf/1 · Duas operações.pdf">PDF</a><a href="decks/seminario-0-duas-operacoes/seminario-0-duas-operacoes.html" title="abre o deck sozinho, sem o visor">só o deck</a></div></article><article class="card" id="card-2" data-chave="2"><a class="capa" href="ver.html?d=2"><div class="chave"><span>2</span><span class="meta">13 folhas</span></div><h3>Quem vem antes</h3><p class="sub">a ordem que a soma define</p><div class="estado"></div></a><div class="pe"><a href="pdf/2 · Quem vem antes — a ordem que a soma define.pdf">PDF</a><a href="decks/seminario-0f-quem-vem-antes/seminario-0f.html" title="abre o deck sozinho, sem o visor">só o deck</a></div></article><article class="card" id="card-3" data-chave="3"><a class="capa" href="ver.html?d=3"><div class="chave"><span>3</span><span class="meta">12 folhas</span></div><h3>Negativos e a reta</h3><p class="sub">a ordem e a distância</p><div class="estado"></div></a><div class="pe"><a href="pdf/3 · Negativos e a reta — a ordem e a distância.pdf">PDF</a><a href="decks/seminario-0e-negativos-e-a-reta/seminario-0e.html" title="abre o deck sozinho, sem o visor">só o deck</a></div></article><article class="card" id="card-4" data-chave="4"><a class="capa" href="ver.html?d=4"><div class="chave"><span>4</span><span class="meta">15 folhas</span></div><h3>Divisibilidade e fatoração</h3><p class="sub">quem divide quem</p><div class="estado"></div></a><div class="pe"><a href="pdf/4 · Divisibilidade e fatoração — quem divide quem.pdf">PDF</a><a href="decks/seminario-0d-divisibilidade-e-fatoracao/seminario-0d.html" title="abre o deck sozinho, sem o visor">só o deck</a></div></article><article class="card" id="card-5" data-chave="5"><a class="capa" href="ver.html?d=5"><div class="chave"><span>5</span><span class="meta">13 folhas</span></div><h3>Números trigonométricos</h3><p class="sub">três razões que não mudam de tamanho</p><div class="estado"></div></a><div class="pe"><a href="pdf/5 · Números trigonométricos.pdf">PDF</a><a href="decks/seminario-0c-numeros-trigonometricos/seminario-0c.html" title="abre o deck sozinho, sem o visor">só o deck</a></div></article><article class="card" id="card-6" data-chave="6"><a class="capa" href="ver.html?d=6"><div class="chave"><span>6</span><span class="meta">14 folhas</span></div><h3>O círculo é um espelho</h3><p class="sub">três números, e o resto é reflexão</p><div class="estado"></div></a><div class="pe"><a href="pdf/6 · O círculo é um espelho — três números, e o resto é reflexão.pdf">PDF</a><a href="decks/seminario-0g-o-circulo-e-um-espelho/seminario-0g.html" title="abre o deck sozinho, sem o visor">só o deck</a></div></article><article class="card" id="card-7" data-chave="7"><a class="capa" href="ver.html?d=7"><div class="chave"><span>7</span><span class="meta">16 folhas</span></div><h3>A balança</h3><p class="sub">fazer o mesmo nos dois lados</p><div class="estado"></div></a><div class="pe"><a href="pdf/7 · A balança — fazer o mesmo nos dois lados.pdf">PDF</a><a href="decks/seminario-0h-a-balanca/seminario-0h.html" title="abre o deck sozinho, sem o visor">só o deck</a></div></article></div></section><div class="arcos"><section id="gaal"><h2><span class="num">10</span>arco GAAL — o que se PRESERVA</h2><p class="legenda">Geometria analítica e álgebra linear: o que uma transformação preserva.</p><div class="grade"><article class="card" id="card-G1" data-chave="G1"><a class="capa" href="ver.html?d=G1"><div class="chave"><span>G1</span><span class="meta">18 folhas</span></div><h3>Contar sem listar</h3><p class="sub">a combinatória que o determinante cobra</p><div class="estado"></div></a><div class="pe"><a href="pdf/G1 · Contar sem listar.pdf">PDF</a><a href="decks/seminario-g1-contar-sem-listar/seminario-g1-contar-sem-listar.html" title="abre o deck sozinho, sem o visor">só o deck</a></div></article><article class="card" id="card-G2" data-chave="G2"><a class="capa" href="ver.html?d=G2"><div class="chave"><span>G2</span><span class="meta">30 folhas</span></div><h3>Determinantes</h3><p class="sub">o número que mede o avesso</p><div class="estado"></div></a><div class="pe"><a href="pdf/G2 · Determinantes — o número que mede o avesso.pdf">PDF</a><a href="decks/seminario-determinantes/seminario-determinantes.html" title="abre o deck sozinho, sem o visor">só o deck</a></div></article><article class="card" id="card-G3" data-chave="G3"><a class="capa" href="ver.html?d=G3"><div class="chave"><span>G3</span><span class="meta">47 folhas</span></div><h3>Geometria analítica</h3><p class="sub">do registro ao pixel</p><div class="estado"></div></a><div class="pe"><a href="pdf/G3 · Geometria analítica — do registro ao pixel.pdf">PDF</a><a href="ver.html?d=G3&v=en" lang="en">English version</a><a href="decks/seminario-geometria/seminario.html" title="abre o deck sozinho, sem o visor">só o deck</a></div></article><article class="card" id="card-G4" data-chave="G4"><a class="capa" href="ver.html?d=G4"><div class="chave"><span>G4</span><span class="meta">28 folhas</span></div><h3>Espaços vetoriais</h3><p class="sub">a sacola e o que não vaza</p><div class="estado"></div></a><div class="pe"><a href="pdf/G4 · Espaços vetoriais — a sacola e o que não vaza.pdf">PDF</a><a href="decks/seminario-espacos-vetoriais/seminario-espacos-vetoriais.html" title="abre o deck sozinho, sem o visor">só o deck</a></div></article></div></section><section id="calculo"><h2><span class="num">20</span>arco do cálculo — PERTO DE UM PONTO</h2><p class="legenda">Cálculo: o que acontece com uma função perto de um ponto.</p><div class="grade"><article class="card" id="card-C1" data-chave="C1"><a class="capa" href="ver.html?d=C1"><div class="chave"><span>C1</span><span class="meta">18 folhas</span></div><h3>Ler um gráfico</h3><p class="sub">a leitura que o cálculo cobra e ninguém ensina</p><div class="estado"></div></a><div class="pe"><a href="pdf/C1 · Ler um gráfico.pdf">PDF</a><a href="decks/seminario-calculo-0-ler-um-grafico/seminario-calculo-0.html" title="abre o deck sozinho, sem o visor">só o deck</a></div></article><article class="card" id="card-C2" data-chave="C2"><a class="capa" href="ver.html?d=C2"><div class="chave"><span>C2</span><span class="meta">22 folhas</span></div><h3>Antes da palavra limite</h3><p class="sub">Arquimedes, Fermat e o cálculo sem o conceito</p><div class="estado"></div></a><div class="pe"><a href="pdf/C2 · Antes da palavra limite.pdf">PDF</a><a href="decks/seminario-calculo-1-antes-do-limite/seminario-calculo-1.html" title="abre o deck sozinho, sem o visor">só o deck</a></div></article><article class="card" id="card-C3" data-chave="C3"><a class="capa" href="ver.html?d=C3"><div class="chave"><span>C3</span><span class="meta">17 folhas</span></div><h3>Limites e continuidade</h3><p class="sub">limites e continuidade</p><div class="estado"></div></a><div class="pe"><a href="pdf/C3 · Limites e continuidade.pdf">PDF</a><a href="decks/seminario-calculo-2-limites-e-continuidade/seminario-calculo-2.html" title="abre o deck sozinho, sem o visor">só o deck</a></div></article><article class="card" id="card-C4" data-chave="C4"><a class="capa" href="ver.html?d=C4"><div class="chave"><span>C4</span><span class="meta">18 folhas</span></div><h3>O confronto</h3><p class="sub">propriedades e o Teorema do Confronto</p><div class="estado"></div></a><div class="pe"><a href="pdf/C4 · O confronto.pdf">PDF</a><a href="decks/seminario-calculo-3-o-confronto/seminario-calculo-3.html" title="abre o deck sozinho, sem o visor">só o deck</a></div></article></div></section></div><section id="extras"><h2><span class="num">90</span>extras</h2><p class="legenda">Documentos que acompanham a série e não são aula.</p><div class="grade"><article class="card" id="card-map" data-chave="map"><a class="capa" href="ver.html?d=map"><div class="chave"><span>map</span><span class="meta">documento</span></div><h3>Os dois pilares</h3><p class="sub">um corte no tempo</p><div class="estado"></div></a><div class="pe"><a href="pdf/Os dois pilares — um corte no tempo.pdf">PDF</a><a href="decks/mapa-genealogia/mapa-genealogia.html" title="abre o deck sozinho, sem o visor">só o deck</a></div></article></div></section>
 <footer class="rodape">
   <div>Autor · <strong>Mateus Felipe Alkimim Pereira</strong><br>Coautora · <strong>Sara Catiele Nogueira Pereira</strong><br>Orientador · <strong>Rosivaldo Antônio Gohnan</strong></div>
+  <div>Dentro de um seminário: setas, espaço ou <em>Page Down</em> avançam; <kbd>?</kbd> mostra os atalhos. O PDF é a mesma sequência, folha a folha.</div>
   <div>Código sob MIT; conteúdo dos seminários sob CC BY-SA 4.0, exceto as figuras de terceiros creditadas dentro de cada deck.</div>
   <div>Índice gerado em 2026-09-14 por <code>gerar_site.py</code>. Não edite esta página: edite o deck de origem e gere de novo.</div>
 </footer>
