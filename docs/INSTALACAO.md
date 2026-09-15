@@ -28,6 +28,10 @@ cd hipatia-site
 open index.html
 ```
 
+### Sem baixar nada
+
+<https://mateusalkimim.github.io/hipatia-site/>
+
 ### Com servidor local (opcional)
 
 Alguns navegadores em celular não abrem um quadro (`iframe`) a partir de

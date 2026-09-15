@@ -11,13 +11,13 @@ que não dependem um do outro — **GAAL**, sobre o que uma transformação
 *preserva*, e **Cálculo**, sobre o que acontece *perto de um ponto*. O índice
 desenha essa ordem; o visor abre um deck de cada vez com os vizinhos ao lado.
 
-**→ [Abrir as apresentações](index.html)**
+<!-- site:inicio — gerado por gerar_site.py; não edite à mão -->
+**→ [Abrir as apresentações](https://mateusalkimim.github.io/hipatia-site/)**
 
-> **Estado: PROTÓTIPO.** O repositório é privado e não está no ar: o link acima
-> abre o site **no clone** (notebook, tablet, qualquer pasta que tenha o
-> repositório); no GitHub ele mostra só o arquivo. Em aberto: a versão em
-> inglês do índice e dos decks (só o G3 a tem), o nome público e a
-> hospedagem, se sair do clone local.
+> **Estado: PROTÓTIPO.** No ar pelo GitHub Pages; também abre do clone,
+> sem servidor. Em aberto: a versão em inglês do índice e dos decks
+> (só o G3 a tem).
+<!-- site:fim -->
 
 ## Início rápido
 
@@ -57,12 +57,34 @@ conferir_publicacao.py  conferência de vocabulário para superfície pública
 docs/INSTALACAO.md      como regenerar a partir do material de origem
 ```
 
-| grupo | seminários |
-|---|---|
-| 00 · a fundação | 0 O que é um número · 1 Duas operações · 2 Quem vem antes · 3 Negativos e a reta · 4 Divisibilidade e fatoração · 5 Números trigonométricos · 6 O círculo é um espelho · 7 A balança |
-| 10 · arco GAAL | G1 Contar sem listar · G2 Determinantes · G3 Geometria analítica (pt-BR e inglês) · G4 Espaços vetoriais |
-| 20 · arco do cálculo | C1 Ler um gráfico · C2 Antes da palavra limite · C3 Limites e continuidade · C4 O confronto |
-| 90 · extras | Os dois pilares — um corte no tempo (documento, não aula) |
+Cada seminário, com os três jeitos de abrir: no **visor** (barra, sumário,
+retomada), o **deck** sozinho, e o **PDF**:
+
+<!-- catalogo:inicio — gerado por gerar_site.py; não edite à mão -->
+| # | seminário | abrir | PDF |
+|---|---|---|---|
+| | **00 · a fundação** | | |
+| 0 | O que é um número — a ideia, a escrita e o sinal | [visor](https://mateusalkimim.github.io/hipatia-site/ver.html?d=0) · [deck](https://mateusalkimim.github.io/hipatia-site/decks/seminario-0b-o-que-e-um-numero/seminario-0b.html) | [PDF](https://mateusalkimim.github.io/hipatia-site/pdf/0%20%C2%B7%20O%20que%20%C3%A9%20um%20n%C3%BAmero.pdf) |
+| 1 | Duas operações — a aritmética que sustenta os dois arcos | [visor](https://mateusalkimim.github.io/hipatia-site/ver.html?d=1) · [deck](https://mateusalkimim.github.io/hipatia-site/decks/seminario-0-duas-operacoes/seminario-0-duas-operacoes.html) | [PDF](https://mateusalkimim.github.io/hipatia-site/pdf/1%20%C2%B7%20Duas%20opera%C3%A7%C3%B5es.pdf) |
+| 2 | Quem vem antes — a ordem que a soma define | [visor](https://mateusalkimim.github.io/hipatia-site/ver.html?d=2) · [deck](https://mateusalkimim.github.io/hipatia-site/decks/seminario-0f-quem-vem-antes/seminario-0f.html) | [PDF](https://mateusalkimim.github.io/hipatia-site/pdf/2%20%C2%B7%20Quem%20vem%20antes%20%E2%80%94%20a%20ordem%20que%20a%20soma%20define.pdf) |
+| 3 | Negativos e a reta — a ordem e a distância | [visor](https://mateusalkimim.github.io/hipatia-site/ver.html?d=3) · [deck](https://mateusalkimim.github.io/hipatia-site/decks/seminario-0e-negativos-e-a-reta/seminario-0e.html) | [PDF](https://mateusalkimim.github.io/hipatia-site/pdf/3%20%C2%B7%20Negativos%20e%20a%20reta%20%E2%80%94%20a%20ordem%20e%20a%20dist%C3%A2ncia.pdf) |
+| 4 | Divisibilidade e fatoração — quem divide quem | [visor](https://mateusalkimim.github.io/hipatia-site/ver.html?d=4) · [deck](https://mateusalkimim.github.io/hipatia-site/decks/seminario-0d-divisibilidade-e-fatoracao/seminario-0d.html) | [PDF](https://mateusalkimim.github.io/hipatia-site/pdf/4%20%C2%B7%20Divisibilidade%20e%20fatora%C3%A7%C3%A3o%20%E2%80%94%20quem%20divide%20quem.pdf) |
+| 5 | Números trigonométricos — três razões que não mudam de tamanho | [visor](https://mateusalkimim.github.io/hipatia-site/ver.html?d=5) · [deck](https://mateusalkimim.github.io/hipatia-site/decks/seminario-0c-numeros-trigonometricos/seminario-0c.html) | [PDF](https://mateusalkimim.github.io/hipatia-site/pdf/5%20%C2%B7%20N%C3%BAmeros%20trigonom%C3%A9tricos.pdf) |
+| 6 | O círculo é um espelho — três números, e o resto é reflexão | [visor](https://mateusalkimim.github.io/hipatia-site/ver.html?d=6) · [deck](https://mateusalkimim.github.io/hipatia-site/decks/seminario-0g-o-circulo-e-um-espelho/seminario-0g.html) | [PDF](https://mateusalkimim.github.io/hipatia-site/pdf/6%20%C2%B7%20O%20c%C3%ADrculo%20%C3%A9%20um%20espelho%20%E2%80%94%20tr%C3%AAs%20n%C3%BAmeros%2C%20e%20o%20resto%20%C3%A9%20reflex%C3%A3o.pdf) |
+| 7 | A balança — fazer o mesmo nos dois lados | [visor](https://mateusalkimim.github.io/hipatia-site/ver.html?d=7) · [deck](https://mateusalkimim.github.io/hipatia-site/decks/seminario-0h-a-balanca/seminario-0h.html) | [PDF](https://mateusalkimim.github.io/hipatia-site/pdf/7%20%C2%B7%20A%20balan%C3%A7a%20%E2%80%94%20fazer%20o%20mesmo%20nos%20dois%20lados.pdf) |
+| | **10 · arco GAAL — o que se PRESERVA** | | |
+| G1 | Contar sem listar — a combinatória que o determinante cobra | [visor](https://mateusalkimim.github.io/hipatia-site/ver.html?d=G1) · [deck](https://mateusalkimim.github.io/hipatia-site/decks/seminario-g1-contar-sem-listar/seminario-g1-contar-sem-listar.html) | [PDF](https://mateusalkimim.github.io/hipatia-site/pdf/G1%20%C2%B7%20Contar%20sem%20listar.pdf) |
+| G2 | Determinantes — o número que mede o avesso | [visor](https://mateusalkimim.github.io/hipatia-site/ver.html?d=G2) · [deck](https://mateusalkimim.github.io/hipatia-site/decks/seminario-determinantes/seminario-determinantes.html) | [PDF](https://mateusalkimim.github.io/hipatia-site/pdf/G2%20%C2%B7%20Determinantes%20%E2%80%94%20o%20n%C3%BAmero%20que%20mede%20o%20avesso.pdf) |
+| G3 | Geometria analítica — do registro ao pixel | [visor](https://mateusalkimim.github.io/hipatia-site/ver.html?d=G3) · [deck](https://mateusalkimim.github.io/hipatia-site/decks/seminario-geometria/seminario.html) · [English version](https://mateusalkimim.github.io/hipatia-site/ver.html?d=G3&v=en) | [PDF](https://mateusalkimim.github.io/hipatia-site/pdf/G3%20%C2%B7%20Geometria%20anal%C3%ADtica%20%E2%80%94%20do%20registro%20ao%20pixel.pdf) |
+| G4 | Espaços vetoriais — a sacola e o que não vaza | [visor](https://mateusalkimim.github.io/hipatia-site/ver.html?d=G4) · [deck](https://mateusalkimim.github.io/hipatia-site/decks/seminario-espacos-vetoriais/seminario-espacos-vetoriais.html) | [PDF](https://mateusalkimim.github.io/hipatia-site/pdf/G4%20%C2%B7%20Espa%C3%A7os%20vetoriais%20%E2%80%94%20a%20sacola%20e%20o%20que%20n%C3%A3o%20vaza.pdf) |
+| | **20 · arco do cálculo — PERTO DE UM PONTO** | | |
+| C1 | Ler um gráfico — a leitura que o cálculo cobra e ninguém ensina | [visor](https://mateusalkimim.github.io/hipatia-site/ver.html?d=C1) · [deck](https://mateusalkimim.github.io/hipatia-site/decks/seminario-calculo-0-ler-um-grafico/seminario-calculo-0.html) | [PDF](https://mateusalkimim.github.io/hipatia-site/pdf/C1%20%C2%B7%20Ler%20um%20gr%C3%A1fico.pdf) |
+| C2 | Antes da palavra limite — Arquimedes, Fermat e o cálculo sem o conceito | [visor](https://mateusalkimim.github.io/hipatia-site/ver.html?d=C2) · [deck](https://mateusalkimim.github.io/hipatia-site/decks/seminario-calculo-1-antes-do-limite/seminario-calculo-1.html) | [PDF](https://mateusalkimim.github.io/hipatia-site/pdf/C2%20%C2%B7%20Antes%20da%20palavra%20limite.pdf) |
+| C3 | Limites e continuidade — limites e continuidade | [visor](https://mateusalkimim.github.io/hipatia-site/ver.html?d=C3) · [deck](https://mateusalkimim.github.io/hipatia-site/decks/seminario-calculo-2-limites-e-continuidade/seminario-calculo-2.html) | [PDF](https://mateusalkimim.github.io/hipatia-site/pdf/C3%20%C2%B7%20Limites%20e%20continuidade.pdf) |
+| C4 | O confronto — propriedades e o Teorema do Confronto | [visor](https://mateusalkimim.github.io/hipatia-site/ver.html?d=C4) · [deck](https://mateusalkimim.github.io/hipatia-site/decks/seminario-calculo-3-o-confronto/seminario-calculo-3.html) | [PDF](https://mateusalkimim.github.io/hipatia-site/pdf/C4%20%C2%B7%20O%20confronto.pdf) |
+| | **90 · extras** | | |
+| map | Os dois pilares — um corte no tempo | [visor](https://mateusalkimim.github.io/hipatia-site/ver.html?d=map) · [deck](https://mateusalkimim.github.io/hipatia-site/decks/mapa-genealogia/mapa-genealogia.html) | [PDF](https://mateusalkimim.github.io/hipatia-site/pdf/Os%20dois%20pilares%20%E2%80%94%20um%20corte%20no%20tempo.pdf) |
+<!-- catalogo:fim -->
 
 ## De onde vem, e como se regenera
 

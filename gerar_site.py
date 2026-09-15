@@ -45,6 +45,29 @@ MATERIAL_PADRAO = "/mnt/b/AITools/interfaces/itaca-workspace/hipatia/material"
 VARIANTES = {"G3": ("seminario-en.html", "en", "English version")}
 
 TITULO_SITE = "Um curso de visão computacional e geometria da imagem"
+
+
+def url_do_site():
+    """O endereço do site no ar sai do remoto do git (owner/repo → Pages),
+    não de uma string solta: se o repositório mudar de nome, o README e a
+    tabela seguem sozinhos. `HS_URL_SITE` no ambiente sobrepõe."""
+    fixo = os.environ.get("HS_URL_SITE")
+    if fixo:
+        return fixo.rstrip("/") + "/"
+    try:
+        import subprocess
+        remoto = subprocess.run(["git", "-C", AQUI, "config", "--get", "remote.origin.url"],
+                                capture_output=True, text=True, check=True).stdout.strip()
+    except Exception:
+        return ""
+    m = re.search(r"github\.com[:/]([^/]+)/([^/.]+?)(?:\.git)?$", remoto)
+    if not m:
+        return ""
+    dono, repo = m.group(1), m.group(2)
+    return f"https://{dono}.github.io/{repo}/"
+
+
+URL_SITE = url_do_site()
 AUTORIA = [
     ("Autor", "Mateus Felipe Alkimim Pereira"),
     ("Coautora", "Sara Catiele Nogueira Pereira"),
@@ -196,6 +219,7 @@ def levar_deck(material, item, arq_html, raiz_saida):
 
     if "</body>" not in texto:
         falha(f"{arq_html} não tem </body>; a ponte não tem onde entrar")
+    texto = limpar_comentarios(texto)
     texto = texto.replace("</body>", PONTE + "</body>", 1)
 
     with open(os.path.join(pasta_saida, arq_html), "w", encoding="utf-8") as f:
@@ -212,6 +236,65 @@ def levar_deck(material, item, arq_html, raiz_saida):
     lang = "en" if 'lang="en' in texto[:300] else "pt-BR"
     return dict(caminho=f"decks/{item['pasta']}/{arq_html}", titulo=titulo, sub=sub,
                 tese=tese, folhas=len(RE_SLIDE.findall(texto)), lang=lang)
+
+
+def limpar_comentarios(texto):
+    """Tira comentários de HTML e de CSS/JS da cópia derivada. Comentário é
+    conversa da oficina, não conteúdo — e numa superfície pública ele conta
+    como texto. A fonte fica intacta; só a cópia sai limpa."""
+    texto = re.sub(r"<!--.*?-->", "", texto, flags=re.S)
+
+    def limpa_bloco(m):
+        return re.sub(r"/\*.*?\*/", "", m.group(0), flags=re.S)
+
+    texto = re.sub(r"<style[^>]*>.*?</style>", limpa_bloco, texto, flags=re.S)
+    texto = re.sub(r"<script(?![^>]*src=)[^>]*>.*?</script>", limpa_bloco, texto, flags=re.S)
+    return re.sub(r"\n[ \t]*\n([ \t]*\n)+", "\n\n", texto)
+
+
+def escrever_catalogo_readme(decks, raiz_saida):
+    """A tabela do README entre <!-- catalogo:inicio --> e <!-- catalogo:fim -->
+    é derivada: links para o visor, para o deck sozinho e para o PDF, no ar."""
+    from urllib.parse import quote
+    caminho = os.path.join(raiz_saida, "README.md")
+    if not os.path.exists(caminho):
+        return
+    linhas = ["| # | seminário | abrir | PDF |", "|---|---|---|---|"]
+    grupo_atual = None
+    for d in decks:
+        if d["grupo"] != grupo_atual:
+            grupo_atual = d["grupo"]
+            linhas.append(f"| | **{grupo_atual}** | | |")
+        abrir = f"[visor]({URL_SITE}ver.html?d={quote(d['chave'])}) · [deck]({URL_SITE}{quote(d['caminho'])})"
+        if d.get("variante"):
+            abrir += (f" · [{d['variante']['rotulo']}]({URL_SITE}ver.html?d={quote(d['chave'])}"
+                      f"&v={quote(d['variante']['codigo'])})")
+        pdf = f"[PDF]({URL_SITE}{quote(d['pdf'])})" if d.get("pdf") else "—"
+        nome = d["titulo"] + (" — " + d["sub"] if d["sub"] else "")
+        linhas.append(f"| {d['chave']} | {nome} | {abrir} | {pdf} |")
+    bloco = ("<!-- catalogo:inicio — gerado por gerar_site.py; não edite à mão -->\n"
+             + "\n".join(linhas) + "\n<!-- catalogo:fim -->")
+    texto = open(caminho, encoding="utf-8").read()
+    novo, n = re.subn(r"<!-- catalogo:inicio.*?<!-- catalogo:fim -->", lambda m: bloco, texto, flags=re.S)
+    if n != 1:
+        falha("README.md sem o par de marcadores <!-- catalogo:inicio --> … <!-- catalogo:fim -->")
+    # a seta de abrir, logo abaixo da introdução: no ar quando há endereço,
+    # senão o index.html do clone
+    if URL_SITE:
+        seta = (f"**→ [Abrir as apresentações]({URL_SITE})**\n\n"
+                "> **Estado: PROTÓTIPO.** No ar pelo GitHub Pages; também abre do clone,\n"
+                "> sem servidor. Em aberto: a versão em inglês do índice e dos decks\n"
+                "> (só o G3 a tem).")
+    else:
+        seta = ("**→ [Abrir as apresentações](index.html)**\n\n"
+                "> **Estado: PROTÓTIPO.** Abre do clone, sem servidor; no GitHub o link\n"
+                "> mostra só o arquivo.")
+    bloco_seta = "<!-- site:inicio — gerado por gerar_site.py; não edite à mão -->\n" + seta + "\n<!-- site:fim -->"
+    novo, n = re.subn(r"<!-- site:inicio.*?<!-- site:fim -->", lambda m: bloco_seta, novo, flags=re.S)
+    if n != 1:
+        falha("README.md sem o par de marcadores <!-- site:inicio --> … <!-- site:fim -->")
+    with open(caminho, "w", encoding="utf-8") as f:
+        f.write(novo)
 
 
 def conferir_saida(raiz_saida):
@@ -933,6 +1016,7 @@ def main():
 
     gerar_index(decks, grupos, raiz)
     gerar_visor(decks, grupos, raiz)
+    escrever_catalogo_readme(decks, raiz)
 
     faltando = conferir_saida(raiz)
     if faltando:

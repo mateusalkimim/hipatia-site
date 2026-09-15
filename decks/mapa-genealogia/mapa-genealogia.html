@@ -13,10 +13,7 @@
 </script>
 <script src="../../vendor/tex-svg.js"></script>
 <style>
-/* ============================================================
-   Ítaca DS — tema claro. Forma: norma-de-composicao.md da Hipátia,
-   registro CADERNO (lido de perto, denso).
-   ============================================================ */
+
 :root {
   --bg: #f3f5f9; --card: #ffffff; --linha: #d9e0ec;
   --ink: #16233f; --ink2: #3f4d6b; --muted: #7c88a1;
@@ -26,16 +23,12 @@
   --it-serif: Georgia, "Cormorant Garamond", "Times New Roman", serif;
   --it-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --it-mono: "Spline Sans Mono", ui-monospace, "Cascadia Code", monospace;
-  /* §2.1 — a medida de linha, declarada UMA vez, em EM e nunca em `ch`:
-     `ch` mede o glifo "0" (0,636 em na Inter) e não o caractere médio de
-     prosa (0,456 em), então 66ch entregaria 92 caracteres. */
+  
   --medida: 30em;
-  --margem: 6vw;          /* §3.1 */
-  --medianiz: 1.25vw;     /* = 24 px a 1920, §3.2 */
+  --margem: 6vw;          
+  --medianiz: 1.25vw;     
 }
-/* §2.6 — a ESCALA. Uma raiz só, porque `rem` é global: subir aqui escala
-   junto o que tem clamp e o que tem tamanho fixo. Levantar só os clamps
-   deixa `.leitura` e `.legenda` para trás e a folha fica com DUAS escalas. */
+
 html { font-size: 25px; }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html, body { height: 100%; background: var(--azul-deep); }
@@ -43,7 +36,7 @@ body { font-family: var(--it-sans); color: var(--ink); overflow: hidden; }
 
 .folha { display: none; position: absolute; inset: 0; background: var(--bg);
          padding: 4vh var(--margem) 6vh; flex-direction: column;
-         /* sem isto, bloco alto demais SOME no PDF em vez de acusar o erro */
+         
          overflow: hidden; }
 .folha.ativo { display: flex; }
 .eyebrow { font-size: 0.72rem; letter-spacing: 0.22em; text-transform: uppercase;
@@ -53,8 +46,6 @@ h1 { font-family: var(--it-serif); font-weight: 700;
      margin-bottom: 1.2vh; color: var(--azul-deep); letter-spacing: -0.01em; }
 h1 em { color: var(--bronze); font-style: normal; }
 
-/* §3.2 grade real de 12 colunas · §2.4 o conteúdo pende do topo
-   (a exceção do §2.4 é do registro DECK; este é caderno) */
 .folha .corpo {
   display: grid; grid-template-columns: repeat(12, 1fr);
   gap: var(--medianiz); align-items: start;
@@ -71,7 +62,6 @@ img.fig { max-width: 100%; height: auto; border-radius: 8px;
           border: 1px solid var(--linha); background: var(--card);
           box-shadow: 0 1px 4px rgba(18,36,74,.08); }
 
-/* §2.1 a medida governa a PROSA; bloco de exibição é governado pelo conteúdo */
 .folha p, .folha li, .leitura, .legenda { max-width: var(--medida); }
 .folha .formula, .folha .formula p, .folha table, .folha table p,
 .folha .respostas { max-width: none; }
@@ -130,10 +120,7 @@ table.simbolos td:first-child { color: var(--azul-deep); font-weight: 600;
 .folha.capa { align-items: center; justify-content: center; text-align: center; }
 .folha.capa h1 { font-size: clamp(2rem, 4.4vw, 3.4rem); }
 .folha.capa p { max-width: 34em; color: var(--ink2); margin-inline: auto; }
-    /* §2.8 e §2.10 da norma-de-diagramas/composição: parágrafo é bloco, e
-       na folha-quadro o espaço entre blocos é o único ritmo. Prosa longa
-       centralizada é o pior caso de leitura — o bloco segue centrado, as
-       LINHAS alinham à esquerda. */
+    
     .folha.capa p.prosa { text-align: left; margin: 0 auto 1.6vh; }
     .folha.capa p.prosa:last-of-type { margin-bottom: 0; }
 
@@ -151,7 +138,6 @@ table.simbolos td:first-child { color: var(--azul-deep); font-weight: 600;
 </head>
 <body>
 
-<!-- 1 · capa -->
 <section class="folha capa ativo">
   <div class="eyebrow">Hipátia · mapa da matéria</div>
   <h1>Três fluxogramas:<br><em>a história, o sistema e a base</em></h1>
@@ -287,8 +273,6 @@ table.simbolos td:first-child { color: var(--azul-deep); font-weight: 600;
   <p class="prosa">Os três fluxogramas dizem a mesma coisa por caminhos diferentes: o que hoje parece arquitetura foi, em cada época, <strong>peça solta</strong>.</p>
   <p class="prosa">Nomear o mapa como datado não o enfraquece. É o que permite ensiná-lo sem fingir que a ordem do currículo é a ordem das coisas — e é o que deixa espaço para o que ainda não tem nome.</p>
 </section>
-
-
 
 <script>
   const folhas = [...document.querySelectorAll('.folha')];
